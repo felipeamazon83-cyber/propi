@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import String,Boolean,DateTime,ForeignKey,Numeric,UniqueConstraint
+from sqlalchemy import String,Boolean,DateTime,ForeignKey,Numeric,UniqueConstraint,JSON
 from sqlalchemy.orm import Mapped,mapped_column
 from ..database import Base
 UUID=lambda: mapped_column(String(36),primary_key=True,default=lambda:str(uuid.uuid4()))
@@ -9,7 +9,7 @@ class Business(Base):
 class Employee(Base):
  __tablename__='employees'; id:Mapped[str]=UUID(); business_id:Mapped[str]=mapped_column(ForeignKey('businesses.id'),index=True); name:Mapped[str]=mapped_column(String(120)); photo_url:Mapped[str|None]=mapped_column(String(500)); active:Mapped[bool]=mapped_column(Boolean,default=True); created_at:Mapped[datetime]=mapped_column(DateTime,default=datetime.utcnow); updated_at:Mapped[datetime]=mapped_column(DateTime,default=datetime.utcnow,onupdate=datetime.utcnow)
 class Location(Base):
- __tablename__='locations'; id:Mapped[str]=UUID(); business_id:Mapped[str]=mapped_column(ForeignKey('businesses.id'),index=True); name:Mapped[str]=mapped_column(String(120)); type:Mapped[str]=mapped_column(String(32),default='table'); public_token:Mapped[str]=mapped_column(String(64),unique=True,index=True); active:Mapped[bool]=mapped_column(Boolean,default=True); created_at:Mapped[datetime]=mapped_column(DateTime,default=datetime.utcnow)
+ __tablename__='locations'; id:Mapped[str]=UUID(); business_id:Mapped[str]=mapped_column(ForeignKey('businesses.id'),index=True); name:Mapped[str]=mapped_column(String(120)); type:Mapped[str]=mapped_column(String(32),default='table'); public_token:Mapped[str]=mapped_column(String(64),unique=True,index=True); active:Mapped[bool]=mapped_column(Boolean,default=True); distribution_mode:Mapped[str]=mapped_column(String(16),default='employee'); fixed_employee_id:Mapped[str|None]=mapped_column(ForeignKey('employees.id')); employee_percentage:Mapped[float]=mapped_column(Numeric(5,2),default=100); suggested_amounts:Mapped[list]=mapped_column(JSON,default=lambda:[1,2,3,5]); created_at:Mapped[datetime]=mapped_column(DateTime,default=datetime.utcnow)
 class Tip(Base):
  __tablename__='tips'; __table_args__=(UniqueConstraint('stripe_checkout_session_id'),); id:Mapped[str]=UUID(); business_id:Mapped[str]=mapped_column(ForeignKey('businesses.id'),index=True); employee_id:Mapped[str|None]=mapped_column(ForeignKey('employees.id')); location_id:Mapped[str]=mapped_column(ForeignKey('locations.id')); amount:Mapped[float]=mapped_column(Numeric(10,2)); currency:Mapped[str]=mapped_column(String(3)); status:Mapped[str]=mapped_column(String(16),default='pending'); stripe_payment_intent_id:Mapped[str|None]=mapped_column(String(255),unique=True); stripe_checkout_session_id:Mapped[str|None]=mapped_column(String(255),unique=True); created_at:Mapped[datetime]=mapped_column(DateTime,default=datetime.utcnow)
 class TipSetting(Base):
