@@ -20,7 +20,7 @@ app.include_router(router, prefix='/api')
 app.include_router(webhook_router, prefix='/api')
 
 @app.on_event('startup')
-def startup(): 
+def startup():
     Base.metadata.create_all(engine)
 
 @app.get('/health')
