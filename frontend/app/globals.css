@@ -183,7 +183,8 @@ button, input, select, textarea {
 
 /* Hero Card */
 .hero-card {
-  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  background: linear-gradient(145deg, #fff8f2 0%, #ffe9dc 100%);
+  color: #0f172a;
   border: 1px solid rgba(255, 107, 53, 0.2);
   border-radius: 1.5rem;
   padding: 2rem;
@@ -284,8 +285,77 @@ button, input, select, textarea {
   color: var(--color-success);
 }
 
-/* Proof Strip */
-.proof-strip {
+.hero-card .mini-brand,
+.hero-card .amount,
+.hero-card .card-kicker {
+  color: #0f172a;
+}
+
+.hero-card .card-muted {
+  color: #475569;
+}
+
+.qr-image {
+  display: block;
+  width: min(100%, 23rem);
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 1.1rem;
+  margin: 0 auto 1.25rem;
+  mix-blend-mode: multiply;
+}
+
+.qr-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(15, 23, 42, 0.12);
+}
+
+.qr-caption .card-kicker,
+.qr-caption .card-muted {
+  margin-bottom: 0.25rem;
+}
+
+  .payment-options {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  position: relative;
+  z-index: 1;
+  }
+
+  .payment-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 0.75rem;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.42);
+  font-size: 0.72rem;
+  }
+
+  .payment-option strong {
+  color: #0f172a;
+  font-size: 0.8rem;
+  }
+
+  .payment-option-active {
+  border-color: rgba(255, 107, 53, 0.45);
+  background: rgba(255, 107, 53, 0.1);
+  }
+
+  .payment-option-active strong {
+  color: var(--color-accent);
+  }
+
+  /* Proof Strip */
+  .proof-strip {
   background: rgba(30, 41, 59, 0.5);
   border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
@@ -349,6 +419,8 @@ button, input, select, textarea {
 
 .step-card {
   background: rgba(30, 41, 59, 0.3);
+  padding: 0;
+  overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: 1rem;
   padding: 2.5rem 2rem;
@@ -362,6 +434,31 @@ button, input, select, textarea {
   background: rgba(30, 41, 59, 0.6);
   border-color: var(--color-accent);
   transform: translateY(-4px);
+}
+
+.step-image-wrap {
+  background: #f6eee8;
+  aspect-ratio: 4 / 2.45;
+  overflow: hidden;
+}
+
+.step-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.step-card:hover .step-image {
+  transform: scale(1.04);
+}
+
+.step-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.75rem 2rem 2rem;
 }
 
 .step-number {
