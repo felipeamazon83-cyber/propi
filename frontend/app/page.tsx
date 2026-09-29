@@ -33,6 +33,7 @@ export default function Home() {
           <div className="hero-card-top"><span className="mini-brand">propi.</span><span className="status-pill">Listo para recibir</span></div>
           <Image className="qr-image" src="/propi-qr.png" alt="Código QR de Propi para recibir una propina" width={560} height={560} priority />
           <div className="qr-caption"><div><p className="card-kicker">TU QR DE PROPINA</p><p className="card-muted">Escanea y agradece en segundos.</p></div><span className="check-mark">✓</span></div>
+          <div className="payment-options" aria-label="Opciones para recibir propinas"><span className="payment-option payment-option-active"><strong>QR</strong><span>Escanea</span></span><span className="payment-option"><strong>NFC</strong><span>Acerca tu móvil</span></span></div>
         </div>
       </section>
 

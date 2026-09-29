@@ -319,8 +319,43 @@ button, input, select, textarea {
   margin-bottom: 0.25rem;
 }
 
-/* Proof Strip */
-.proof-strip {
+  .payment-options {
+  display: flex;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  position: relative;
+  z-index: 1;
+  }
+
+  .payment-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 0.75rem;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.42);
+  font-size: 0.72rem;
+  }
+
+  .payment-option strong {
+  color: #0f172a;
+  font-size: 0.8rem;
+  }
+
+  .payment-option-active {
+  border-color: rgba(255, 107, 53, 0.45);
+  background: rgba(255, 107, 53, 0.1);
+  }
+
+  .payment-option-active strong {
+  color: var(--color-accent);
+  }
+
+  /* Proof Strip */
+  .proof-strip {
   background: rgba(30, 41, 59, 0.5);
   border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
