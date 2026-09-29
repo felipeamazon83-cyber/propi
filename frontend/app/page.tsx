@@ -1,9 +1,9 @@
 import Link from 'next/link'
 
 const steps = [
-  ['01', 'Crea tu perfil', 'Configura tu negocio en minutos.'],
-  ['02', 'Comparte tu QR', 'Ponlo en tu mesa, barra o recibo.'],
-  ['03', 'Recibe al instante', 'Tus clientes agradecen sin efectivo.'],
+  ['01', 'Crea tu perfil', 'Configura tu negocio en minutos.', '/propi-dashboard.png'],
+  ['02', 'Comparte QR o NFC', 'Ponlo en tu mesa, barra o recibo.', '/propi-qr.png'],
+  ['03', 'Recibe al instante', 'Tus clientes agradecen sin efectivo.', '/propi-team.png'],
 ]
 
 export default function Home() {
@@ -28,7 +28,7 @@ export default function Home() {
           </div>
           <p className="trust-note"><span className="trust-dot" aria-hidden="true" /> Sin permanencia · Configuración en 5 minutos</p>
         </div>
-        <div className="hero-card" aria-label="Vista previa de propina recibida">
+        <div className="hero-card" aria-label="Vista previa de propina recibida"><div className="payment-methods"><img src="/propi-qr.png" alt="Código QR de Propi" /><span>QR</span><span>NFC</span></div>
           <div className="hero-card-top"><span className="mini-brand">propi.</span><span className="status-pill">Activo</span></div>
           <div className="portrait" aria-hidden="true"><span>MC</span></div>
           <p className="card-kicker">PROPINA RECIBIDA</p>
@@ -46,7 +46,7 @@ export default function Home() {
 
       <section id="como-funciona" className="steps-section">
         <div className="section-heading"><p className="eyebrow">EMPIEZA EN TRES PASOS</p><h2>Más simple para todos.</h2><p>Una experiencia pensada para que agradecer sea tan fácil como escanear.</p></div>
-        <div className="steps-grid">{steps.map(([number, title, description]) => <article className="step-card" key={number}><span className="step-number">{number}</span><h3>{title}</h3><p>{description}</p></article>)}</div>
+        <div className="steps-grid">{steps.map(([number, title, description, image]) => <article className="step-card" key={number}><img className="step-image" src={image} alt="" /><span className="step-number">{number}</span><h3>{title}</h3><p>{description}</p></article>)}</div>
       </section>
 
       <section className="closing-banner"><div><p className="eyebrow">TU EQUIPO LO MERECE</p><h2>Convierte un buen servicio<br />en un gran recuerdo.</h2></div><Link className="btn btn-light" href="/register">Crear mi cuenta <span aria-hidden="true">→</span></Link></section>
