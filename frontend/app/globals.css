@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
-  --propi-ink: #16302b;
-  --propi-muted: #60756f;
-  --propi-green: #1c8c68;
-  --propi-green-dark: #12624c;
-  --propi-mint: #dff4e9;
-  --propi-cream: #fbfaf5;
-  --propi-line: #dce8e1;
+  color-scheme: dark;
+  --propi-ink: #f7f8ff;
+  --propi-muted: #a9b6d4;
+  --propi-green: #ff8a3d;
+  --propi-green-dark: #e46722;
+  --propi-mint: #26365d;
+  --propi-cream: #08132f;
+  --propi-line: #263861;
   color: var(--propi-ink);
   background: var(--propi-cream);
 }
@@ -21,7 +21,8 @@ body {
   margin: 0;
   min-width: 320px;
   background:
-    radial-gradient(circle at 90% 0%, rgba(223,244,233,.8), transparent 30rem),
+    radial-gradient(circle at 90% 0%, rgba(255,138,61,.2), transparent 30rem),
+    radial-gradient(circle at 10% 30%, rgba(35,66,130,.35), transparent 34rem),
     var(--propi-cream);
   color: var(--propi-ink);
   font-family: Arial, Helvetica, sans-serif;
@@ -114,5 +115,27 @@ main > section::before, main > form::before { pointer-events: none; }
 .closing-banner .eyebrow { color:#f29a76; }
 .btn-light { background:#fff; color:var(--propi-ink); }
 footer { display:flex; justify-content:space-between; align-items:center; padding-top:22px; color:var(--propi-muted); font-size:.8rem; }
+
+/* Propi signature palette: deep navy with energetic orange accents. */
+.site-shell { color: var(--propi-ink); }
+.brand, .nav-link, .text-link { color: var(--propi-ink); }
+.nav-link, .text-link, .hero-text, .trust-note, .proof-strip, .section-heading > p:last-child, .step-card p, footer { color: var(--propi-muted); }
+.btn-dark, .closing-banner { background: #ff8a3d; color: #08132f; }
+.btn-coral { background: #ff8a3d; color: #08132f; }
+.btn-coral:hover, .btn-dark:hover { background: #ffad70; }
+.hero-card, .step-card { background: #101f43; border-color: #2c4270; color: var(--propi-ink); }
+.hero-card { box-shadow: 0 28px 70px rgba(0,0,0,.3); }
+.amount { color: #fff; }
+.card-divider, .proof-strip { border-color: #2c4270; }
+.card-muted, .card-kicker, .card-foot { color: #a9b6d4; }
+.status-pill { background: rgba(255,138,61,.18); color: #ffad70; }
+.portrait { background: #263b70; color: #ffad70; }
+.step-image { display:block; width:100%; height:145px; object-fit:cover; border-radius:12px; margin-bottom:24px; border:1px solid #385184; }
+.step-number, .eyebrow, .hero-copy h1 em { color: #ff9b55; }
+.btn-light { background: #fff; color: #08132f; }
+.payment-methods { display:flex; align-items:center; gap:8px; margin:18px 0 -8px; }
+.payment-methods img { width:58px; height:58px; object-fit:cover; border-radius:8px; }
+.payment-methods span { padding:5px 8px; border-radius:6px; background:#263b70; color:#fff; font-size:.68rem; font-weight:800; }
+.payment-methods span:last-child { background:#ff8a3d; color:#08132f; }
 @media (max-width: 760px) { .hero-section { grid-template-columns:1fr; gap:35px; padding-top:35px; } .hero-card { justify-self:start; } .proof-strip, .closing-banner, footer { flex-direction:column; align-items:flex-start; } .steps-grid { grid-template-columns:1fr; } .nav-link { display:none; } .closing-banner { padding:28px; } }
 
