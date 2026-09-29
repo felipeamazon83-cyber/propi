@@ -1,6 +1,6 @@
 # TIP — Propinas digitales con QR y NFC
 
-MVP SaaS para que un negocio cree ubicaciones QR/NFC, el cliente elija a su empleado y pague una propina por Stripe Checkout. No procesa ni almacena tarjetas: Stripe aloja el pago.
+MVP SaaS de €0/mes: un negocio crea ubicaciones QR/NFC y el cliente paga una propina por Stripe Checkout. Propi aplica una tarifa fija por transacción al cliente; el importe de propina seleccionado se transfiere íntegro a la cuenta conectada. No procesa ni almacena tarjetas: Stripe aloja el pago.
 
 ## Arquitectura
 
@@ -17,7 +17,7 @@ MVP SaaS para que un negocio cree ubicaciones QR/NFC, el cliente elija a su empl
 
 ## Stripe
 
-Configura `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` y los Price IDs en Render; nunca los expongas al frontend. Reenvía webhooks localmente con `stripe listen --forward-to localhost:8000/api/webhooks/stripe`. El endpoint verifica la firma y usa el ID de Checkout como clave única para no duplicar propinas.
+Configura `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `PROPI_FIXED_FEE_CENTS` (20 por defecto) y `PROPI_FEE_PERCENT` (0 por defecto) en Render; nunca los expongas al frontend. Reenvía webhooks localmente con `stripe listen --forward-to localhost:8000/api/webhooks/stripe`. El endpoint verifica la firma y usa el ID de Checkout como clave única para no duplicar propinas.
 
 Stripe Checkout muestra tarjeta y, cuando Stripe/browser lo permite, Apple Pay y Google Pay. Configura los dominios de pago en Stripe antes de producción.
 
