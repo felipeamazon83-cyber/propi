@@ -20,4 +20,4 @@ def get_business(business_id: str, user: str = Depends(current_user), db: Sessio
 def update_business(business_id: str, payload: BusinessUpdate, user: str = Depends(current_user), db: Session = Depends(get_db)):
     b = owned_business(business_id, user, db)
     for field, value in payload.model_dump().items(): setattr(b, field, value)
-    db.commit(); return {'id': b.id, 'name': b.name}
+    db.commit(); db.refresh(b); return {'id': b.id, 'name': b.name}
