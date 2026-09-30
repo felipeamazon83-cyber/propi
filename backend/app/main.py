@@ -6,15 +6,17 @@ from .api.webhooks import router as webhook_router
 from . import models
 
 app = FastAPI(title='TIP API', version='0.1.0')
-# Explicit wildcard policy requested for the frontend deployment. CORSMiddleware
-# handles OPTIONS preflight for every mounted /api sub-route automatically.
+
+# Se deshabilita allow_credentials si allow_origins=["*"] para evitar bloqueos
+# del navegador en peticiones autenticadas preflight (OPTIONS).
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*'],
-    allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
 app.include_router(router, prefix='/api')
 app.include_router(webhook_router, prefix='/api')
 
