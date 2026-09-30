@@ -6,7 +6,7 @@ from .api.routes import router
 from .api.webhooks import router as webhook_router
 from . import models
 app=FastAPI(title='TIP API',version='0.1.0')
-app.add_middleware(CORSMiddleware,allow_origins=[x.strip() for x in settings.cors_origins.split(',')],allow_credentials=True,allow_methods=['*'],allow_headers=['*'])
+app.add_middleware(CORSMiddleware,allow_origins=[x.strip().rstrip('/') for x in settings.cors_origins.split(',') if x.strip()],allow_credentials=True,allow_methods=['*'],allow_headers=['*'])
 app.include_router(router,prefix='/api');app.include_router(webhook_router,prefix='/api')
 @app.on_event('startup')
 def startup(): Base.metadata.create_all(engine)
