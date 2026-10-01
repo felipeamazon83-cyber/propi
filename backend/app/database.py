@@ -30,8 +30,10 @@ DATABASE_URL = sqlalchemy_url(settings.database_url)
 engine = create_engine(
     DATABASE_URL,
     pool_pre_ping=True,
+    pool_recycle=300,
     connect_args={
         "options": "-csearch_path=public",
+        "prepare_threshold": None,
     },
 )
 
