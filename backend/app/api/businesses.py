@@ -1,7 +1,8 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
+from sqlalchemy import cast, select
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Session
 
 from ..auth import current_user
@@ -29,7 +30,9 @@ def list_businesses(
     # en Supabase convierta este GET en un 500 durante un despliegue de migración.
     stmt = (
         select(Business.id, Business.name)
-        .where(Business.owner_id == user_uuid)
+        # Some early deployments stored Supabase UUIDs as varchar.  Cast the
+        # column while the accompanying migration converts it permanently.
+        .where(cast(Business.owner_id, PG_UUID) == user_uuid)
         .order_by(Business.name)
     )
     businesses = db.execute(stmt).all()

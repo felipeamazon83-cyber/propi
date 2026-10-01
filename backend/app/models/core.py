@@ -94,6 +94,7 @@ class Business(Base):
 
 class Employee(Base):
     __tablename__ = "employees"
+    __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -103,7 +104,7 @@ class Employee(Base):
 
     business_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("businesses.id"),
+        ForeignKey("public.businesses.id"),
         index=True,
         nullable=False,
     )
@@ -140,6 +141,7 @@ class Employee(Base):
 
 class Location(Base):
     __tablename__ = "locations"
+    __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -149,7 +151,7 @@ class Location(Base):
 
     business_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("businesses.id"),
+        ForeignKey("public.businesses.id"),
         index=True,
         nullable=False,
     )
@@ -186,7 +188,7 @@ class Location(Base):
 
     fixed_employee_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("employees.id"),
+        ForeignKey("public.employees.id"),
         nullable=True,
     )
 
@@ -213,6 +215,7 @@ class Tip(Base):
     __tablename__ = "tips"
     __table_args__ = (
         UniqueConstraint("stripe_checkout_session_id"),
+        {"schema": "public"},
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -223,20 +226,20 @@ class Tip(Base):
 
     business_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("businesses.id"),
+        ForeignKey("public.businesses.id"),
         index=True,
         nullable=False,
     )
 
     employee_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("employees.id"),
+        ForeignKey("public.employees.id"),
         nullable=False,
     )
 
     location_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("locations.id"),
+        ForeignKey("public.locations.id"),
         nullable=False,
     )
 
@@ -307,6 +310,7 @@ class Tip(Base):
 
 class TipSetting(Base):
     __tablename__ = "tip_settings"
+    __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -316,7 +320,7 @@ class TipSetting(Base):
 
     business_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("businesses.id"),
+        ForeignKey("public.businesses.id"),
         unique=True,
         nullable=False,
     )
