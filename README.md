@@ -11,7 +11,7 @@ MVP SaaS de €0/mes: un negocio crea ubicaciones QR/NFC y el cliente paga una p
 ## Desarrollo local
 
 1. Copia `.env.example` a `frontend/.env.local` y `backend/.env`; reparte las variables por aplicación.
-2. En Supabase, ejecuta `supabase/migrations/202609290001_initial.sql` y habilita email/password en Auth.
+2. En Supabase, ejecuta las migraciones de `supabase/migrations/` en orden y habilita email/password en Auth. Si el proyecto ya tenía la tabla `businesses`, ejecuta también las migraciones de compatibilidad `202610010001_businesses_schema_compatibility.sql` y `202610010002_business_owner_id_uuid.sql`. Las migraciones son la fuente de verdad del esquema; el backend no crea ni altera tablas al arrancar.
 3. `cd backend && python -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/uvicorn app.main:app --reload`.
 4. `cd frontend && npm install && npm run dev`.
 

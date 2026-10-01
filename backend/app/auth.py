@@ -20,13 +20,19 @@ async def current_user(
             detail="Autenticación requerida",
         )
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            f"{settings.supabase_url}/auth/v1/user",
-            headers={
-                "Authorization": authorization,
-                "apikey": settings.supabase_service_role_key,
-            },
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(10.0)) as client:
+            response = await client.get(
+                f"{settings.supabase_url}/auth/v1/user",
+                headers={
+                    "Authorization": authorization,
+                    "apikey": settings.supabase_service_role_key,
+                },
+            )
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=503,
+            detail="No se pudo validar la sesión. Inténtalo de nuevo.",
         )
 
     if response.status_code != 200:

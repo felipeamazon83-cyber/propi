@@ -1,7 +1,8 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy import select
+from sqlalchemy import cast, select
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Session
 
 from ..auth import current_user
@@ -24,20 +25,24 @@ def list_businesses(
     # Asegurar tipo UUID
     user_uuid = user if isinstance(user, UUID) else UUID(str(user))
 
-    # Uso de db.execute().scalars().all() para evitar conflictos con el driver/proxy
+    # La vista que abre el selector de negocio solo necesita estos dos campos.
+    # No cargar la entidad completa evita que una columna añadida posteriormente
+    # en Supabase convierta este GET en un 500 durante un despliegue de migración.
     stmt = (
-        select(Business)
-        .where(Business.owner_id == user_uuid)
-        .order_by(Business.created_at.desc())
+        select(Business.id, Business.name)
+        # Some early deployments stored Supabase UUIDs as varchar.  Cast the
+        # column while the accompanying migration converts it permanently.
+        .where(cast(Business.owner_id, PG_UUID) == user_uuid)
+        .order_by(Business.name)
     )
-    businesses = db.execute(stmt).scalars().all()
+    businesses = db.execute(stmt).all()
 
     return [
         {
-            "id": str(b.id),
-            "name": b.name,
+            "id": str(business_id),
+            "name": name,
         }
-        for b in businesses
+        for business_id, name in businesses
     ]
 
 
@@ -139,4 +144,3 @@ def update_business(
         "id": str(business.id),
         "name": business.name,
     }
-
