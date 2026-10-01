@@ -1,8 +1,7 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import cast, select
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..auth import current_user
@@ -23,14 +22,11 @@ def list_employees(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    # 1. Validar permisos de acceso al negocio
     business = owned_business(business_id, user, db)
 
-    # 2. Consultar casteando business_id a UUID explícitamente
+    # Comparación limpia directa entre UUIDs sin CAST explicito
     employees = db.scalars(
-        select(Employee).where(
-            cast(Employee.business_id, PG_UUID) == cast(business.id, PG_UUID)
-        )
+        select(Employee).where(Employee.business_id == business.id)
     ).all()
 
     return [
@@ -54,7 +50,7 @@ def create_employee(
     business = owned_business(business_id, user, db)
 
     employee = Employee(
-        business_id=business.id,  # Usa el UUID ya parseado de business
+        business_id=business.id,
         **payload.model_dump(),
     )
     db.add(employee)
@@ -77,7 +73,6 @@ def set_employee_active(
 ):
     business = owned_business(business_id, user, db)
 
-    # Normalizar employee_id a UUID
     try:
         emp_uuid = UUID(employee_id) if isinstance(employee_id, str) else employee_id
     except (ValueError, TypeError):
@@ -86,11 +81,10 @@ def set_employee_active(
             detail="Empleado no encontrado",
         )
 
-    # Buscar empleado con cast explícito
     employee = db.scalar(
         select(Employee).where(
-            cast(Employee.id, PG_UUID) == cast(emp_uuid, PG_UUID),
-            cast(Employee.business_id, PG_UUID) == cast(business.id, PG_UUID),
+            Employee.id == emp_uuid,
+            Employee.business_id == business.id,
         )
     )
 
