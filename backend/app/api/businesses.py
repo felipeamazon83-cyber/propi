@@ -30,7 +30,7 @@ def list_businesses(
     stmt = (
         select(Business.id, Business.name)
         .where(Business.owner_id == user_uuid)
-        .order_by(Business.created_at.desc())
+        .order_by(Business.name)
     )
     businesses = db.execute(stmt).all()
 

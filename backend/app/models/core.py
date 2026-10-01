@@ -18,6 +18,9 @@ from ..database import Base
 
 class Business(Base):
     __tablename__ = "businesses"
+    # Supabase stores the application tables in `public`.  Qualifying the table
+    # makes this query independent of the connection pooler's search_path.
+    __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -27,7 +30,6 @@ class Business(Base):
 
     owner_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
         index=True,
         nullable=False,
     )
