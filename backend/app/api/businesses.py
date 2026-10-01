@@ -24,20 +24,22 @@ def list_businesses(
     # Asegurar tipo UUID
     user_uuid = user if isinstance(user, UUID) else UUID(str(user))
 
-    # Uso de db.execute().scalars().all() para evitar conflictos con el driver/proxy
+    # La vista que abre el selector de negocio solo necesita estos dos campos.
+    # No cargar la entidad completa evita que una columna añadida posteriormente
+    # en Supabase convierta este GET en un 500 durante un despliegue de migración.
     stmt = (
-        select(Business)
+        select(Business.id, Business.name)
         .where(Business.owner_id == user_uuid)
         .order_by(Business.created_at.desc())
     )
-    businesses = db.execute(stmt).scalars().all()
+    businesses = db.execute(stmt).all()
 
     return [
         {
-            "id": str(b.id),
-            "name": b.name,
+            "id": str(business_id),
+            "name": name,
         }
-        for b in businesses
+        for business_id, name in businesses
     ]
 
 
@@ -139,4 +141,3 @@ def update_business(
         "id": str(business.id),
         "name": business.name,
     }
-
