@@ -1,8 +1,7 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
-from sqlalchemy import select, cast
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from fastapi import APIRouter, Depends, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..auth import current_user
@@ -10,7 +9,6 @@ from ..database import get_db
 from ..models import Business, TipSetting
 from ..schemas.contracts import BusinessCreate, BusinessUpdate
 from .deps import owned_business
-
 
 router = APIRouter(
     prefix="/businesses",
@@ -23,10 +21,10 @@ def list_businesses(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    # FORZAMOS A SQLALCHEMY A GENERAR: CAST(owner_id AS UUID) = CAST($1 AS UUID)
+    # Comparación directa entre UUIDs sin CAST explícito
     businesses = db.scalars(
         select(Business)
-        .where(cast(Business.owner_id, PG_UUID) == cast(user, PG_UUID))
+        .where(Business.owner_id == user)
         .order_by(Business.created_at.desc())
     ).all()
 
@@ -39,7 +37,7 @@ def list_businesses(
     ]
 
 
-@router.post("", status_code=201)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_business(
     payload: BusinessCreate,
     user: UUID = Depends(current_user),
@@ -135,3 +133,4 @@ def update_business(
         "id": str(business.id),
         "name": business.name,
     }
+
