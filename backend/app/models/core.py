@@ -8,8 +8,9 @@ from sqlalchemy import (
     Numeric,
     String,
     UniqueConstraint,
+    UUID,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from ..database import Base
@@ -17,17 +18,18 @@ from ..database import Base
 
 class Business(Base):
     __tablename__ = "businesses"
-    __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+        UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
     )
 
     owner_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+        UUID(as_uuid=True),
+        ForeignKey("users.id"),
         index=True,
+        nullable=False,
     )
 
     name: Mapped[str] = mapped_column(
@@ -90,17 +92,16 @@ class Business(Base):
 
 class Employee(Base):
     __tablename__ = "employees"
-    __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+        UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
     )
 
     business_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("public.businesses.id"),
+        UUID(as_uuid=True),
+        ForeignKey("businesses.id"),
         index=True,
         nullable=False,
     )
@@ -137,17 +138,16 @@ class Employee(Base):
 
 class Location(Base):
     __tablename__ = "locations"
-    __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+        UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
     )
 
     business_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("public.businesses.id"),
+        UUID(as_uuid=True),
+        ForeignKey("businesses.id"),
         index=True,
         nullable=False,
     )
@@ -183,8 +183,8 @@ class Location(Base):
     )
 
     fixed_employee_id: Mapped[uuid.UUID | None] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("public.employees.id"),
+        UUID(as_uuid=True),
+        ForeignKey("employees.id"),
         nullable=True,
     )
 
@@ -211,31 +211,30 @@ class Tip(Base):
     __tablename__ = "tips"
     __table_args__ = (
         UniqueConstraint("stripe_checkout_session_id"),
-        {"schema": "public"},
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+        UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
     )
 
     business_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("public.businesses.id"),
+        UUID(as_uuid=True),
+        ForeignKey("businesses.id"),
         index=True,
         nullable=False,
     )
 
     employee_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("public.employees.id"),
+        UUID(as_uuid=True),
+        ForeignKey("employees.id"),
         nullable=False,
     )
 
     location_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("public.locations.id"),
+        UUID(as_uuid=True),
+        ForeignKey("locations.id"),
         nullable=False,
     )
 
@@ -306,17 +305,16 @@ class Tip(Base):
 
 class TipSetting(Base):
     __tablename__ = "tip_settings"
-    __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
+        UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
     )
 
     business_id: Mapped[uuid.UUID] = mapped_column(
-        PG_UUID(as_uuid=True),
-        ForeignKey("public.businesses.id"),
+        UUID(as_uuid=True),
+        ForeignKey("businesses.id"),
         unique=True,
         nullable=False,
     )
