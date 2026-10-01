@@ -2,8 +2,7 @@ import secrets
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import cast, select
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..auth import current_user
@@ -43,10 +42,9 @@ def list_locations(
 ):
     business = owned_business(business_id, user, db)
 
+    # Comparación limpia directa entre UUIDs sin CAST explicito
     locations = db.scalars(
-        select(Location).where(
-            cast(Location.business_id, PG_UUID) == cast(business.id, PG_UUID)
-        )
+        select(Location).where(Location.business_id == business.id)
     ).all()
 
     return [serialize(x) for x in locations]
@@ -61,7 +59,6 @@ def create_location(
 ):
     business = owned_business(business_id, user, db)
 
-    # Validar fixed_employee_id si existe
     fixed_emp_uuid = None
     if payload.fixed_employee_id:
         try:
@@ -78,8 +75,8 @@ def create_location(
 
         e = db.scalar(
             select(Employee).where(
-                cast(Employee.id, PG_UUID) == cast(fixed_emp_uuid, PG_UUID),
-                cast(Employee.business_id, PG_UUID) == cast(business.id, PG_UUID),
+                Employee.id == fixed_emp_uuid,
+                Employee.business_id == business.id,
             )
         )
         if not e:
@@ -120,7 +117,7 @@ def update_location(
         )
 
     location = db.scalar(
-        select(Location).where(cast(Location.id, PG_UUID) == cast(loc_uuid, PG_UUID))
+        select(Location).where(Location.id == loc_uuid)
     )
     if not location:
         raise HTTPException(
@@ -152,7 +149,7 @@ def regenerate_token(
         )
 
     location = db.scalar(
-        select(Location).where(cast(Location.id, PG_UUID) == cast(loc_uuid, PG_UUID))
+        select(Location).where(Location.id == loc_uuid)
     )
     if not location:
         raise HTTPException(
