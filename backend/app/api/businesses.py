@@ -1,7 +1,8 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from sqlalchemy import select
+from sqlalchemy import select, cast
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Session
 
 from ..auth import current_user
@@ -22,9 +23,10 @@ def list_businesses(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
+    # FORZAMOS A SQLALCHEMY A GENERAR: CAST(owner_id AS UUID) = CAST($1 AS UUID)
     businesses = db.scalars(
         select(Business)
-        .where(Business.owner_id == user)
+        .where(cast(Business.owner_id, PG_UUID) == cast(user, PG_UUID))
         .order_by(Business.created_at.desc())
     ).all()
 
@@ -43,8 +45,10 @@ def create_business(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
+    user_uuid = user if isinstance(user, UUID) else UUID(str(user))
+
     business = Business(
-        owner_id=user,
+        owner_id=user_uuid,
         name=payload.name,
         legal_name=payload.legal_name,
         country=payload.country.upper(),
