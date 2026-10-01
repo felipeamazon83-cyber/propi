@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import cast, select
+from sqlalchemy import select, cast
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Session
 
@@ -13,7 +13,7 @@ def owned_business(
     user_id: str | UUID,
     db: Session,
 ) -> Business:
-    # 1. Normalizar business_id a UUID
+
     try:
         b_uuid = (
             business_id
@@ -26,7 +26,6 @@ def owned_business(
             detail="Negocio no encontrado",
         )
 
-    # 2. Normalizar user_id a UUID
     try:
         u_uuid = (
             user_id
@@ -39,7 +38,6 @@ def owned_business(
             detail="Usuario no válido",
         )
 
-    # 3. Consulta directa con cast explícito a nivel de PostgreSQL Engine
     stmt = select(Business).where(
         cast(Business.id, PG_UUID) == cast(b_uuid, PG_UUID),
         cast(Business.owner_id, PG_UUID) == cast(u_uuid, PG_UUID),
