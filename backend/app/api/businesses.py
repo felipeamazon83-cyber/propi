@@ -21,12 +21,16 @@ def list_businesses(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    # Comparación directa entre UUIDs sin CAST explícito
-    businesses = db.scalars(
+    # Asegurar tipo UUID
+    user_uuid = user if isinstance(user, UUID) else UUID(str(user))
+
+    # Uso de db.execute().scalars().all() para evitar conflictos con el driver/proxy
+    stmt = (
         select(Business)
-        .where(Business.owner_id == user)
+        .where(Business.owner_id == user_uuid)
         .order_by(Business.created_at.desc())
-    ).all()
+    )
+    businesses = db.execute(stmt).scalars().all()
 
     return [
         {
@@ -49,8 +53,8 @@ def create_business(
         owner_id=user_uuid,
         name=payload.name,
         legal_name=payload.legal_name,
-        country=payload.country.upper(),
-        currency=payload.currency.upper(),
+        country=payload.country.upper() if payload.country else "ES",
+        currency=payload.currency.upper() if payload.currency else "EUR",
     )
 
     db.add(business)
@@ -77,9 +81,11 @@ def get_business(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
+    user_uuid = user if isinstance(user, UUID) else UUID(str(user))
+
     business = owned_business(
         business_id,
-        user,
+        user_uuid,
         db,
     )
 
@@ -90,9 +96,7 @@ def get_business(
         "logo_url": business.logo_url,
         "country": business.country,
         "currency": business.currency,
-        "stripe_connected": bool(
-            business.stripe_account_id
-        ),
+        "stripe_connected": bool(business.stripe_account_id),
     }
 
 
@@ -103,9 +107,11 @@ def update_business(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
+    user_uuid = user if isinstance(user, UUID) else UUID(str(user))
+
     business = owned_business(
         business_id,
-        user,
+        user_uuid,
         db,
     )
 
