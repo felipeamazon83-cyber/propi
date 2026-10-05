@@ -1,4 +1,5 @@
 import logging
+import traceback
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -44,7 +45,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
     return JSONResponse(
         status_code=500,
-        content={"detail": "Error interno en el servidor"},
+        content={"detail": "Error interno en el servidor", "error": str(exc)},
         headers=cors_headers(request),
     )
 
@@ -77,97 +78,64 @@ def debug_db_schema():
         return schema_info
 
 
-@app.get("/debug/db-values")
-def debug_db_values():
-    with engine.connect() as connection:
-        businesses = connection.execute(
-            text("""
-                SELECT owner_id
-                FROM public.businesses
-                WHERE owner_id IS NOT NULL
-                LIMIT 20
-            """)
-        ).fetchall()
-        
-        employees = connection.execute(
-            text("""
-                SELECT business_id
-                FROM public.employees
-                WHERE business_id IS NOT NULL
-                LIMIT 20
-            """)
-        ).fetchall()
-        
-        locations = connection.execute(
-            text("""
-                SELECT business_id
-                FROM public.locations
-                WHERE business_id IS NOT NULL
-                LIMIT 20
-            """)
-        ).fetchall()
-
-        return {
-            "businesses_owner_id": [str(row[0]) for row in businesses],
-            "employees_business_id": [str(row[0]) for row in employees],
-            "locations_business_id": [str(row[0]) for row in locations],
-        }
-
-
 @app.get("/debug/run-migration")
 def run_migration():
-    migration_sql = text("""
-        BEGIN;
+    statements = [
+        # 1. Eliminar temporalmente claves foráneas que puedan bloquear el cambio
+        "ALTER TABLE IF EXISTS public.locations DROP CONSTRAINT IF EXISTS locations_business_id_fkey;",
+        "ALTER TABLE IF EXISTS public.employees DROP CONSTRAINT IF EXISTS employees_business_id_fkey;",
+        "ALTER TABLE IF EXISTS public.tip_settings DROP CONSTRAINT IF EXISTS tip_settings_business_id_fkey;",
+        "ALTER TABLE IF EXISTS public.tips DROP CONSTRAINT IF EXISTS tips_business_id_fkey;",
+        "ALTER TABLE IF EXISTS public.tips DROP CONSTRAINT IF EXISTS tips_location_id_fkey;",
+        "ALTER TABLE IF EXISTS public.tips DROP CONSTRAINT IF EXISTS tips_employee_id_fkey;",
 
-        -- 1. Convertir la tabla public.businesses (id y owner_id)
-        ALTER TABLE public.businesses 
-          ALTER COLUMN id TYPE uuid USING id::uuid,
-          ALTER COLUMN owner_id TYPE uuid USING owner_id::uuid;
+        # 2. Convertir businesses (PK id y owner_id)
+        "ALTER TABLE public.businesses ALTER COLUMN id TYPE uuid USING id::uuid;",
+        "ALTER TABLE public.businesses ALTER COLUMN owner_id TYPE uuid USING owner_id::uuid;",
 
-        -- 2. Convertir la tabla public.locations (id, business_id, fixed_employee_id)
-        ALTER TABLE IF EXISTS public.locations 
-          ALTER COLUMN id TYPE uuid USING id::uuid,
-          ALTER COLUMN business_id TYPE uuid USING business_id::uuid;
+        # 3. Convertir locations
+        "ALTER TABLE IF EXISTS public.locations ALTER COLUMN id TYPE uuid USING id::uuid;",
+        "ALTER TABLE IF EXISTS public.locations ALTER COLUMN business_id TYPE uuid USING business_id::uuid;",
 
-        DO $$ 
-        BEGIN 
-            IF EXISTS (
-                SELECT 1 FROM information_schema.columns 
-                WHERE table_schema='public' AND table_name='locations' AND column_name='fixed_employee_id'
-            ) THEN
-                ALTER TABLE public.locations ALTER COLUMN fixed_employee_id TYPE uuid USING fixed_employee_id::uuid;
-            END IF;
-        END $$;
+        # 4. Convertir employees
+        "ALTER TABLE IF EXISTS public.employees ALTER COLUMN id TYPE uuid USING id::uuid;",
+        "ALTER TABLE IF EXISTS public.employees ALTER COLUMN business_id TYPE uuid USING business_id::uuid;",
 
-        -- 3. Convertir la tabla public.employees (id, business_id)
-        ALTER TABLE IF EXISTS public.employees 
-          ALTER COLUMN id TYPE uuid USING id::uuid,
-          ALTER COLUMN business_id TYPE uuid USING business_id::uuid;
+        # 5. Convertir tip_settings
+        "ALTER TABLE IF EXISTS public.tip_settings ALTER COLUMN id TYPE uuid USING id::uuid;",
+        "ALTER TABLE IF EXISTS public.tip_settings ALTER COLUMN business_id TYPE uuid USING business_id::uuid;",
+    ]
 
-        -- 4. Convertir la tabla public.tip_settings (id, business_id)
-        ALTER TABLE IF EXISTS public.tip_settings 
-          ALTER COLUMN id TYPE uuid USING id::uuid,
-          ALTER COLUMN business_id TYPE uuid USING business_id::uuid;
+    try:
+        with engine.begin() as connection:
+            for stmt in statements:
+                connection.execute(text(stmt))
 
-        -- 5. Convertir la tabla public.tips (id, business_id, location_id, employee_id)
-        DO $$ 
-        BEGIN 
-            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='tips') THEN
-                ALTER TABLE public.tips ALTER COLUMN id TYPE uuid USING id::uuid;
-                ALTER TABLE public.tips ALTER COLUMN business_id TYPE uuid USING business_id::uuid;
-                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tips' AND column_name='location_id') THEN
-                    ALTER TABLE public.tips ALTER COLUMN location_id TYPE uuid USING location_id::uuid;
-                END IF;
-                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tips' AND column_name='employee_id') THEN
-                    ALTER TABLE public.tips ALTER COLUMN employee_id TYPE uuid USING employee_id::uuid;
-                END IF;
-            END IF;
-        END $$;
+            # Bloque especial para columnas condicionales que podrían o no existir
+            connection.execute(text("""
+                DO $$ 
+                BEGIN 
+                    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='locations' AND column_name='fixed_employee_id') THEN
+                        ALTER TABLE public.locations ALTER COLUMN fixed_employee_id TYPE uuid USING fixed_employee_id::uuid;
+                    END IF;
 
-        COMMIT;
-    """)
+                    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='tips') THEN
+                        ALTER TABLE public.tips ALTER COLUMN id TYPE uuid USING id::uuid;
+                        ALTER TABLE public.tips ALTER COLUMN business_id TYPE uuid USING business_id::uuid;
+                        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tips' AND column_name='location_id') THEN
+                            ALTER TABLE public.tips ALTER COLUMN location_id TYPE uuid USING location_id::uuid;
+                        END IF;
+                        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tips' AND column_name='employee_id') THEN
+                            ALTER TABLE public.tips ALTER COLUMN employee_id TYPE uuid USING employee_id::uuid;
+                        END IF;
+                    END IF;
+                END $$;
+            """))
 
-    with engine.begin() as connection:
-        connection.execute(migration_sql)
-
-    return {"status": "Migration completed successfully!"}
+        return {"status": "Migration completed successfully!"}
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
