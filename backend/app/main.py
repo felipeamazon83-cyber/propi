@@ -81,3 +81,44 @@ def fix_locations_columns():
             "message": str(e),
             "traceback": traceback.format_exc()
         }
+
+
+@app.get("/debug/setup-db")
+def setup_db():
+    statements = [
+        # Eliminar constraints si existen
+        "ALTER TABLE IF EXISTS public.locations DROP CONSTRAINT IF EXISTS locations_business_id_fkey;",
+        "ALTER TABLE IF EXISTS public.employees DROP CONSTRAINT IF EXISTS employees_business_id_fkey;",
+        "ALTER TABLE IF EXISTS public.tip_settings DROP CONSTRAINT IF EXISTS tip_settings_business_id_fkey;",
+        "ALTER TABLE IF EXISTS public.tips DROP CONSTRAINT IF EXISTS tips_business_id_fkey;",
+
+        # Convertir/Asegurar columnas de UUIDs
+        "ALTER TABLE IF EXISTS public.businesses ALTER COLUMN id TYPE uuid USING id::uuid;",
+        "ALTER TABLE IF EXISTS public.businesses ALTER COLUMN owner_id TYPE uuid USING owner_id::uuid;",
+
+        "ALTER TABLE IF EXISTS public.locations ALTER COLUMN id TYPE uuid USING id::uuid;",
+        "ALTER TABLE IF EXISTS public.locations ALTER COLUMN business_id TYPE uuid USING business_id::uuid;",
+        "ALTER TABLE IF EXISTS public.locations ADD COLUMN IF NOT EXISTS distribution_mode VARCHAR DEFAULT 'direct';",
+        "ALTER TABLE IF EXISTS public.locations ADD COLUMN IF NOT EXISTS fixed_employee_id UUID NULL;",
+        "ALTER TABLE IF EXISTS public.locations ADD COLUMN IF NOT EXISTS employee_percentage NUMERIC DEFAULT 0;",
+        "ALTER TABLE IF EXISTS public.locations ADD COLUMN IF NOT EXISTS suggested_amounts JSONB DEFAULT '[]'::jsonb;",
+
+        "ALTER TABLE IF EXISTS public.employees ALTER COLUMN id TYPE uuid USING id::uuid;",
+        "ALTER TABLE IF EXISTS public.employees ALTER COLUMN business_id TYPE uuid USING business_id::uuid;",
+
+        "ALTER TABLE IF EXISTS public.tip_settings ALTER COLUMN id TYPE uuid USING id::uuid;",
+        "ALTER TABLE IF EXISTS public.tip_settings ALTER COLUMN business_id TYPE uuid USING business_id::uuid;"
+    ]
+
+    try:
+        with engine.begin() as connection:
+            for stmt in statements:
+                connection.execute(text(stmt))
+
+        return {"status": "Database setup completed on project qxdzkqnjufvgbdxpdtrf!"}
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc()
+        }
