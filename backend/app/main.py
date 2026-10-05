@@ -1,5 +1,4 @@
 import logging
-
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -18,14 +17,12 @@ logger = logging.getLogger(__name__)
 def cors_headers(request: Request) -> dict[str, str]:
     """Return CORS headers for an allowed browser origin, including 500s."""
     origin = request.headers.get("origin")
-
     if origin in settings.cors_origins_list:
         return {
             "Access-Control-Allow-Origin": origin,
             "Access-Control-Allow-Credentials": "true",
             "Vary": "Origin",
         }
-
     return {}
 
 
@@ -45,7 +42,6 @@ async def global_exception_handler(request: Request, exc: Exception):
         request.method,
         request.url.path,
     )
-
     return JSONResponse(
         status_code=500,
         content={"detail": "Error interno en el servidor"},
@@ -62,56 +58,65 @@ def health():
     return {"status": "ok"}
 
 
-# ---------------------------------------------------------
-# TEMPORAL: diagnóstico de la base de datos de Render
-# ---------------------------------------------------------
-
 @app.get("/debug/db-schema")
 def debug_db_schema():
     with engine.connect() as connection:
+        query = text("""
+            SELECT table_name, column_name, data_type 
+            FROM information_schema.columns 
+            WHERE table_schema = 'public' 
+              AND column_name IN ('owner_id', 'business_id')
+        """)
+        result = connection.execute(query).fetchall()
+        
+        schema_info = {
+            "database": engine.url.database,
+            "schema": "public",
+            "businesses_owner_id": [],
+            "employees_business_id": [],
+            "locations_business_id": [],
+        }
+        
+        for row in result:
+            key = f"{row[0]}_{row[1]}"
+            if key in schema_info:
+                schema_info[key].append(row[2])
+                
+        return schema_info
 
-        database = connection.execute(
-            text("SELECT current_database()")
-        ).scalar()
 
-        schema = connection.execute(
-            text("SELECT current_schema()")
-        ).scalar()
-
-        owner_type = connection.execute(
+@app.get("/debug/db-values")
+def debug_db_values():
+    with engine.connect() as connection:
+        businesses = connection.execute(
             text("""
-                SELECT data_type, udt_name
-                FROM information_schema.columns
-                WHERE table_schema = 'public'
-                  AND table_name = 'businesses'
-                  AND column_name = 'owner_id'
+                SELECT owner_id
+                FROM public.businesses
+                WHERE owner_id IS NOT NULL
+                LIMIT 20
             """)
-        ).fetchone()
-
-        employee_type = connection.execute(
+        ).fetchall()
+        
+        employees = connection.execute(
             text("""
-                SELECT data_type, udt_name
-                FROM information_schema.columns
-                WHERE table_schema = 'public'
-                  AND table_name = 'employees'
-                  AND column_name = 'business_id'
+                SELECT business_id
+                FROM public.employees
+                WHERE business_id IS NOT NULL
+                LIMIT 20
             """)
-        ).fetchone()
-
-        location_type = connection.execute(
+        ).fetchall()
+        
+        locations = connection.execute(
             text("""
-                SELECT data_type, udt_name
-                FROM information_schema.columns
-                WHERE table_schema = 'public'
-                  AND table_name = 'locations'
-                  AND column_name = 'business_id'
+                SELECT business_id
+                FROM public.locations
+                WHERE business_id IS NOT NULL
+                LIMIT 20
             """)
-        ).fetchone()
+        ).fetchall()
 
         return {
-            "database": database,
-            "schema": schema,
-            "businesses_owner_id": list(owner_type) if owner_type else None,
-            "employees_business_id": list(employee_type) if employee_type else None,
-            "locations_business_id": list(location_type) if location_type else None,
+            "businesses_owner_id": [str(row[0]) for row in businesses],
+            "employees_business_id": [str(row[0]) for row in employees],
+            "locations_business_id": [str(row[0]) for row in locations],
         }
