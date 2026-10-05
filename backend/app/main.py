@@ -65,22 +65,14 @@ def debug_db_schema():
             SELECT table_name, column_name, data_type 
             FROM information_schema.columns 
             WHERE table_schema = 'public' 
-              AND column_name IN ('owner_id', 'business_id')
+              AND column_name IN ('id', 'owner_id', 'business_id', 'employee_id', 'location_id', 'fixed_employee_id')
         """)
         result = connection.execute(query).fetchall()
         
-        schema_info = {
-            "database": engine.url.database,
-            "schema": "public",
-            "businesses_owner_id": [],
-            "employees_business_id": [],
-            "locations_business_id": [],
-        }
-        
+        schema_info = {}
         for row in result:
             key = f"{row[0]}_{row[1]}"
-            if key in schema_info:
-                schema_info[key].append(row[2])
+            schema_info[key] = row[2]
                 
         return schema_info
 
@@ -120,3 +112,62 @@ def debug_db_values():
             "employees_business_id": [str(row[0]) for row in employees],
             "locations_business_id": [str(row[0]) for row in locations],
         }
+
+
+@app.get("/debug/run-migration")
+def run_migration():
+    migration_sql = text("""
+        BEGIN;
+
+        -- 1. Convertir la tabla public.businesses (id y owner_id)
+        ALTER TABLE public.businesses 
+          ALTER COLUMN id TYPE uuid USING id::uuid,
+          ALTER COLUMN owner_id TYPE uuid USING owner_id::uuid;
+
+        -- 2. Convertir la tabla public.locations (id, business_id, fixed_employee_id)
+        ALTER TABLE IF EXISTS public.locations 
+          ALTER COLUMN id TYPE uuid USING id::uuid,
+          ALTER COLUMN business_id TYPE uuid USING business_id::uuid;
+
+        DO $$ 
+        BEGIN 
+            IF EXISTS (
+                SELECT 1 FROM information_schema.columns 
+                WHERE table_schema='public' AND table_name='locations' AND column_name='fixed_employee_id'
+            ) THEN
+                ALTER TABLE public.locations ALTER COLUMN fixed_employee_id TYPE uuid USING fixed_employee_id::uuid;
+            END IF;
+        END $$;
+
+        -- 3. Convertir la tabla public.employees (id, business_id)
+        ALTER TABLE IF EXISTS public.employees 
+          ALTER COLUMN id TYPE uuid USING id::uuid,
+          ALTER COLUMN business_id TYPE uuid USING business_id::uuid;
+
+        -- 4. Convertir la tabla public.tip_settings (id, business_id)
+        ALTER TABLE IF EXISTS public.tip_settings 
+          ALTER COLUMN id TYPE uuid USING id::uuid,
+          ALTER COLUMN business_id TYPE uuid USING business_id::uuid;
+
+        -- 5. Convertir la tabla public.tips (id, business_id, location_id, employee_id)
+        DO $$ 
+        BEGIN 
+            IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name='tips') THEN
+                ALTER TABLE public.tips ALTER COLUMN id TYPE uuid USING id::uuid;
+                ALTER TABLE public.tips ALTER COLUMN business_id TYPE uuid USING business_id::uuid;
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tips' AND column_name='location_id') THEN
+                    ALTER TABLE public.tips ALTER COLUMN location_id TYPE uuid USING location_id::uuid;
+                END IF;
+                IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema='public' AND table_name='tips' AND column_name='employee_id') THEN
+                    ALTER TABLE public.tips ALTER COLUMN employee_id TYPE uuid USING employee_id::uuid;
+                END IF;
+            END IF;
+        END $$;
+
+        COMMIT;
+    """)
+
+    with engine.begin() as connection:
+        connection.execute(migration_sql)
+
+    return {"status": "Migration completed successfully!"}
