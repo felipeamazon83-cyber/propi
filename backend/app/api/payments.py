@@ -120,10 +120,9 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
         else fee.tip_cents
     )
 
-    # Se habilita la selección automática e inteligente de métodos de pago desde el Dashboard de Stripe
+    # Al omitir payment_method_types, Stripe Checkout usa automáticamente los métodos dinámicos activados en tu Dashboard
     session = stripe.checkout.Session.create(
         mode="payment",
-        automatic_payment_methods={"enabled": True},
         line_items=items,
         metadata=metadata,
         payment_intent_data={
