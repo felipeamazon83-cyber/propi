@@ -80,7 +80,10 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
         "payout_cents": str(fee.connected_account_payout_cents),
     }
 
-    # Solo mostramos el importe de la propina al cliente (sin la tarifa explícita de Propi)
+    # Determinamos quién asume la comisión ('business' o 'customer')
+    fee_payer = getattr(s, "fee_payer", "business")
+
+    # Ítem principal de la propina
     items = [
         {
             "price_data": {
@@ -92,7 +95,26 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
         }
     ]
 
-    # Retenemos la comisión de Propi internamente usando application_fee_amount
+    # Si el restaurante configuró trasladar la tarifa al cliente, la añadimos como ítem explícito
+    if fee_payer == "customer" and fee.propi_fee_cents > 0:
+        items.append(
+            {
+                "price_data": {
+                    "currency": b.currency.lower(),
+                    "product_data": {"name": "Tarifa de servicio Propi"},
+                    "unit_amount": fee.propi_fee_cents,
+                },
+                "quantity": 1,
+            }
+        )
+
+    # Calculamos el total abonado por el cliente
+    customer_total_cents = (
+        (fee.tip_cents + fee.propi_fee_cents)
+        if fee_payer == "customer"
+        else fee.tip_cents
+    )
+
     session = stripe.checkout.Session.create(
         mode="payment",
         payment_method_types=["card"],
@@ -100,7 +122,7 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
         metadata=metadata,
         payment_intent_data={
             "metadata": metadata,
-            "application_fee_amount": fee.propi_fee_cents,
+            "application_fee_amount": fee.propi_fee_cents,  # Propi siempre retiene sus 0,20 €
             "transfer_data": {
                 "destination": b.stripe_account_id,
             },
@@ -113,5 +135,5 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
         "checkout_url": session.url,
         "tip_amount": fee.tip_cents / 100,
         "propi_fee": fee.propi_fee_cents / 100,
-        "total": fee.tip_cents / 100,
+        "total": customer_total_cents / 100,
     }
