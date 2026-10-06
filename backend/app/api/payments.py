@@ -36,6 +36,8 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
 
     b = db.get(Business, l.business_id)
     e = db.get(Employee, payload.employee_id)
+    
+    # Consultamos TipSetting asegurando concordancia de ID
     s = db.scalar(
         select(TipSetting).where(TipSetting.business_id == l.business_id)
     )
@@ -48,7 +50,7 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
     ):
         raise HTTPException(422, "Empleado no válido")
 
-    if (
+    if s and (
         payload.amount < float(s.minimum_amount)
         or payload.amount > float(s.maximum_amount)
     ):
@@ -57,7 +59,7 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
     if not settings.stripe_secret_key:
         raise HTTPException(503, "Los pagos aún no están configurados")
 
-    if not b.stripe_account_id:
+    if not b or not b.stripe_account_id:
         raise HTTPException(409, "Este negocio aún no ha conectado Stripe")
 
     from ..services.stripe_service import calculate_fee
@@ -70,18 +72,21 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
 
     stripe.api_key = settings.stripe_secret_key
 
+    # Determinamos de forma segura quién asume la comisión ('business' o 'customer')
+    fee_payer = getattr(s, "fee_payer", "business") if s else "business"
+    if not fee_payer:
+        fee_payer = "business"
+
     metadata = {
         "business_id": str(l.business_id),
         "employee_id": str(e.id),
         "location_id": str(l.id),
+        "fee_payer": fee_payer,
         "tip_cents": str(fee.tip_cents),
         "propi_fixed_fee_cents": str(fee.fixed_fee_cents),
         "propi_percentage_fee_cents": str(fee.percentage_fee_cents),
         "payout_cents": str(fee.connected_account_payout_cents),
     }
-
-    # Determinamos quién asume la comisión ('business' o 'customer')
-    fee_payer = getattr(s, "fee_payer", "business")
 
     # Ítem principal de la propina
     items = [
@@ -133,6 +138,7 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
 
     return {
         "checkout_url": session.url,
+        "fee_payer": fee_payer,
         "tip_amount": fee.tip_cents / 100,
         "propi_fee": fee.propi_fee_cents / 100,
         "total": customer_total_cents / 100,
