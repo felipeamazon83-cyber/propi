@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import cast, select
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import insert as pg_insert, UUID as PG_UUID
 from sqlalchemy.orm import Session
 
 from ..auth import current_user
@@ -22,16 +22,10 @@ def list_businesses(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    # Asegurar tipo UUID
     user_uuid = user if isinstance(user, UUID) else UUID(str(user))
 
-    # La vista que abre el selector de negocio solo necesita estos dos campos.
-    # No cargar la entidad completa evita que una columna añadida posteriormente
-    # en Supabase convierta este GET en un 500 durante un despliegue de migración.
     stmt = (
         select(Business.id, Business.name)
-        # Some early deployments stored Supabase UUIDs as varchar. Cast the
-        # column while the accompanying migration converts it permanently.
         .where(cast(Business.owner_id, PG_UUID) == user_uuid)
         .order_by(Business.name)
     )
@@ -65,7 +59,6 @@ def create_business(
     db.add(business)
     db.flush()
 
-    # Si en BusinessCreate viene fee_payer, se asigna al crear TipSetting
     fee_payer_val = getattr(payload, "fee_payer", "business") or "business"
 
     tip_settings = TipSetting(
@@ -98,11 +91,12 @@ def get_business(
         db,
     )
 
-    # Consultar fee_payer en tip_settings
+    b_uuid = business.id if isinstance(business.id, UUID) else UUID(str(business.id))
+
     setting = db.scalar(
-        select(TipSetting).where(TipSetting.business_id == business.id)
+        select(TipSetting).where(cast(TipSetting.business_id, PG_UUID) == b_uuid)
     )
-    fee_payer = setting.fee_payer if setting and hasattr(setting, "fee_payer") else "business"
+    fee_payer = getattr(setting, "fee_payer", "business") if setting else "business"
 
     return {
         "id": str(business.id),
@@ -111,7 +105,7 @@ def get_business(
         "logo_url": business.logo_url,
         "country": business.country,
         "currency": business.currency,
-        "fee_payer": fee_payer,
+        "fee_payer": fee_payer or "business",
         "stripe_connected": bool(business.stripe_account_id),
     }
 
@@ -135,7 +129,7 @@ def update_business(
         exclude_unset=True,
     )
 
-    # Extraer fee_payer para gestionarlo en TipSetting
+    # Extraer fee_payer para gestionarlo en TipSetting mediante UPSERT
     fee_payer = data.pop("fee_payer", None)
 
     for field, value in data.items():
@@ -152,28 +146,30 @@ def update_business(
                 value,
             )
 
-    # Actualizar o crear la configuración fee_payer en TipSetting
+    b_uuid = business.id if isinstance(business.id, UUID) else UUID(str(business.id))
+
     if fee_payer:
-        setting = db.scalar(
-            select(TipSetting).where(TipSetting.business_id == business.id)
-        )
-        if setting:
-            setting.fee_payer = fee_payer
-        else:
-            setting = TipSetting(
-                business_id=business.id,
+        stmt = (
+            pg_insert(TipSetting)
+            .values(
+                business_id=b_uuid,
                 fee_payer=fee_payer,
             )
-            db.add(setting)
+            .on_conflict_do_update(
+                constraint="tip_settings_business_id_key",
+                set_={"fee_payer": fee_payer},
+            )
+        )
+        db.execute(stmt)
 
     db.commit()
     db.refresh(business)
 
-    # Consultar fee_payer final para devolverlo en la respuesta
-    setting = db.scalar(
-        select(TipSetting).where(TipSetting.business_id == business.id)
+    # Consultar valor final persistido para la respuesta
+    updated_setting = db.scalar(
+        select(TipSetting).where(cast(TipSetting.business_id, PG_UUID) == b_uuid)
     )
-    current_fee_payer = setting.fee_payer if setting and hasattr(setting, "fee_payer") else "business"
+    current_fee_payer = getattr(updated_setting, "fee_payer", "business") if updated_setting else "business"
 
     return {
         "id": str(business.id),
