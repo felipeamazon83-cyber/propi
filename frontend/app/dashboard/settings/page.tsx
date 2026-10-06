@@ -142,7 +142,7 @@ export default function SettingsPage() {
     <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
       <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="brand text-xl">PROPI<span className="text-orange-400">.</span> <span className="text-sm font-bold text-orange-300">· Configuración</span></p>
+          <p className="flex items-center gap-3"><img className="brand-logo-image" src="/propi-logo.png" alt="Propi" /><span className="text-sm font-bold text-orange-300">· Configuración</span></p>
           <h1 className="mt-3 text-3xl font-black sm:text-4xl">{business ? business.name : 'Configura tu negocio'}</h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-400 sm:text-base">Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.</p>
         </div>
