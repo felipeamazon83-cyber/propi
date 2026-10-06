@@ -30,7 +30,7 @@ def list_businesses(
     # en Supabase convierta este GET en un 500 durante un despliegue de migración.
     stmt = (
         select(Business.id, Business.name)
-        # Some early deployments stored Supabase UUIDs as varchar.  Cast the
+        # Some early deployments stored Supabase UUIDs as varchar. Cast the
         # column while the accompanying migration converts it permanently.
         .where(cast(Business.owner_id, PG_UUID) == user_uuid)
         .order_by(Business.name)
@@ -65,8 +65,12 @@ def create_business(
     db.add(business)
     db.flush()
 
+    # Si en BusinessCreate viene fee_payer, se asigna al crear TipSetting
+    fee_payer_val = getattr(payload, "fee_payer", "business") or "business"
+
     tip_settings = TipSetting(
         business_id=business.id,
+        fee_payer=fee_payer_val,
     )
 
     db.add(tip_settings)
@@ -94,6 +98,12 @@ def get_business(
         db,
     )
 
+    # Consultar fee_payer en tip_settings
+    setting = db.scalar(
+        select(TipSetting).where(TipSetting.business_id == business.id)
+    )
+    fee_payer = setting.fee_payer if setting and hasattr(setting, "fee_payer") else "business"
+
     return {
         "id": str(business.id),
         "name": business.name,
@@ -101,6 +111,7 @@ def get_business(
         "logo_url": business.logo_url,
         "country": business.country,
         "currency": business.currency,
+        "fee_payer": fee_payer,
         "stripe_connected": bool(business.stripe_account_id),
     }
 
@@ -124,6 +135,9 @@ def update_business(
         exclude_unset=True,
     )
 
+    # Extraer fee_payer para gestionarlo en TipSetting
+    fee_payer = data.pop("fee_payer", None)
+
     for field, value in data.items():
         if field == "country" and value:
             value = value.upper()
@@ -131,16 +145,38 @@ def update_business(
         if field == "currency" and value:
             value = value.upper()
 
-        setattr(
-            business,
-            field,
-            value,
+        if hasattr(business, field):
+            setattr(
+                business,
+                field,
+                value,
+            )
+
+    # Actualizar o crear la configuración fee_payer en TipSetting
+    if fee_payer:
+        setting = db.scalar(
+            select(TipSetting).where(TipSetting.business_id == business.id)
         )
+        if setting:
+            setting.fee_payer = fee_payer
+        else:
+            setting = TipSetting(
+                business_id=business.id,
+                fee_payer=fee_payer,
+            )
+            db.add(setting)
 
     db.commit()
     db.refresh(business)
 
+    # Consultar fee_payer final para devolverlo en la respuesta
+    setting = db.scalar(
+        select(TipSetting).where(TipSetting.business_id == business.id)
+    )
+    current_fee_payer = setting.fee_payer if setting and hasattr(setting, "fee_payer") else "business"
+
     return {
         "id": str(business.id),
         "name": business.name,
+        "fee_payer": current_fee_payer,
     }
