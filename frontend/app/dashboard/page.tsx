@@ -38,7 +38,7 @@ export default function DashboardPage() {
   if (loading) return <main className="mx-auto max-w-5xl p-8">Cargando tu espacio…</main>;
 
   return <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
-    <p className="brand text-xl">PROPI<span className="text-orange-400">.</span> <span className="text-sm font-bold text-orange-300">· Dashboard</span></p>
+    <p className="flex items-center gap-3"><img className="brand-logo-image" src="/propi-logo.png" alt="Propi" /><span className="text-sm font-bold text-orange-300">· Dashboard</span></p>
     <h1 className="mt-3 text-3xl font-black sm:text-4xl">{business ? business.name : 'Configura tu negocio'}</h1>
     <p className="mt-2 text-slate-400">Consulta el rendimiento de tu equipo y las propinas recibidas.</p>
     {error && <p className="mt-5 rounded-lg bg-red-500/10 p-3 text-red-200">{error}</p>}

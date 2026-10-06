@@ -16,7 +16,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className="w-full border-b border-white/10 bg-[#0b2344]/95 px-4 py-4 backdrop-blur md:min-h-screen md:w-64 md:border-b-0 md:border-r md:px-5 md:py-7">
         <div className="flex items-center justify-between md:block">
           <div className="flex items-center gap-2">
-            <span className="brand text-2xl">PROPI<span className="text-orange-400">.</span></span>
+            <Link href="/" className="brand-logo" aria-label="Propi"><img src="/propi-logo.png" alt="Propi" /></Link>
             <span className="rounded-full bg-orange-400/15 px-2 py-1 text-xs font-bold text-orange-300">Business</span>
           </div>
           <span className="text-xs font-semibold text-slate-500 md:hidden">Panel de control</span>
