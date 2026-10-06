@@ -136,18 +136,23 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) return <main className="mx-auto max-w-5xl p-8">Cargando configuración…</main>;
+  if (loading) return <main className="glow mx-auto min-h-screen max-w-5xl p-5 sm:p-8">Cargando configuración…</main>;
 
   return (
-    <main className="mx-auto max-w-5xl px-5 py-10">
-      <p className="font-bold text-green-600">TIP · Configuración</p>
-      <h1 className="mt-2 text-4xl font-black">{business ? business.name : 'Configura tu negocio'}</h1>
-      <p className="mt-2 text-gray-600">Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.</p>
+    <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
+      <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="brand text-xl">PROPI<span className="text-orange-400">.</span> <span className="text-sm font-bold text-orange-300">· Configuración</span></p>
+          <h1 className="mt-3 text-3xl font-black sm:text-4xl">{business ? business.name : 'Configura tu negocio'}</h1>
+          <p className="mt-2 max-w-2xl text-sm text-slate-400 sm:text-base">Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.</p>
+        </div>
+        <a className="btn btn-secondary w-full sm:w-auto" href="/dashboard">Volver al dashboard</a>
+      </header>
 
       {error && <p className="mt-5 rounded-lg bg-red-50 p-3 text-red-700">{error}</p>}
       {message && <p className="mt-5 rounded-lg bg-green-50 p-3 text-green-700">{message}</p>}
 
-      <section className="card mt-6">
+      <section className="card mt-6 sm:mt-8">
         <h2 className="text-xl font-bold">1. Datos del negocio</h2>
         <form onSubmit={saveBusiness} className="mt-4 grid gap-3 sm:grid-cols-2">
           <label>
@@ -181,7 +186,7 @@ export default function SettingsPage() {
         <>
           <section className="card mt-5">
             <h2 className="text-xl font-bold">2. Equipo y cuenta de cobro</h2>
-            <p className="mt-1 text-sm text-gray-600">
+            <p className="mt-1 text-sm text-slate-400">
               Stripe recopila las cuentas bancarias de forma segura; TIP nunca las almacena.
             </p>
             <button
@@ -203,7 +208,7 @@ export default function SettingsPage() {
             </button>
             <div className="mt-4 flex flex-wrap gap-2">
               {employees.map((employee) => (
-                <span className="rounded-full bg-gray-100 px-3 py-2" key={employee.id}>
+                <span className="rounded-full bg-white/10 px-3 py-2 text-slate-200" key={employee.id}>
                   {employee.name} · {employee.active ? 'Activo' : 'Inactivo'}
                 </span>
               ))}
@@ -254,7 +259,7 @@ export default function SettingsPage() {
               {locations.map((location) => (
                 <article className="rounded-xl border border-gray-200 p-4" key={location.id}>
                   <b>{location.name}</b>
-                  <p className="mt-1 text-sm text-gray-600">
+                  <p className="mt-1 text-sm text-slate-400">
                     {location.distribution_mode} · {location.employee_percentage}% empleado ·{' '}
                     {location.suggested_amounts.join(' €, ')} €
                   </p>
