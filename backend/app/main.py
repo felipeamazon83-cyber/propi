@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from . import models
+from .api.dashboard import router as dashboard_router
 from .api.routes import router
 from .api.webhooks import router as webhook_router
 from .config import settings
@@ -50,7 +51,9 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
+# Inclusión de Routers
 app.include_router(router, prefix="/api")
+app.include_router(dashboard_router, prefix="/api")
 app.include_router(webhook_router, prefix="/api")
 
 
@@ -79,7 +82,7 @@ def fix_locations_columns():
         return {
             "status": "error",
             "message": str(e),
-            "traceback": traceback.format_exc()
+            "traceback": traceback.format_exc(),
         }
 
 
@@ -107,7 +110,7 @@ def setup_db():
         "ALTER TABLE IF EXISTS public.employees ALTER COLUMN business_id TYPE uuid USING business_id::uuid;",
 
         "ALTER TABLE IF EXISTS public.tip_settings ALTER COLUMN id TYPE uuid USING id::uuid;",
-        "ALTER TABLE IF EXISTS public.tip_settings ALTER COLUMN business_id TYPE uuid USING business_id::uuid;"
+        "ALTER TABLE IF EXISTS public.tip_settings ALTER COLUMN business_id TYPE uuid USING business_id::uuid;",
     ]
 
     try:
@@ -120,5 +123,5 @@ def setup_db():
         return {
             "status": "error",
             "message": str(e),
-            "traceback": traceback.format_exc()
+            "traceback": traceback.format_exc(),
         }
