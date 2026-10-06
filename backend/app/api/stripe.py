@@ -16,7 +16,7 @@ def create_connect_onboarding(
     user: str = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    """Crea/reutiliza la cuenta conectada del negocio y devuelve la URL de onboarding segura de Stripe."""
+    """Crea/reutiliza la cuenta Express del negocio y devuelve la URL de onboarding segura de Stripe."""
     business = owned_business(business_id, user, db)
 
     if not settings.stripe_secret_key:
@@ -26,11 +26,15 @@ def create_connect_onboarding(
 
     stripe.api_key = settings.stripe_secret_key
 
-    # 1. Crear cuenta conectada con la nueva API Accounts v2
+    # 1. Crear cuenta Express con API v1
     if not business.stripe_account_id:
-        account = stripe.v2.core.Accounts.create(
+        account = stripe.Account.create(
             type="express",
             country=business.country or "ES",
+            capabilities={
+                "card_payments": {"requested": True},
+                "transfers": {"requested": True},
+            },
         )
         business.stripe_account_id = account.id
         db.commit()
