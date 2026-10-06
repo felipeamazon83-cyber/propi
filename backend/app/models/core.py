@@ -18,7 +18,7 @@ from ..database import Base
 
 class Business(Base):
     __tablename__ = "businesses"
-    # Supabase stores the application tables in `public`.  Qualifying the table
+    # Supabase stores the application tables in `public`. Qualifying the table
     # makes this query independent of the connection pooler's search_path.
     __table_args__ = {"schema": "public"}
 
@@ -370,5 +370,11 @@ class TipSetting(Base):
     tip_distribution_mode: Mapped[str] = mapped_column(
         String(16),
         default="employee",
+        nullable=False,
+    )
+
+    fee_payer: Mapped[str] = mapped_column(
+        String(16),
+        default="business",
         nullable=False,
     )
