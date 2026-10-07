@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from ..auth import current_user
 from ..database import get_db
-from ..models import Business, TipSetting
+from ..models import Business, Employee, Location, TipSetting
 from ..schemas.contracts import BusinessCreate, BusinessUpdate
 from .deps import owned_business
 
@@ -107,6 +107,86 @@ def get_business(
         "currency": business.currency,
         "fee_payer": fee_payer or "business",
         "stripe_connected": bool(business.stripe_account_id),
+    }
+
+
+@router.get("/{business_id}/settings-summary")
+def get_settings_summary(
+    business_id: str,
+    user: UUID = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    user_uuid = user if isinstance(user, UUID) else UUID(str(user))
+
+    # Valida ownership del negocio
+    business = owned_business(
+        business_id,
+        user_uuid,
+        db,
+    )
+
+    b_uuid = business.id if isinstance(business.id, UUID) else UUID(str(business.id))
+
+    # 1. Configuración de comisiones (TipSetting)
+    setting = db.scalar(
+        select(TipSetting).where(cast(TipSetting.business_id, PG_UUID) == b_uuid)
+    )
+    fee_payer = getattr(setting, "fee_payer", "business") if setting else "business"
+
+    business_data = {
+        "id": str(business.id),
+        "name": business.name,
+        "legal_name": business.legal_name,
+        "logo_url": business.logo_url,
+        "country": business.country,
+        "currency": business.currency,
+        "fee_payer": fee_payer or "business",
+        "stripe_connected": bool(business.stripe_account_id),
+    }
+
+    # 2. Lista de empleados
+    employees = db.scalars(
+        select(Employee)
+        .where(cast(Employee.business_id, PG_UUID) == b_uuid)
+        .order_by(Employee.created_at if hasattr(Employee, "created_at") else Employee.name)
+    ).all()
+
+    employees_data = [
+        {
+            "id": str(emp.id),
+            "name": emp.name,
+            "active": getattr(emp, "active", True),
+            "stripe_account_id": getattr(emp, "stripe_account_id", None),
+            "stripe_onboarding_completed": bool(getattr(emp, "stripe_account_id", None)),
+            "onboarding_url": getattr(emp, "onboarding_url", None),
+        }
+        for emp in employees
+    ]
+
+    # 3. Lista de ubicaciones (Mesas / QRs)
+    locations = db.scalars(
+        select(Location)
+        .where(cast(Location.business_id, PG_UUID) == b_uuid)
+        .order_by(Location.name)
+    ).all()
+
+    locations_data = [
+        {
+            "id": str(loc.id),
+            "name": loc.name,
+            "url": getattr(loc, "url", f"/l/{getattr(loc, 'public_token', str(loc.id))}"),
+            "public_token": getattr(loc, "public_token", str(loc.id)),
+            "distribution_mode": getattr(loc, "distribution_mode", "employee"),
+            "employee_percentage": float(getattr(loc, "employee_percentage", 100) or 100),
+            "suggested_amounts": getattr(loc, "suggested_amounts", [1, 2, 3, 5]) or [1, 2, 3, 5],
+        }
+        for loc in locations
+    ]
+
+    return {
+        "business": business_data,
+        "employees": employees_data,
+        "locations": locations_data,
     }
 
 
