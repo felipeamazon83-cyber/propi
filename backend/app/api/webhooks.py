@@ -74,16 +74,39 @@ def record_paid_tip(
 
 @router.post("/webhooks/stripe")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
-    if not settings.stripe_webhook_secret:
+    # Recopilar todos los secretos disponibles de la configuración
+    webhook_secrets = []
+    
+    # Soporte para las variables duales
+    secret_main = getattr(settings, "stripe_webhook_secret_main", None)
+    secret_connect = getattr(settings, "stripe_webhook_secret_connect", None)
+    
+    # Fallback al secreto original si no se hubieran definido las duales
+    secret_default = getattr(settings, "stripe_webhook_secret", None)
+
+    if secret_main:
+        webhook_secrets.append(secret_main)
+    if secret_connect:
+        webhook_secrets.append(secret_connect)
+    if secret_default and secret_default not in webhook_secrets:
+        webhook_secrets.append(secret_default)
+
+    if not webhook_secrets:
         raise HTTPException(503, "Webhook no configurado")
 
-    try:
-        event = stripe.Webhook.construct_event(
-            await request.body(),
-            request.headers.get("stripe-signature", ""),
-            settings.stripe_webhook_secret,
-        )
-    except Exception:
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+
+    event = None
+    # Iterar sobre los secretos configurados hasta encontrar el que valida la firma
+    for secret in webhook_secrets:
+        try:
+            event = stripe.Webhook.construct_event(payload, sig_header, secret)
+            break  # Firma verificada con éxito
+        except (stripe.error.SignatureVerificationError, ValueError):
+            continue
+
+    if not event:
         raise HTTPException(400, "Firma de webhook inválida")
 
     obj, kind = event["data"]["object"], event["type"]
