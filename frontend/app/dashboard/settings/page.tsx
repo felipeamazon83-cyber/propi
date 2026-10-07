@@ -31,6 +31,12 @@ type Location = {
   suggested_amounts: number[];
 };
 
+type DeleteTarget = {
+  type: 'employee' | 'location';
+  id: string;
+  name: string;
+} | null;
+
 export default function SettingsPage() {
   const [business, setBusiness] = useState<Business | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -42,6 +48,10 @@ export default function SettingsPage() {
   // Estados para modal de onboarding de Stripe por empleado
   const [activeModalLink, setActiveModalLink] = useState<{ name: string; url: string } | null>(null);
   const [copied, setCopied] = useState(false);
+
+  // Estado para modal de confirmación de eliminación
+  const [deleteModal, setDeleteModal] = useState<DeleteTarget>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -127,6 +137,28 @@ export default function SettingsPage() {
       }
     } catch (caught) {
       showMessage(caught instanceof Error ? caught.message : 'No se pudo añadir el empleado.', true);
+    }
+  }
+
+  // Confirmar y procesar eliminación
+  async function confirmDelete() {
+    if (!business || !deleteModal) return;
+    setDeleting(true);
+
+    try {
+      if (deleteModal.type === 'employee') {
+        await api(`/businesses/${business.id}/employees/${deleteModal.id}`, { method: 'DELETE' }, true);
+        showMessage('Empleado eliminado correctamente.');
+      } else {
+        await api(`/businesses/${business.id}/locations/${deleteModal.id}`, { method: 'DELETE' }, true);
+        showMessage('Ubicación eliminada correctamente.');
+      }
+      setDeleteModal(null);
+      await loadDashboard();
+    } catch (caught) {
+      showMessage(caught instanceof Error ? caught.message : 'No se pudo completar la eliminación.', true);
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -261,7 +293,7 @@ export default function SettingsPage() {
               {business.stripe_connected ? 'Gestionar Stripe' : 'Conectar Stripe'}
             </button>
 
-            {/* Chips de Empleados con estado de IBAN de Stripe */}
+            {/* Chips de Empleados con estado de IBAN de Stripe y opción de eliminar */}
             <div className="mt-4 flex flex-wrap gap-2">
               {employees.length ? (
                 employees.map((employee) => (
@@ -273,20 +305,30 @@ export default function SettingsPage() {
                     <span className="text-xs opacity-60">· {employee.active ? 'Activo' : 'Inactivo'}</span>
 
                     {employee.stripe_onboarding_completed ? (
-                      <span className="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-500/30">
+                      <span className="ml-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-400">
                         IBAN Listo
                       </span>
                     ) : (
                       <button
                         type="button"
                         onClick={() => handleReissueLink(employee)}
-                        className="ml-1 flex items-center gap-1 rounded-full bg-orange-500/20 px-2.5 py-0.5 text-xs font-semibold text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 transition-colors"
+                        className="ml-1 flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2.5 py-0.5 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-500/30"
                         title="Haz clic para ver o copiar el enlace de vinculación"
                       >
                         <span>Pendiente IBAN</span>
                         <span>🔗</span>
                       </button>
                     )}
+
+                    {/* Botón para eliminar empleado */}
+                    <button
+                      type="button"
+                      onClick={() => setDeleteModal({ type: 'employee', id: employee.id, name: employee.name })}
+                      className="ml-1.5 flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                      title={`Eliminar a ${employee.name}`}
+                    >
+                      ✕
+                    </button>
                   </div>
                 ))
               ) : (
@@ -367,6 +409,14 @@ export default function SettingsPage() {
                       </svg>
                       Descargar QR
                     </a>
+                    {/* Botón para eliminar ubicación */}
+                    <button
+                      type="button"
+                      className="btn bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors ml-auto"
+                      onClick={() => setDeleteModal({ type: 'location', id: location.id, name: location.name })}
+                    >
+                      Eliminar
+                    </button>
                   </div>
                 </article>
               ))}
@@ -395,7 +445,7 @@ export default function SettingsPage() {
               />
               <button
                 onClick={handleCopyLink}
-                className="whitespace-nowrap rounded bg-orange-500 px-3 py-1 text-xs font-bold text-slate-950 hover:bg-orange-400 transition-colors"
+                className="whitespace-nowrap rounded bg-orange-500 px-3 py-1 text-xs font-bold text-slate-950 transition-colors hover:bg-orange-400"
               >
                 {copied ? '¡Copiado!' : 'Copiar'}
               </button>
@@ -406,15 +456,49 @@ export default function SettingsPage() {
                 href={activeModalLink.url}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
+                className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/10"
               >
                 Abrir enlace ↗
               </a>
               <button
                 onClick={() => setActiveModalLink(null)}
-                className="rounded-lg bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors"
+                className="rounded-lg bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 transition-colors hover:bg-slate-700"
               >
                 Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmación de Eliminación */}
+      {deleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">
+              ¿Eliminar {deleteModal.type === 'employee' ? 'empleado' : 'ubicación'}?
+            </h3>
+            <p className="mt-2 text-sm text-slate-400">
+              ¿Estás seguro de que deseas eliminar <strong className="text-white">{deleteModal.name}</strong>?
+              Esta acción no se puede deshacer.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteModal(null)}
+                disabled={deleting}
+                className="rounded-lg bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 transition-colors hover:bg-slate-700 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-red-500 disabled:opacity-50"
+              >
+                {deleting ? 'Eliminando…' : 'Sí, eliminar'}
               </button>
             </div>
           </div>
