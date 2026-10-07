@@ -11,7 +11,7 @@ from ..models import Employee
 from ..schemas.contracts import EmployeeCreate
 from .deps import owned_business
 
-stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.api_key = settings.stripe_secret_key
 
 router = APIRouter(
     prefix="/businesses/{business_id}/employees",
@@ -72,8 +72,8 @@ def create_employee(
         # 2. Generar el enlace de vinculación para que el empleado configure su IBAN
         account_link = stripe.AccountLink.create(
             account=stripe_account.id,
-            refresh_url=f"{settings.FRONTEND_URL}/dashboard?onboarding=refresh",
-            return_url=f"{settings.FRONTEND_URL}/dashboard?onboarding=success",
+            refresh_url=f"{settings.app_url}/dashboard?onboarding=refresh",
+            return_url=f"{settings.app_url}/dashboard?onboarding=success",
             type="account_onboarding",
         )
         onboarding_url = account_link.url
@@ -139,8 +139,8 @@ def get_employee_onboarding_link(
     try:
         account_link = stripe.AccountLink.create(
             account=employee.stripe_account_id,
-            refresh_url=f"{settings.FRONTEND_URL}/dashboard?onboarding=refresh",
-            return_url=f"{settings.FRONTEND_URL}/dashboard?onboarding=success",
+            refresh_url=f"{settings.app_url}/dashboard?onboarding=refresh",
+            return_url=f"{settings.app_url}/dashboard?onboarding=success",
             type="account_onboarding",
         )
         return {"onboarding_url": account_link.url}
