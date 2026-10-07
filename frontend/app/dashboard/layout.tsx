@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { LanguageSwitcher } from '../../components/language-switcher';
 import { usePathname } from 'next/navigation';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -19,7 +20,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link href="/" className="brand-logo" aria-label="Propi"><img src="/propi-logo.png" alt="Propi" /></Link>
             <span className="rounded-full bg-orange-400/15 px-2 py-1 text-xs font-bold text-orange-300">Business</span>
           </div>
-          <span className="text-xs font-semibold text-slate-500 md:hidden">Panel de control</span>
+          <div className="flex items-center gap-2"><span className="text-xs font-semibold text-slate-500 md:hidden">Panel de control</span><LanguageSwitcher /></div>
         </div>
 
         <nav className="mt-5 flex gap-2 overflow-x-auto md:mt-10 md:flex-col">
