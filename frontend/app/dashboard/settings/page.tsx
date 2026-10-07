@@ -61,12 +61,12 @@ export default function SettingsPage() {
     setMessage(isError ? '' : text);
   }
 
-  // 1. Carga inicial optimizada (Peticiones dependientes ejecutadas en paralelo)
+  // Carga inicial optimizada en paralelo
   const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
       const businesses = await api<{ id: string }[]>('/businesses', {}, true);
-      
+
       if (!businesses[0]) {
         setBusiness(null);
         setEmployees([]);
@@ -74,7 +74,6 @@ export default function SettingsPage() {
         return;
       }
 
-      // Paralelización en paralelo: Detalle, Empleados y Ubicaciones en una única ráfaga
       const [details, team, places] = await Promise.all([
         api<Business>(`/businesses/${businesses[0].id}`, {}, true),
         api<Employee[]>(`/businesses/${businesses[0].id}/employees`, {}, true),
@@ -95,8 +94,6 @@ export default function SettingsPage() {
     void loadDashboard();
   }, [loadDashboard]);
 
-  // 2. Optimización de Mutaciones (Actualizaciones directas de Estado Local)
-
   async function saveBusiness(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -115,7 +112,6 @@ export default function SettingsPage() {
           { method: 'PUT', body: JSON.stringify(payload) },
           true
         );
-        // Actualización directa del estado local de negocio
         setBusiness((prev) => (prev ? { ...prev, ...updated } : updated));
       } else {
         const created = await api<Business>('/businesses', { method: 'POST', body: JSON.stringify(payload) }, true);
@@ -142,11 +138,8 @@ export default function SettingsPage() {
 
       form.reset();
       showMessage('Empleado añadido correctamente.');
-
-      // Inserción directa en estado local de empleados
       setEmployees((prev) => [...prev, created]);
 
-      // Abrir modal con la URL de vinculación de IBAN si está disponible
       if (created.onboarding_url) {
         setActiveModalLink({ name: created.name, url: created.onboarding_url });
       }
@@ -181,15 +174,12 @@ export default function SettingsPage() {
 
       form.reset();
       showMessage('QR/NFC creado correctamente.');
-
-      // Inserción directa en estado local de ubicaciones
       setLocations((prev) => [...prev, created]);
     } catch (caught) {
       showMessage(caught instanceof Error ? caught.message : 'No se pudo crear la ubicación.', true);
     }
   }
 
-  // Confirmar y procesar eliminación con actualización instantánea
   async function confirmDelete() {
     if (!business || !deleteModal) return;
     const target = deleteModal;
@@ -214,7 +204,6 @@ export default function SettingsPage() {
     }
   }
 
-  // Solicitar nuevo enlace de vinculación cuando el empleado lo necesite
   async function handleReissueLink(employee: Employee) {
     if (!business) return;
 
@@ -318,7 +307,6 @@ export default function SettingsPage() {
               {business.stripe_connected ? 'Gestionar Stripe' : 'Conectar Stripe'}
             </button>
 
-            {/* Chips de Empleados */}
             <div className="mt-4 flex flex-wrap gap-2">
               {employees.length ? (
                 employees.map((employee) => (
@@ -448,7 +436,7 @@ export default function SettingsPage() {
         </>
       )}
 
-      {/* Modal Enlace de Stripe Connect */}
+      {/* Modal Enlace Stripe Connect */}
       {activeModalLink && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
@@ -494,7 +482,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* Modal de Confirmación de Eliminación */}
+      {/* Modal Confirmación Eliminación */}
       {deleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
@@ -530,5 +518,3 @@ export default function SettingsPage() {
     </main>
   );
 }
-
-```
