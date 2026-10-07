@@ -140,30 +140,30 @@ export default function SettingsPage() {
     }
   }
 
-  // Confirmar y procesar eliminación
+  // Confirmar y procesar eliminación con actualización instantánea
   async function confirmDelete() {
     if (!business || !deleteModal) return;
+    const target = deleteModal;
     setDeleting(true);
 
     try {
-      if (deleteModal.type === 'employee') {
-        await api(`/businesses/${business.id}/employees/${deleteModal.id}`, { method: 'DELETE' }, true);
+      if (target.type === 'employee') {
+        await api(`/businesses/${business.id}/employees/${target.id}`, { method: 'DELETE' }, true);
+        // Actualización directa del estado sin esperar recarga
+        setEmployees((prev) => prev.filter((emp) => emp.id !== target.id));
         showMessage('Empleado eliminado correctamente.');
       } else {
-        await api(`/businesses/${business.id}/locations/${deleteModal.id}`, { method: 'DELETE' }, true);
+        await api(`/businesses/${business.id}/locations/${target.id}`, { method: 'DELETE' }, true);
+        // Actualización directa del estado sin esperar recarga
+        setLocations((prev) => prev.filter((loc) => loc.id !== target.id));
         showMessage('Ubicación eliminada correctamente.');
       }
-      
-      // Cerrar modal inmediatamente tras eliminar
-      setDeleteModal(null);
-
-      // Refrescar lista de datos
-      await loadDashboard();
     } catch (caught) {
-      // Cerrar modal aunque ocurra un error
-      setDeleteModal(null);
       showMessage(caught instanceof Error ? caught.message : 'No se pudo completar la eliminación.', true);
+      // En caso de fallo, re-sincronizamos con el servidor
+      await loadDashboard();
     } finally {
+      setDeleteModal(null);
       setDeleting(false);
     }
   }
