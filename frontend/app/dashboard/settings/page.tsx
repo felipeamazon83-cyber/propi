@@ -1,6 +1,11 @@
+Aquí tienes el código **100% completo e integrado** de la página de configuración (`page.tsx`).
+
+Conserva todo el diseño visual, estilos Tailwind, logo, modales, gestión de Stripe, reexpedición de enlaces y confirmación de borrado del archivo original, pero con las optimizaciones de **paralelización en `loadDashboard**` y **actualizaciones directas de estado local** (sin bloqueos ni parpadeos al crear o guardar):
+
+```tsx
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
 
 type Business = {
@@ -19,6 +24,7 @@ type Employee = {
   active: boolean;
   stripe_account_id?: string | null;
   stripe_onboarding_completed: boolean;
+  onboarding_url?: string;
 };
 
 type Location = {
@@ -60,15 +66,26 @@ export default function SettingsPage() {
     setMessage(isError ? '' : text);
   }
 
-  async function loadDashboard() {
+  // 1. Carga inicial optimizada (Peticiones dependientes ejecutadas en paralelo)
+  const loadDashboard = useCallback(async () => {
     try {
+      setLoading(true);
       const businesses = await api<{ id: string }[]>('/businesses', {}, true);
-      if (!businesses[0]) return;
-      const details = await api<Business>(`/businesses/${businesses[0].id}`, {}, true);
-      const [team, places] = await Promise.all([
-        api<Employee[]>(`/businesses/${details.id}/employees`, {}, true),
-        api<Location[]>(`/businesses/${details.id}/locations`, {}, true),
+      
+      if (!businesses[0]) {
+        setBusiness(null);
+        setEmployees([]);
+        setLocations([]);
+        return;
+      }
+
+      // Paralelización en paralelo: Detalle, Empleados y Ubicaciones en una única ráfaga
+      const [details, team, places] = await Promise.all([
+        api<Business>(`/businesses/${businesses[0].id}`, {}, true),
+        api<Employee[]>(`/businesses/${businesses[0].id}/employees`, {}, true),
+        api<Location[]>(`/businesses/${businesses[0].id}/locations`, {}, true),
       ]);
+
       setBusiness(details);
       setEmployees(team);
       setLocations(places);
@@ -77,11 +94,13 @@ export default function SettingsPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
     void loadDashboard();
-  }, []);
+  }, [loadDashboard]);
+
+  // 2. Optimización de Mutaciones (Actualizaciones directas de Estado Local)
 
   async function saveBusiness(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -96,12 +115,18 @@ export default function SettingsPage() {
 
     try {
       if (business) {
-        await api(`/businesses/${business.id}`, { method: 'PUT', body: JSON.stringify(payload) }, true);
+        const updated = await api<Business>(
+          `/businesses/${business.id}`,
+          { method: 'PUT', body: JSON.stringify(payload) },
+          true
+        );
+        // Actualización directa del estado local de negocio
+        setBusiness((prev) => (prev ? { ...prev, ...updated } : updated));
       } else {
-        await api('/businesses', { method: 'POST', body: JSON.stringify(payload) }, true);
+        const created = await api<Business>('/businesses', { method: 'POST', body: JSON.stringify(payload) }, true);
+        setBusiness(created);
       }
       showMessage('Negocio guardado correctamente.');
-      await loadDashboard();
     } catch (caught) {
       showMessage(caught instanceof Error ? caught.message : 'No se pudo guardar el negocio.', true);
     }
@@ -114,14 +139,7 @@ export default function SettingsPage() {
     const name = String(new FormData(form).get('name')).trim();
 
     try {
-      const created = await api<{
-        id: string;
-        name: string;
-        active: boolean;
-        stripe_account_id?: string;
-        stripe_onboarding_completed: boolean;
-        onboarding_url?: string;
-      }>(
+      const created = await api<Employee>(
         `/businesses/${business.id}/employees`,
         { method: 'POST', body: JSON.stringify({ name }) },
         true
@@ -129,7 +147,9 @@ export default function SettingsPage() {
 
       form.reset();
       showMessage('Empleado añadido correctamente.');
-      await loadDashboard();
+
+      // Inserción directa en estado local de empleados
+      setEmployees((prev) => [...prev, created]);
 
       // Abrir modal con la URL de vinculación de IBAN si está disponible
       if (created.onboarding_url) {
@@ -137,6 +157,40 @@ export default function SettingsPage() {
       }
     } catch (caught) {
       showMessage(caught instanceof Error ? caught.message : 'No se pudo añadir el empleado.', true);
+    }
+  }
+
+  async function addLocation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!business) return;
+    const form = event.currentTarget;
+    const data = new FormData(form);
+    const payload = {
+      name: String(data.get('name')),
+      type: String(data.get('type')),
+      distribution_mode: String(data.get('mode')),
+      fixed_employee_id: String(data.get('employee') || '') || null,
+      employee_percentage: Number(data.get('percentage')),
+      suggested_amounts: String(data.get('tips'))
+        .split(',')
+        .map((value) => Number(value.trim()))
+        .filter((value) => value > 0),
+    };
+
+    try {
+      const created = await api<Location>(
+        `/businesses/${business.id}/locations`,
+        { method: 'POST', body: JSON.stringify(payload) },
+        true
+      );
+
+      form.reset();
+      showMessage('QR/NFC creado correctamente.');
+
+      // Inserción directa en estado local de ubicaciones
+      setLocations((prev) => [...prev, created]);
+    } catch (caught) {
+      showMessage(caught instanceof Error ? caught.message : 'No se pudo crear la ubicación.', true);
     }
   }
 
@@ -149,18 +203,15 @@ export default function SettingsPage() {
     try {
       if (target.type === 'employee') {
         await api(`/businesses/${business.id}/employees/${target.id}`, { method: 'DELETE' }, true);
-        // Actualización directa del estado sin esperar recarga
         setEmployees((prev) => prev.filter((emp) => emp.id !== target.id));
         showMessage('Empleado eliminado correctamente.');
       } else {
         await api(`/businesses/${business.id}/locations/${target.id}`, { method: 'DELETE' }, true);
-        // Actualización directa del estado sin esperar recarga
         setLocations((prev) => prev.filter((loc) => loc.id !== target.id));
         showMessage('Ubicación eliminada correctamente.');
       }
     } catch (caught) {
       showMessage(caught instanceof Error ? caught.message : 'No se pudo completar la eliminación.', true);
-      // En caso de fallo, re-sincronizamos con el servidor
       await loadDashboard();
     } finally {
       setDeleteModal(null);
@@ -191,36 +242,9 @@ export default function SettingsPage() {
 
   function handleCopyLink() {
     if (!activeModalLink) return;
-    navigator.clipboard.writeText(activeModalLink.url);
+    void navigator.clipboard.writeText(activeModalLink.url);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }
-
-  async function addLocation(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!business) return;
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const payload = {
-      name: String(data.get('name')),
-      type: String(data.get('type')),
-      distribution_mode: String(data.get('mode')),
-      fixed_employee_id: String(data.get('employee') || '') || null,
-      employee_percentage: Number(data.get('percentage')),
-      suggested_amounts: String(data.get('tips'))
-        .split(',')
-        .map((value) => Number(value.trim()))
-        .filter((value) => value > 0),
-    };
-
-    try {
-      await api(`/businesses/${business.id}/locations`, { method: 'POST', body: JSON.stringify(payload) }, true);
-      form.reset();
-      showMessage('QR/NFC creado correctamente.');
-      await loadDashboard();
-    } catch (caught) {
-      showMessage(caught instanceof Error ? caught.message : 'No se pudo crear la ubicación.', true);
-    }
   }
 
   if (loading) return <main className="glow mx-auto min-h-screen max-w-5xl p-5 sm:p-8">Cargando configuración…</main>;
@@ -249,7 +273,7 @@ export default function SettingsPage() {
         <form onSubmit={saveBusiness} className="mt-4 grid gap-3 sm:grid-cols-2">
           <label>
             Nombre comercial
-            <input className="field mt-1" name="name" required defaultValue={business?.name} />
+            <input className="field mt-1" name="name" required defaultValue={business?.name || ''} />
           </label>
           <label>
             Razón social
@@ -299,7 +323,7 @@ export default function SettingsPage() {
               {business.stripe_connected ? 'Gestionar Stripe' : 'Conectar Stripe'}
             </button>
 
-            {/* Chips de Empleados con estado de IBAN de Stripe y opción de eliminar */}
+            {/* Chips de Empleados */}
             <div className="mt-4 flex flex-wrap gap-2">
               {employees.length ? (
                 employees.map((employee) => (
@@ -326,7 +350,6 @@ export default function SettingsPage() {
                       </button>
                     )}
 
-                    {/* Botón para eliminar empleado */}
                     <button
                       type="button"
                       onClick={() => setDeleteModal({ type: 'employee', id: employee.id, name: employee.name })}
@@ -415,10 +438,9 @@ export default function SettingsPage() {
                       </svg>
                       Descargar QR
                     </a>
-                    {/* Botón para eliminar ubicación */}
                     <button
                       type="button"
-                      className="btn bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors ml-auto"
+                      className="btn ml-auto border border-red-500/20 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20"
                       onClick={() => setDeleteModal({ type: 'location', id: location.id, name: location.name })}
                     >
                       Eliminar
@@ -431,7 +453,7 @@ export default function SettingsPage() {
         </>
       )}
 
-      {/* Modal / Ventana Emergente de Enlace de Stripe Connect */}
+      {/* Modal Enlace de Stripe Connect */}
       {activeModalLink && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
@@ -513,3 +535,5 @@ export default function SettingsPage() {
     </main>
   );
 }
+
+```
