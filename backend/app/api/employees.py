@@ -189,3 +189,48 @@ def set_employee_active(
         "id": str(employee.id),
         "active": employee.active,
     }
+
+
+@router.delete("/{employee_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_employee(
+    business_id: str,
+    employee_id: str,
+    user: UUID = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    """Elimina el empleado de la base de datos y su cuenta asociada en Stripe Connect."""
+    business = owned_business(business_id, user, db)
+
+    try:
+        emp_uuid = UUID(employee_id) if isinstance(employee_id, str) else employee_id
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Empleado no encontrado",
+        )
+
+    employee = db.scalar(
+        select(Employee).where(
+            Employee.id == emp_uuid,
+            Employee.business_id == business.id,
+        )
+    )
+
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Empleado no encontrado",
+        )
+
+    # Eliminar o desvincular la cuenta en Stripe Connect si existe
+    if employee.stripe_account_id:
+        try:
+            stripe.Account.delete(employee.stripe_account_id)
+        except Exception:
+            # Por si ya fue eliminada o no permite borrado físico en modo prueba
+            pass
+
+    db.delete(employee)
+    db.commit()
+
+    return None
