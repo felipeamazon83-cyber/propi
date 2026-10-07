@@ -1,7 +1,7 @@
 import secrets
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -163,3 +163,37 @@ def regenerate_token(
     db.commit()
 
     return serialize(location)
+
+
+@router.delete("/businesses/{business_id}/locations/{location_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/locations/{location_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_location(
+    location_id: str,
+    business_id: str = None,
+    user: UUID = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        loc_uuid = UUID(location_id) if isinstance(location_id, str) else location_id
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ubicación no encontrada",
+        )
+
+    location = db.scalar(
+        select(Location).where(Location.id == loc_uuid)
+    )
+    if not location:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ubicación no encontrada",
+        )
+
+    # Validar que el usuario sea dueño del negocio de esta ubicación
+    owned_business(location.business_id, user, db)
+
+    db.delete(location)
+    db.commit()
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
