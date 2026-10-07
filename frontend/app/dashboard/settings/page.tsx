@@ -32,6 +32,12 @@ type Location = {
   suggested_amounts: number[];
 };
 
+type SettingsSummary = {
+  business: Business;
+  employees: Employee[];
+  locations: Location[];
+};
+
 type DeleteTarget = {
   type: 'employee' | 'location';
   id: string;
@@ -61,7 +67,7 @@ export default function SettingsPage() {
     setMessage(isError ? '' : text);
   }
 
-  // Carga inicial optimizada en paralelo
+  // Carga inicial optimizada con 1 sola petición al endpoint unificado
   const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
@@ -74,15 +80,16 @@ export default function SettingsPage() {
         return;
       }
 
-      const [details, team, places] = await Promise.all([
-        api<Business>(`/businesses/${businesses[0].id}`, {}, true),
-        api<Employee[]>(`/businesses/${businesses[0].id}/employees`, {}, true),
-        api<Location[]>(`/businesses/${businesses[0].id}/locations`, {}, true),
-      ]);
+      // Consulta directa al nuevo endpoint unificado
+      const summary = await api<SettingsSummary>(
+        `/businesses/${businesses[0].id}/settings-summary`,
+        {},
+        true
+      );
 
-      setBusiness(details);
-      setEmployees(team);
-      setLocations(places);
+      setBusiness(summary.business);
+      setEmployees(summary.employees);
+      setLocations(summary.locations);
     } catch (caught) {
       showMessage(caught instanceof Error ? caught.message : 'No se pudo cargar la configuración.', true);
     } finally {
