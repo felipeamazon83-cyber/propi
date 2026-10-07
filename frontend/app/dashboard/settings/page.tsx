@@ -17,6 +17,8 @@ type Employee = {
   id: string;
   name: string;
   active: boolean;
+  stripe_account_id?: string | null;
+  stripe_onboarding_completed: boolean;
 };
 
 type Location = {
@@ -36,6 +38,10 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  // Estados para modal de onboarding de Stripe por empleado
+  const [activeModalLink, setActiveModalLink] = useState<{ name: string; url: string } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -95,18 +101,61 @@ export default function SettingsPage() {
     event.preventDefault();
     if (!business) return;
     const form = event.currentTarget;
+    const name = String(new FormData(form).get('name')).trim();
+
     try {
-      await api(
+      const created = await api<{
+        id: string;
+        name: string;
+        active: boolean;
+        stripe_account_id?: string;
+        stripe_onboarding_completed: boolean;
+        onboarding_url?: string;
+      }>(
         `/businesses/${business.id}/employees`,
-        { method: 'POST', body: JSON.stringify({ name: String(new FormData(form).get('name')) }) },
+        { method: 'POST', body: JSON.stringify({ name }) },
         true
       );
+
       form.reset();
-      showMessage('Empleado añadido.');
+      showMessage('Empleado añadido correctamente.');
       await loadDashboard();
+
+      // Abrir modal con la URL de vinculación de IBAN si está disponible
+      if (created.onboarding_url) {
+        setActiveModalLink({ name: created.name, url: created.onboarding_url });
+      }
     } catch (caught) {
       showMessage(caught instanceof Error ? caught.message : 'No se pudo añadir el empleado.', true);
     }
+  }
+
+  // Solicitar nuevo enlace de vinculación cuando el empleado lo necesite
+  async function handleReissueLink(employee: Employee) {
+    if (!business) return;
+
+    try {
+      const res = await api<{ onboarding_url: string }>(
+        `/businesses/${business.id}/employees/${employee.id}/onboarding-link`,
+        {},
+        true
+      );
+      setActiveModalLink({ name: employee.name, url: res.onboarding_url });
+    } catch (caught) {
+      showMessage(
+        caught instanceof Error
+          ? caught.message
+          : 'No se pudo generar un nuevo enlace de vinculación.',
+        true
+      );
+    }
+  }
+
+  function handleCopyLink() {
+    if (!activeModalLink) return;
+    navigator.clipboard.writeText(activeModalLink.url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   async function addLocation(event: FormEvent<HTMLFormElement>) {
@@ -142,9 +191,14 @@ export default function SettingsPage() {
     <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
       <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="flex items-center gap-3"><img className="brand-logo-image" src="/propi-logo.png" alt="Propi" /><span className="text-sm font-bold text-orange-300">· Configuración</span></p>
+          <p className="flex items-center gap-3">
+            <img className="brand-logo-image" src="/propi-logo.png" alt="Propi" />
+            <span className="text-sm font-bold text-orange-300">· Configuración</span>
+          </p>
           <h1 className="mt-3 text-3xl font-black sm:text-4xl">{business ? business.name : 'Configura tu negocio'}</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-400 sm:text-base">Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.</p>
+          <p className="mt-2 max-w-2xl text-sm text-slate-400 sm:text-base">
+            Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.
+          </p>
         </div>
         <a className="btn btn-secondary w-full sm:w-auto" href="/dashboard">Volver al dashboard</a>
       </header>
@@ -206,13 +260,40 @@ export default function SettingsPage() {
             >
               {business.stripe_connected ? 'Gestionar Stripe' : 'Conectar Stripe'}
             </button>
+
+            {/* Chips de Empleados con estado de IBAN de Stripe */}
             <div className="mt-4 flex flex-wrap gap-2">
-              {employees.map((employee) => (
-                <span className="rounded-full bg-white/10 px-3 py-2 text-slate-200" key={employee.id}>
-                  {employee.name} · {employee.active ? 'Activo' : 'Inactivo'}
-                </span>
-              ))}
+              {employees.length ? (
+                employees.map((employee) => (
+                  <div
+                    key={employee.id}
+                    className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3.5 py-2 text-slate-200"
+                  >
+                    <span className="font-semibold text-white">{employee.name}</span>
+                    <span className="text-xs opacity-60">· {employee.active ? 'Activo' : 'Inactivo'}</span>
+
+                    {employee.stripe_onboarding_completed ? (
+                      <span className="ml-1 rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-400 border border-emerald-500/30">
+                        IBAN Listo
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleReissueLink(employee)}
+                        className="ml-1 flex items-center gap-1 rounded-full bg-orange-500/20 px-2.5 py-0.5 text-xs font-semibold text-orange-300 border border-orange-500/30 hover:bg-orange-500/30 transition-colors"
+                        title="Haz clic para ver o copiar el enlace de vinculación"
+                      >
+                        <span>Pendiente IBAN</span>
+                        <span>🔗</span>
+                      </button>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-400">No hay empleados registrados en este negocio.</p>
+              )}
             </div>
+
             <form className="mt-4 flex gap-2" onSubmit={addEmployee}>
               <input className="field" name="name" required placeholder="Nombre del empleado" />
               <button className="btn btn-primary">Añadir</button>
@@ -292,6 +373,52 @@ export default function SettingsPage() {
             </div>
           </section>
         </>
+      )}
+
+      {/* Modal / Ventana Emergente de Enlace de Stripe Connect */}
+      {activeModalLink && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">
+              Vincular IBAN de {activeModalLink.name}
+            </h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Comparte este enlace con el empleado para que ingrese su IBAN en Stripe y pueda recibir sus propinas directamente:
+            </p>
+
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-white/10 bg-black/40 p-2">
+              <input
+                type="text"
+                readOnly
+                value={activeModalLink.url}
+                className="w-full bg-transparent px-2 text-xs text-slate-300 outline-none"
+              />
+              <button
+                onClick={handleCopyLink}
+                className="whitespace-nowrap rounded bg-orange-500 px-3 py-1 text-xs font-bold text-slate-950 hover:bg-orange-400 transition-colors"
+              >
+                {copied ? '¡Copiado!' : 'Copiar'}
+              </button>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <a
+                href={activeModalLink.url}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-xs font-semibold text-white hover:bg-white/10 transition-colors"
+              >
+                Abrir enlace ↗
+              </a>
+              <button
+                onClick={() => setActiveModalLink(null)}
+                className="rounded-lg bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
