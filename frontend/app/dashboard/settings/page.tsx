@@ -1,8 +1,3 @@
-Aquí tienes el código **100% completo e integrado** de la página de configuración (`page.tsx`).
-
-Conserva todo el diseño visual, estilos Tailwind, logo, modales, gestión de Stripe, reexpedición de enlaces y confirmación de borrado del archivo original, pero con las optimizaciones de **paralelización en `loadDashboard**` y **actualizaciones directas de estado local** (sin bloqueos ni parpadeos al crear o guardar):
-
-```tsx
 'use client';
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
