@@ -11,6 +11,42 @@ from ..models import Business, Employee, Tip
 router = APIRouter(tags=["dashboard"])
 
 
+@router.get("/tips/summary")
+def get_tip_summary(
+    user: UUID = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    user_uuid = user if isinstance(user, UUID) else UUID(str(user))
+
+    # 1. Obtener todos los negocios pertenecientes al usuario autenticado
+    business_ids = db.scalars(
+        select(Business.id).where(cast(Business.owner_id, PG_UUID) == user_uuid)
+    ).all()
+
+    if not business_ids:
+        return {"count": 0, "tip_total": 0.0, "average": 0.0}
+
+    b_uuids = [b if isinstance(b, UUID) else UUID(str(b)) for b in business_ids]
+
+    # 2. Calcular acumulado, cantidad total y promedio de propinas confirmadas (paid)
+    stats = db.execute(
+        select(
+            func.coalesce(func.sum(Tip.amount), 0.0).label("tip_total"),
+            func.count(Tip.id).label("count"),
+            func.coalesce(func.avg(Tip.amount), 0.0).label("average"),
+        ).where(
+            cast(Tip.business_id, PG_UUID).in_(b_uuids),
+            Tip.status == "paid",
+        )
+    ).first()
+
+    return {
+        "tip_total": float(stats.tip_total) if stats else 0.0,
+        "count": stats.count if stats else 0,
+        "average": float(stats.average) if stats else 0.0,
+    }
+
+
 @router.get("/tips/summary-by-employee")
 def get_tips_summary_by_employee(
     user: UUID = Depends(current_user),
@@ -39,7 +75,7 @@ def get_tips_summary_by_employee(
 
     summary = []
 
-    # 3. Iterar cada empleado y calcular las métricas desde la tabla Tip (status == 'paid')
+    # 3. Iterar cada empleado y calcular sus métricas individuales desde Tip (status == 'paid')
     for emp in employees:
         e_uuid = emp.id if isinstance(emp.id, UUID) else UUID(str(emp.id))
 
