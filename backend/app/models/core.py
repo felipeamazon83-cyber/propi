@@ -18,8 +18,6 @@ from ..database import Base
 
 class Business(Base):
     __tablename__ = "businesses"
-    # Supabase stores the application tables in `public`. Qualifying the table
-    # makes this query independent of the connection pooler's search_path.
     __table_args__ = {"schema": "public"}
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -118,6 +116,20 @@ class Employee(Base):
         String(500),
         nullable=True,
     )
+
+    # --- NUEVOS CAMPOS STRIPE CONNECT ---
+    stripe_account_id: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        index=True,
+    )
+
+    stripe_onboarding_completed: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
+    # ------------------------------------
 
     active: Mapped[bool] = mapped_column(
         Boolean,
