@@ -153,9 +153,15 @@ export default function SettingsPage() {
         await api(`/businesses/${business.id}/locations/${deleteModal.id}`, { method: 'DELETE' }, true);
         showMessage('Ubicación eliminada correctamente.');
       }
+      
+      // Cerrar modal inmediatamente tras eliminar
       setDeleteModal(null);
+
+      // Refrescar lista de datos
       await loadDashboard();
     } catch (caught) {
+      // Cerrar modal aunque ocurra un error
+      setDeleteModal(null);
       showMessage(caught instanceof Error ? caught.message : 'No se pudo completar la eliminación.', true);
     } finally {
       setDeleting(false);
