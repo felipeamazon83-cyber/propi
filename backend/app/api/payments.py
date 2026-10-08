@@ -1,30 +1,20 @@
-from collections import defaultdict, deque
-import secrets
-import time
-
-from fastapi import APIRouter, Depends, HTTPException, Request
+import math
+import stripe
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-import stripe
 
-from ..auth import current_user
 from ..config import settings
 from ..database import get_db
-from ..models import Business, Employee, Location, Tip, TipSetting
-from ..schemas.contracts import (
-    BusinessCreate,
-    BusinessUpdate,
-    CheckoutCreate,
-    EmployeeCreate,
-    LocationCreate,
-    LocationUpdate,
-)
+from ..models import Business, Employee, Location, TipSetting
+from ..schemas.contracts import CheckoutCreate
 
 router = APIRouter(tags=["payments"])
 
 
 @router.post("/payments/checkout")
 def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
+    # 1. Obtener ubicación activa
     l = db.scalar(
         select(Location).where(
             Location.public_token == payload.public_token,
@@ -34,14 +24,16 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
     if not l:
         raise HTTPException(404, "Ubicación no disponible")
 
+    # 2. Obtener entidad de Negocio y Empleado
     b = db.get(Business, l.business_id)
     e = db.get(Employee, payload.employee_id)
-    
-    # Consultamos TipSetting asegurando concordancia de ID
+
+    # 3. Consultar la configuración de propinas
     s = db.scalar(
         select(TipSetting).where(TipSetting.business_id == l.business_id)
     )
 
+    # 4. Validar disponibilidad del empleado
     if (
         not e
         or e.business_id != l.business_id
@@ -50,84 +42,77 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
     ):
         raise HTTPException(422, "Empleado no válido")
 
+    # 5. Validar rangos de importe permitido
     if s and (
         payload.amount < float(s.minimum_amount)
         or payload.amount > float(s.maximum_amount)
     ):
         raise HTTPException(422, "Importe fuera de los límites permitidos")
 
+    # 6. Validar configuración de Stripe
     if not settings.stripe_secret_key:
         raise HTTPException(503, "Los pagos aún no están configurados")
 
     if not b or not b.stripe_account_id:
         raise HTTPException(409, "Este negocio aún no ha conectado Stripe")
 
-    from ..services.stripe_service import calculate_fee
-
-    fee = calculate_fee(
-        payload.amount,
-        settings.propi_fee_percent,
-        settings.propi_fixed_fee_cents,
-    )
-
     stripe.api_key = settings.stripe_secret_key
 
-    # Determinamos de forma segura quién asume la comisión ('business' o 'customer')
-    fee_payer = getattr(s, "fee_payer", "business") if s else "business"
-    if not fee_payer:
-        fee_payer = "business"
+    # 7. Normalización estricta de quién asume las comisiones
+    raw_fee_payer = getattr(s, "fee_payer", "business") if s else "business"
+    fee_payer = "customer" if raw_fee_payer in ["customer", "CLIENT"] else "business"
 
-    metadata = {
-        "business_id": str(l.business_id),
-        "employee_id": str(e.id),
-        "location_id": str(l.id),
-        "fee_payer": fee_payer,
-        "tip_cents": str(fee.tip_cents),
-        "propi_fixed_fee_cents": str(fee.fixed_fee_cents),
-        "propi_percentage_fee_cents": str(fee.percentage_fee_cents),
-        "payout_cents": str(fee.connected_account_payout_cents),
-    }
+    # 8. Importe base de la propina en céntimos
+    tip_cents = int(round(payload.amount * 100))
 
-    # Ítem principal de la propina
+    # 9. Cálculo del total cobrado al cliente según el modelo de comisión
+    if fee_payer == "customer":
+        propi_fixed = settings.propi_fixed_fee_cents  # Ej: 10 céntimos
+        stripe_fixed = getattr(settings, "stripe_fixed_fee_cents", 25)  # 25 céntimos
+        stripe_pct = getattr(settings, "stripe_fee_percent", 0.015)      # 1.5%
+
+        # Recargo dinámico para garantizar propina completa + 0,10 € Propi tras pagar la pasarela
+        customer_total_cents = math.ceil(
+            (tip_cents + propi_fixed + stripe_fixed) / (1 - stripe_pct)
+        )
+    else:
+        # El restaurante asume gastos: el cliente paga únicamente la propina
+        customer_total_cents = tip_cents
+
+    # 10. Único ítem unificado para eliminar fricción en la pasarela Stripe Checkout
+    unit_amount = customer_total_cents if fee_payer == "customer" else tip_cents
+
     items = [
         {
             "price_data": {
                 "currency": b.currency.lower(),
-                "product_data": {"name": f"Propina para {e.name}"},
-                "unit_amount": fee.tip_cents,
+                "product_data": {
+                    "name": f"Propina para {e.name}",
+                },
+                "unit_amount": unit_amount,
             },
             "quantity": 1,
         }
     ]
 
-    # Si el restaurante configuró trasladar la tarifa al cliente, la añadimos como ítem explícito
-    if fee_payer == "customer" and fee.propi_fee_cents > 0:
-        items.append(
-            {
-                "price_data": {
-                    "currency": b.currency.lower(),
-                    "product_data": {"name": "Tarifa de servicio Propi"},
-                    "unit_amount": fee.propi_fee_cents,
-                },
-                "quantity": 1,
-            }
-        )
+    # 11. Metadatos de auditoría para el Webhook
+    metadata = {
+        "business_id": str(l.business_id),
+        "employee_id": str(e.id),
+        "location_id": str(l.id),
+        "fee_payer": fee_payer,
+        "tip_cents": str(tip_cents),
+        "propi_fixed_fee_cents": str(settings.propi_fixed_fee_cents),
+        "customer_total_cents": str(customer_total_cents),
+    }
 
-    # Calculamos el total abonado por el cliente
-    customer_total_cents = (
-        (fee.tip_cents + fee.propi_fee_cents)
-        if fee_payer == "customer"
-        else fee.tip_cents
-    )
-
-    # Al omitir payment_method_types, Stripe Checkout usa automáticamente los métodos dinámicos activados en tu Dashboard
+    # 12. Creación de la sesión de Checkout
     session = stripe.checkout.Session.create(
         mode="payment",
         line_items=items,
         metadata=metadata,
         payment_intent_data={
             "metadata": metadata,
-            "application_fee_amount": fee.propi_fee_cents,  # Propi siempre retiene sus 0,20 €
             "transfer_data": {
                 "destination": b.stripe_account_id,
             },
@@ -139,7 +124,6 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
     return {
         "checkout_url": session.url,
         "fee_payer": fee_payer,
-        "tip_amount": fee.tip_cents / 100,
-        "propi_fee": fee.propi_fee_cents / 100,
-        "total": customer_total_cents / 100,
+        "tip_amount": tip_cents / 100.0,
+        "total": customer_total_cents / 100.0,
     }
