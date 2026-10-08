@@ -508,16 +508,30 @@ export default function SettingsPage() {
                       >
                         Copiar URL NFC
                       </button>
+
+                      {/* Opción B: Botón de Tarjeta Completa + Botón de Solo QR */}
                       <a
                         className="btn btn-primary inline-flex items-center gap-1.5"
-                        href={`${apiUrl}/public/locations/${location.public_token}/qr.png`}
-                        download={`tip-${location.name}.png`}
+                        href={`${apiUrl}/public/locations/${location.public_token}/card.png`}
+                        download={`tarjeta-propi-${location.name}.png`}
                       >
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Descargar QR
+                        Tarjeta Mesa 🎨
                       </a>
+
+                      <a
+                        className="btn btn-secondary inline-flex items-center gap-1.5"
+                        href={`${apiUrl}/public/locations/${location.public_token}/qr.png`}
+                        download={`qr-${location.name}.png`}
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Solo QR 📲
+                      </a>
+
                       <button
                         type="button"
                         className="btn ml-auto border border-red-500/20 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20"
