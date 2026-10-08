@@ -397,47 +397,138 @@ export default function SettingsPage() {
                 Crear QR/NFC
               </button>
             </form>
-            <div className="mt-5 space-y-3">
-              {locations.map((location) => (
-                <article className="rounded-xl border border-gray-200 p-4" key={location.id}>
-                  <b>{location.name}</b>
-                  <p className="mt-1 text-sm text-slate-400">
-                    {location.distribution_mode} · {location.employee_percentage}% empleado ·{' '}
-                    {location.suggested_amounts.join(' €, ')} €
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <a className="btn btn-secondary" href={location.url} target="_blank" rel="noreferrer">
-                      Probar QR
-                    </a>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => {
-                        void navigator.clipboard.writeText(location.url).then(() => showMessage('URL NFC copiada.'));
-                      }}
-                    >
-                      Copiar URL NFC
-                    </button>
-                    <a
-                      className="btn btn-primary inline-flex items-center gap-1.5"
-                      href={`${apiUrl}/public/locations/${location.public_token}/qr.png`}
-                      download={`tip-${location.name}.png`}
-                    >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Descargar QR
-                    </a>
-                    <button
-                      type="button"
-                      className="btn ml-auto border border-red-500/20 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20"
-                      onClick={() => setDeleteModal({ type: 'location', id: location.id, name: location.name })}
-                    >
-                      Eliminar
-                    </button>
+
+            {/* Guía interactiva de configuración NFC */}
+            <div className="mt-6 rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 sm:p-5">
+              <div className="flex items-center gap-2.5">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/20 text-lg">
+                  📲
+                </span>
+                <div>
+                  <h3 className="text-base font-bold text-white">¿Quieres usar pegatinas o tarjetas NFC?</h3>
+                  <p className="text-xs text-slate-400">Configura tus propios chips NFC en menos de 1 minuto</p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                {/* Paso 1 */}
+                <div className="rounded-xl border border-white/5 bg-slate-900/60 p-3.5">
+                  <div className="flex items-center gap-2 font-semibold text-orange-300">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
+                      1
+                    </span>
+                    Comprar pegatinas
                   </div>
-                </article>
-              ))}
+                  <p className="mt-1.5 text-xs text-slate-300">
+                    Consigue pegatinas NFC neutras (tipo <b className="text-white">NTAG213 o NTAG215</b>). Cuestan menos de 0,50 €/ud en Amazon.
+                  </p>
+                </div>
+
+                {/* Paso 2 */}
+                <div className="rounded-xl border border-white/5 bg-slate-900/60 p-3.5">
+                  <div className="flex items-center gap-2 font-semibold text-orange-300">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
+                      2
+                    </span>
+                    Descargar app gratuita
+                  </div>
+                  <p className="mt-1.5 text-xs text-slate-300">
+                    Descarga <b className="text-white">NFC Tools</b> para grabar tus pegatinas fácilmente.
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-1.5">
+                    <a
+                      href="https://apps.apple.com/app/nfc-tools/id1252962749"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded bg-white/10 px-2 py-1 text-[11px] font-semibold text-slate-200 transition-colors hover:bg-white/20"
+                    >
+                      App Store ↗
+                    </a>
+                    <a
+                      href="https://play.google.com/store/apps/details?id=com.wakdev.wdnfc"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded bg-white/10 px-2 py-1 text-[11px] font-semibold text-slate-200 transition-colors hover:bg-white/20"
+                    >
+                      Google Play ↗
+                    </a>
+                    <a
+                      href="https://nfc.software/es"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded bg-orange-500/20 px-2 py-1 text-[11px] font-semibold text-orange-300 transition-colors hover:bg-orange-500/30"
+                    >
+                      Web oficial ↗
+                    </a>
+                  </div>
+                </div>
+
+                {/* Paso 3 */}
+                <div className="rounded-xl border border-white/5 bg-slate-900/60 p-3.5">
+                  <div className="flex items-center gap-2 font-semibold text-orange-300">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
+                      3
+                    </span>
+                    Grabar la pegatina
+                  </div>
+                  <ol className="mt-1.5 list-inside list-decimal space-y-0.5 text-xs text-slate-300">
+                    <li>Copia la <b>URL NFC</b> de la mesa.</li>
+                    <li>Abre NFC Tools → <b>Escribir</b> → <b>Añadir registro</b> → <b>URL</b>.</li>
+                    <li>Pega la URL y acerca tu móvil a la pegatina.</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {locations.map((location) => {
+                const publicUrl = typeof window !== 'undefined'
+                  ? `${window.location.origin}/l/${location.public_token}`
+                  : location.url;
+
+                return (
+                  <article className="rounded-xl border border-gray-200 p-4" key={location.id}>
+                    <b>{location.name}</b>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {location.distribution_mode} · {location.employee_percentage}% empleado ·{' '}
+                      {location.suggested_amounts.join(' €, ')} €
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <a className="btn btn-secondary" href={publicUrl} target="_blank" rel="noreferrer">
+                        Probar QR ↗
+                      </a>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          void navigator.clipboard.writeText(publicUrl).then(() =>
+                            showMessage('URL NFC copiada. Abre NFC Tools para grabarla en tu pegatina.')
+                          );
+                        }}
+                      >
+                        Copiar URL NFC
+                      </button>
+                      <a
+                        className="btn btn-primary inline-flex items-center gap-1.5"
+                        href={`${apiUrl}/public/locations/${location.public_token}/qr.png`}
+                        download={`tip-${location.name}.png`}
+                      >
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Descargar QR
+                      </a>
+                      <button
+                        type="button"
+                        className="btn ml-auto border border-red-500/20 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20"
+                        onClick={() => setDeleteModal({ type: 'location', id: location.id, name: location.name })}
+                      >
+                        Eliminar
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           </section>
         </>
