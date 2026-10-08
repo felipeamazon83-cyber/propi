@@ -8,8 +8,9 @@ from sqlalchemy.orm import Session
 from ..auth import current_user
 from ..config import settings
 from ..database import get_db
-from ..models import Employee, Location
+from ..models import Business, Employee, Location
 from ..schemas.contracts import LocationCreate, LocationUpdate
+from ..services import qr_service
 from .deps import owned_business
 
 router = APIRouter(tags=["locations"])
@@ -34,6 +35,53 @@ def serialize(location: Location):
     }
 
 
+# --- Endpoints Públicos de Descarga de QR y Tarjeta ---
+
+
+@router.get("/public/locations/{public_token}/qr.png")
+def get_location_qr(public_token: str, db: Session = Depends(get_db)):
+    location = db.scalar(
+        select(Location).where(Location.public_token == public_token)
+    )
+    if not location:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ubicación no encontrada",
+        )
+
+    url = f"{settings.app_url}/r/{location.public_token}"
+    img_bytes = qr_service.png(url)
+    return Response(content=img_bytes, media_type="image/png")
+
+
+@router.get("/public/locations/{public_token}/card.png")
+def get_location_card(public_token: str, db: Session = Depends(get_db)):
+    location = db.scalar(
+        select(Location).where(Location.public_token == public_token)
+    )
+    if not location:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ubicación no encontrada",
+        )
+
+    business = db.scalar(
+        select(Business).where(Business.id == location.business_id)
+    )
+    business_name = business.name if business else ""
+
+    url = f"{settings.app_url}/r/{location.public_token}"
+    img_bytes = qr_service.generate_table_card_png(
+        url=url,
+        location_name=location.name,
+        business_name=business_name,
+    )
+    return Response(content=img_bytes, media_type="image/png")
+
+
+# --- Endpoints Privados de Gestión ---
+
+
 @router.get("/businesses/{business_id}/locations")
 def list_locations(
     business_id: str,
@@ -42,7 +90,6 @@ def list_locations(
 ):
     business = owned_business(business_id, user, db)
 
-    # Comparación limpia directa entre UUIDs sin CAST explicito
     locations = db.scalars(
         select(Location).where(Location.business_id == business.id)
     ).all()
@@ -190,7 +237,6 @@ def delete_location(
             detail="Ubicación no encontrada",
         )
 
-    # Validar que el usuario sea dueño del negocio de esta ubicación
     owned_business(location.business_id, user, db)
 
     db.delete(location)
