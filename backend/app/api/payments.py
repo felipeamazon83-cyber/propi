@@ -118,7 +118,7 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
             },
         },
         success_url=f"{settings.app_url}/thank-you?session_id={{CHECKOUT_SESSION_ID}}",
-        cancel_url=f"{settings.app_url}/r/{payload.public_token}",
+        cancel_url=f"{settings.app_url}/l/{payload.public_token}",
     )
 
     return {
