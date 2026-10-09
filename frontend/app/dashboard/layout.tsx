@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { LanguageSwitcher } from '../../components/language-switcher';
 import { usePathname } from 'next/navigation';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -17,10 +16,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <aside className="w-full border-b border-white/10 bg-[#0b2344]/95 px-4 py-4 backdrop-blur md:min-h-screen md:w-64 md:border-b-0 md:border-r md:px-5 md:py-7">
         <div className="flex items-center justify-between md:block">
           <div className="flex items-center gap-2">
-            <Link href="/" className="brand-logo" aria-label="Propi"><img src="/propi-logo.png" alt="Propi" /></Link>
+            <Link href="/" className="brand-logo" aria-label="Propi">
+              <img src="/propi-logo.png" alt="Propi" className="h-8 w-auto object-contain" />
+            </Link>
             <span className="rounded-full bg-orange-400/15 px-2 py-1 text-xs font-bold text-orange-300">Business</span>
           </div>
-          <div className="flex items-center gap-2"><span className="text-xs font-semibold text-slate-500 md:hidden">Panel de control</span><LanguageSwitcher /></div>
         </div>
 
         <nav className="mt-5 flex gap-2 overflow-x-auto md:mt-10 md:flex-col">
