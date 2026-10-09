@@ -54,21 +54,29 @@ export default function DashboardPage() {
       setError('');
 
       // 1. Obtener lista de negocios para extraer el ID activo
-      const businesses = await api<{ id: string }[]>('/businesses', {}, true);
+      const businesses = await api<{ id: string; logo_url?: string | null }[]>('/businesses', {}, true);
       if (!businesses || !businesses[0]) {
         setBusiness(null);
         return;
       }
 
-      // 2. Consulta unificada al nuevo endpoint optimizado
+      const activeBusinessId = businesses[0].id;
+
+      // 2. Consulta unificada al endpoint de resumen
       const data = await api<DashboardSummaryResponse>(
-        `/businesses/${businesses[0].id}/dashboard-summary`,
+        `/businesses/${activeBusinessId}/dashboard-summary`,
         {},
         true
       );
 
-      setBusiness(data.business);
-      
+      // Si el endpoint summary no devuelve logo_url, usamos el obtenido en la lista /businesses
+      const logoUrl = data.business.logo_url || businesses[0].logo_url || null;
+
+      setBusiness({
+        ...data.business,
+        logo_url: logoUrl,
+      });
+
       const count = data.summary.total_count || 0;
       const total = data.summary.total_amount || 0;
       const average = count > 0 ? total / count : 0;
@@ -156,7 +164,7 @@ export default function DashboardPage() {
             {business?.logo_url ? (
               <img
                 src={business.logo_url}
-                alt={business.name}
+                alt={business.name || 'Restaurante'}
                 className="h-14 w-14 rounded-xl border border-white/10 object-cover shadow-md"
               />
             ) : (
