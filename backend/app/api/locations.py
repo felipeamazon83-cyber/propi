@@ -51,7 +51,14 @@ def get_location_qr(public_token: str, db: Session = Depends(get_db)):
 
     url = f"{settings.app_url}/r/{location.public_token}"
     img_bytes = qr_service.png(url)
-    return Response(content=img_bytes, media_type="image/png")
+
+    filename = f"qr-{location.name.lower().replace(' ', '-')}.png"
+
+    return Response(
+        content=img_bytes,
+        media_type="image/png",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @router.get("/public/locations/{public_token}/card.png")
@@ -76,7 +83,14 @@ def get_location_card(public_token: str, db: Session = Depends(get_db)):
         location_name=location.name,
         business_name=business_name,
     )
-    return Response(content=img_bytes, media_type="image/png")
+
+    filename = f"tarjeta-propi-{location.name.lower().replace(' ', '-')}.png"
+
+    return Response(
+        content=img_bytes,
+        media_type="image/png",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # --- Endpoints Privados de Gestión ---
