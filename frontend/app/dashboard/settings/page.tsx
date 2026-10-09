@@ -7,6 +7,7 @@ type Business = {
   id: string;
   name: string;
   legal_name?: string;
+  logo_url?: string | null;
   country: string;
   currency: string;
   fee_payer?: 'business' | 'customer';
@@ -52,6 +53,9 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
+  // Estado para la vista previa del logo del restaurante
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
   // Estados para modal de onboarding de Stripe por empleado
   const [activeModalLink, setActiveModalLink] = useState<{ name: string; url: string } | null>(null);
   const [copied, setCopied] = useState(false);
@@ -88,6 +92,7 @@ export default function SettingsPage() {
       );
 
       setBusiness(summary.business);
+      setLogoPreview(summary.business.logo_url || null);
       setEmployees(summary.employees);
       setLocations(summary.locations);
     } catch (caught) {
@@ -101,12 +106,31 @@ export default function SettingsPage() {
     void loadDashboard();
   }, [loadDashboard]);
 
+  // Manejador para cargar y convertir la imagen del logo a Base64
+  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      showMessage('La imagen no debe superar los 2 MB.', true);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const base64String = reader.result as string;
+      setLogoPreview(base64String);
+    };
+    reader.readAsDataURL(file);
+  }
+
   async function saveBusiness(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
     const payload = {
       name: String(data.get('name')),
       legal_name: String(data.get('legal_name') || '') || null,
+      logo_url: logoPreview || null,
       country: String(data.get('country')).toUpperCase(),
       currency: String(data.get('currency')).toUpperCase(),
       fee_payer: String(data.get('fee_payer') || 'business'),
@@ -124,7 +148,7 @@ export default function SettingsPage() {
         const created = await api<Business>('/businesses', { method: 'POST', body: JSON.stringify(payload) }, true);
         setBusiness(created);
       }
-      showMessage('Negocio guardado correctamente.');
+      showMessage('Datos del negocio guardados correctamente.');
     } catch (caught) {
       showMessage(caught instanceof Error ? caught.message : 'No se pudo guardar el negocio.', true);
     }
@@ -245,19 +269,38 @@ export default function SettingsPage() {
       <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="flex items-center gap-3">
-            <img className="brand-logo-image" src="/propi-logo.png" alt="Propi" />
+            {/* Logo Estático de Propi */}
+            <img className="h-8 w-auto object-contain" src="/propi-logo.png" alt="Propi" />
             <span className="text-sm font-bold text-orange-300">· Configuración</span>
           </p>
-          <h1 className="mt-3 text-3xl font-black sm:text-4xl">{business ? business.name : 'Configura tu negocio'}</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-400 sm:text-base">
-            Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.
-          </p>
+
+          <div className="mt-4 flex items-center gap-4">
+            {/* Logo propio del Restaurante */}
+            {logoPreview ? (
+              <img
+                src={logoPreview}
+                alt={business?.name || 'Restaurante'}
+                className="h-14 w-14 rounded-xl border border-white/10 object-cover shadow-md"
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/5 text-2xl font-black text-orange-400">
+                {business?.name?.charAt(0) || 'R'}
+              </div>
+            )}
+
+            <div>
+              <h1 className="text-3xl font-black sm:text-4xl">{business ? business.name : 'Configura tu negocio'}</h1>
+              <p className="mt-1 text-sm text-slate-400">
+                Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.
+              </p>
+            </div>
+          </div>
         </div>
         <a className="btn btn-secondary w-full sm:w-auto" href="/dashboard">Volver al dashboard</a>
       </header>
 
-      {error && <p className="mt-5 rounded-lg bg-red-50 p-3 text-red-700">{error}</p>}
-      {message && <p className="mt-5 rounded-lg bg-green-50 p-3 text-green-700">{message}</p>}
+      {error && <p className="mt-5 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400">{error}</p>}
+      {message && <p className="mt-5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-emerald-400">{message}</p>}
 
       <section className="card mt-6 sm:mt-8">
         <h2 className="text-xl font-bold">1. Datos del negocio</h2>
@@ -270,6 +313,35 @@ export default function SettingsPage() {
             Razón social
             <input className="field mt-1" name="legal_name" defaultValue={business?.legal_name || ''} />
           </label>
+
+          {/* Subida de Logo Personalizado del Restaurante */}
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-slate-300">Logo del Restaurante</label>
+            <div className="mt-2 flex items-center gap-4">
+              {logoPreview ? (
+                <img
+                  src={logoPreview}
+                  alt="Vista previa del logo"
+                  className="h-16 w-16 rounded-xl border border-white/10 object-cover shadow"
+                />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/5 text-2xl font-bold text-orange-400">
+                  {business?.name?.charAt(0) || 'R'}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-1">
+                <input
+                  type="file"
+                  accept="image/png, image/jpeg, image/webp"
+                  onChange={handleImageChange}
+                  className="text-xs text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-500/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-orange-300 hover:file:bg-orange-500/30"
+                />
+                <span className="text-[11px] text-slate-500">Formatos: PNG, JPG o WEBP (Máx. 2 MB)</span>
+              </div>
+            </div>
+          </div>
+
           <label>
             País
             <input className="field mt-1" name="country" required maxLength={2} defaultValue={business?.country || 'ES'} />
@@ -411,7 +483,6 @@ export default function SettingsPage() {
               </div>
 
               <div className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-                {/* Paso 1 */}
                 <div className="rounded-xl border border-white/5 bg-slate-900/60 p-3.5">
                   <div className="flex items-center gap-2 font-semibold text-orange-300">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
@@ -424,7 +495,6 @@ export default function SettingsPage() {
                   </p>
                 </div>
 
-                {/* Paso 2 */}
                 <div className="rounded-xl border border-white/5 bg-slate-900/60 p-3.5">
                   <div className="flex items-center gap-2 font-semibold text-orange-300">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
@@ -463,7 +533,6 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-                {/* Paso 3 */}
                 <div className="rounded-xl border border-white/5 bg-slate-900/60 p-3.5">
                   <div className="flex items-center gap-2 font-semibold text-orange-300">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
@@ -509,7 +578,7 @@ export default function SettingsPage() {
                         Copiar URL NFC
                       </button>
 
-                      {/* Opción B: Botón de Tarjeta Completa + Botón de Solo QR */}
+                      {/* Botón único de Descargar Tarjeta Mesa */}
                       <a
                         className="btn btn-primary inline-flex items-center gap-1.5"
                         href={`${apiUrl}/public/locations/${location.public_token}/card.png`}
