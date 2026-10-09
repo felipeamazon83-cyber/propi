@@ -47,38 +47,37 @@ def generate_table_card_png(
     font_medium_path = os.path.join(ASSETS_DIR, "fonts", "Inter-Medium.ttf")
 
     try:
-        font_title = ImageFont.truetype(font_bold_path, 64)
-        font_sub = ImageFont.truetype(font_medium_path, 42)
+        font_title = ImageFont.truetype(font_bold_path, 60)
+        font_sub = ImageFont.truetype(font_medium_path, 40)
         font_cta = ImageFont.truetype(font_bold_path, 48)
         font_small = ImageFont.truetype(font_medium_path, 34)
     except IOError:
         try:
-            # En Pillow 9.2+ se puede definir tamaño en load_default()
-            font_title = ImageFont.load_default(size=64)
-            font_sub = ImageFont.load_default(size=42)
+            font_title = ImageFont.load_default(size=60)
+            font_sub = ImageFont.load_default(size=40)
             font_cta = ImageFont.load_default(size=48)
             font_small = ImageFont.load_default(size=34)
         except TypeError:
-            # Fallback para versiones anteriores de Pillow
             font_title = ImageFont.load_default()
             font_sub = ImageFont.load_default()
             font_cta = ImageFont.load_default()
             font_small = ImageFont.load_default()
 
-    # 3. Cargar Logo superior de Propi desde assets
+    # 3. Logo superior Propi con posición Y fija y sin choques
     logo_path = os.path.join(ASSETS_DIR, "propi-logo.png")
     if os.path.exists(logo_path):
         try:
             logo = Image.open(logo_path).convert("RGBA")
-            logo_w = 360
+            logo_w = 320
             aspect_ratio = logo.height / logo.width
             logo = logo.resize(
                 (logo_w, int(logo_w * aspect_ratio)), Image.Resampling.LANCZOS
             )
-            card.paste(logo, ((width - logo_w) // 2, 90), mask=logo)
+            # Colocado en Y=80 con transparencia
+            card.paste(logo, ((width - logo_w) // 2, 80), mask=logo)
         except Exception:
             draw.text(
-                (width // 2, 110),
+                (width // 2, 120),
                 "propi",
                 fill="#F97316",
                 font=font_title,
@@ -86,68 +85,38 @@ def generate_table_card_png(
             )
     else:
         draw.text(
-            (width // 2, 110),
+            (width // 2, 120),
             "propi",
             fill="#F97316",
             font=font_title,
             anchor="mm",
         )
 
-    # 4. Nombre de Negocio y Mesa en blanco/gris
+    # 4. Nombre de Negocio y Mesa (bajados a Y=310 y Y=385 para dejar espacio al logo)
     draw.text(
-        (width // 2, 270), business_name, fill="white", font=font_title, anchor="mm"
+        (width // 2, 310), business_name, fill="white", font=font_title, anchor="mm"
     )
     draw.text(
-        (width // 2, 345),
+        (width // 2, 385),
         location_name,
         fill="#94A3B8",
         font=font_sub,
         anchor="mm",
     )
 
-    # 5. Generar QR Naranja sobre fondo Blanco
+    # 5. Generar QR Naranja sobre fondo Blanco limpio (Sin icono central)
     qr = qrcode.QRCode(
         version=2,
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=16,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=15,
         border=2,
     )
     qr.add_data(url)
     qr.make(fit=True)
 
-    # QR Naranja (#F97316) con fondo Blanco
     qr_img = qr.make_image(fill_color="#F97316", back_color="white").convert(
         "RGBA"
     )
-
-    # Cargar corazón central desde assets si existe
-    heart_path = os.path.join(ASSETS_DIR, "propi-heart.png")
-    if os.path.exists(heart_path):
-        try:
-            heart = Image.open(heart_path).convert("RGBA")
-            heart_size = int(qr_img.width * 0.22)
-            heart = heart.resize(
-                (heart_size, heart_size), Image.Resampling.LANCZOS
-            )
-
-            # Fondo blanco para aislar el corazón dentro del QR
-            pad = 12
-            bg_heart = Image.new(
-                "RGBA", (heart_size + pad, heart_size + pad), "white"
-            )
-            pos_bg = (
-                (qr_img.width - (heart_size + pad)) // 2,
-                (qr_img.height - (heart_size + pad)) // 2,
-            )
-            qr_img.paste(bg_heart, pos_bg)
-
-            pos_heart = (
-                (qr_img.width - heart_size) // 2,
-                (qr_img.height - heart_size) // 2,
-            )
-            qr_img.paste(heart, pos_heart, mask=heart)
-        except Exception:
-            pass
 
     # Marco blanco alrededor del QR
     frame_padding = 36
@@ -157,11 +126,11 @@ def generate_table_card_png(
     frame.paste(qr_img, (frame_padding, frame_padding))
 
     qr_x = (width - frame_w) // 2
-    card.paste(frame, (qr_x, 430))
+    card.paste(frame, (qr_x, 460))
 
-    # 6. Texto inferior simplificado
+    # 6. Texto inferior limpio
     draw.text(
-        (width // 2, 1380),
+        (width // 2, 1400),
         "DEJA AQUI TU PROPINA",
         fill="#F97316",
         font=font_cta,
@@ -169,7 +138,7 @@ def generate_table_card_png(
     )
 
     draw.text(
-        (width // 2, 1470),
+        (width // 2, 1485),
         "Escanea con tu camara o acerca tu movil",
         fill="#94A3B8",
         font=font_small,
