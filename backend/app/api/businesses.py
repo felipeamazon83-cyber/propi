@@ -74,6 +74,12 @@ def create_business(
     return {
         "id": str(business.id),
         "name": business.name,
+        "legal_name": business.legal_name,
+        "logo_url": business.logo_url,
+        "country": business.country,
+        "currency": business.currency,
+        "fee_payer": fee_payer_val,
+        "stripe_connected": bool(business.stripe_account_id),
     }
 
 
@@ -254,5 +260,10 @@ def update_business(
     return {
         "id": str(business.id),
         "name": business.name,
+        "legal_name": business.legal_name,
+        "logo_url": business.logo_url,
+        "country": business.country,
+        "currency": business.currency,
         "fee_payer": current_fee_payer,
+        "stripe_connected": bool(business.stripe_account_id),
     }
