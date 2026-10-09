@@ -366,10 +366,10 @@ export default function SettingsPage() {
             <input className="field mt-1" name="currency" required maxLength={3} defaultValue={business?.currency || 'EUR'} />
           </label>
           <label className="sm:col-span-2">
-            Asignación de comisión por servicio (0,20 €)
+            Asignación de comisión por servicio
             <select className="field mt-1" name="fee_payer" defaultValue={business?.fee_payer || 'business'}>
               <option value="business">El Restaurante (Se descuenta del total recaudado)</option>
-              <option value="customer">El Cliente (Se añade un cargo extra de 0,20 € en la pasarela de pago)</option>
+              <option value="customer">El Cliente (Se le añade un recargo de 0,10 € + gastos de procesamiento al pagar)</option>
             </select>
           </label>
           <button className="btn btn-primary sm:col-span-2">{business ? 'Guardar datos' : 'Crear mi negocio'}</button>
