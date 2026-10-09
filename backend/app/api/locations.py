@@ -77,7 +77,7 @@ def get_location_card(public_token: str, db: Session = Depends(get_db)):
     )
     business_name = business.name if business else ""
 
-    url = f"{settings.app_url}/r/{location.public_token}"
+    url = f"{settings.app_url}/l/{location.public_token}"
     img_bytes = qr_service.generate_table_card_png(
         url=url,
         location_name=location.name,
