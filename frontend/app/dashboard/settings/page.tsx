@@ -266,15 +266,14 @@ export default function SettingsPage() {
 
   return (
     <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
-      <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+   <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="flex items-center gap-3">
-            {/* Logo Estático de Propi */}
-            <img className="h-8 w-auto object-contain" src="/propi-logo.png" alt="Propi" />
-            <span className="text-sm font-bold text-orange-300">· Configuración</span>
+          {/* Título sin el logo de Propi */}
+          <p className="text-sm font-bold text-orange-300">
+            · Configuración
           </p>
 
-          <div className="mt-4 flex items-center gap-4">
+          <div className="mt-3 flex items-center gap-4">
             {/* Logo propio del Restaurante */}
             {logoPreview ? (
               <img
@@ -296,7 +295,23 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-        <a className="btn btn-secondary w-full sm:w-auto" href="/dashboard">Volver al dashboard</a>
+
+        {/* Botones a la derecha: Dashboard + Cerrar Sesión */}
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <a className="btn btn-secondary w-full sm:w-auto" href="/dashboard">
+            Volver al dashboard
+          </a>
+          <button
+            type="button"
+            className="btn border border-red-500/20 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20 w-full sm:w-auto"
+            onClick={() => {
+              localStorage.removeItem('token');
+              window.location.href = '/login';
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </header>
 
       {error && <p className="mt-5 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400">{error}</p>}
