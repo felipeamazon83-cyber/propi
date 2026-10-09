@@ -6,6 +6,7 @@ import { api } from '../../lib/api';
 type Business = {
   id: string;
   name: string;
+  logo_url?: string | null;
   currency: string;
 };
 
@@ -143,23 +144,53 @@ export default function DashboardPage() {
 
   return (
     <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
-      {/* Cabecera / Marca */}
+      {/* Cabecera / Marca con Logo del Restaurante y Botón Cerrar Sesión */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="flex items-center gap-3">
-            <img className="brand-logo-image" src="/propi-logo.png" alt="Propi" />
-            <span className="text-sm font-bold text-orange-300">· Dashboard</span>
+          <p className="text-sm font-bold text-orange-300">
+            · Dashboard
           </p>
-          <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">
-            {business ? business.name : 'Configura tu negocio'}
-          </h1>
-          <p className="mt-2 text-slate-400">
-            Consulta el rendimiento de tu equipo y gestiona el pago de propinas.
-          </p>
+
+          <div className="mt-3 flex items-center gap-4">
+            {/* Logo propio del Restaurante o Avatar por defecto */}
+            {business?.logo_url ? (
+              <img
+                src={business.logo_url}
+                alt={business.name}
+                className="h-14 w-14 rounded-xl border border-white/10 object-cover shadow-md"
+              />
+            ) : (
+              <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/5 text-2xl font-black text-orange-400">
+                {business?.name?.charAt(0) || 'R'}
+              </div>
+            )}
+
+            <div>
+              <h1 className="text-3xl font-black text-white sm:text-4xl">
+                {business ? business.name : 'Configura tu negocio'}
+              </h1>
+              <p className="mt-1 text-sm text-slate-400">
+                Consulta el rendimiento de tu equipo y gestiona el pago de propinas.
+              </p>
+            </div>
+          </div>
         </div>
-        <a className="btn btn-secondary w-full sm:w-auto" href="/dashboard/settings">
-          Ajustes del negocio
-        </a>
+
+        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+          <a className="btn btn-secondary w-full sm:w-auto" href="/dashboard/settings">
+            Ajustes del negocio
+          </a>
+          <button
+            type="button"
+            className="btn border border-red-500/20 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20 w-full sm:w-auto"
+            onClick={() => {
+              localStorage.removeItem('token');
+              window.location.href = '/login';
+            }}
+          >
+            Cerrar sesión
+          </button>
+        </div>
       </div>
 
       {/* Mensajes Globales */}
