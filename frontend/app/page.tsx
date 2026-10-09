@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LanguageSwitcher } from '../components/language-switcher';
 
 const steps = [
   ['01', 'Crea tu negocio', 'Configura tu perfil y deja todo listo en minutos.'],
@@ -25,7 +26,8 @@ export default function Home() {
           <Link href="/" className="brand-logo brand-logo-hero" aria-label="Propi">
             <img src="/propi-logo.png" alt="Propi · Propinas que hacen la diferencia" />
           </Link>
-          <div className="landing-header-actions flex items-center gap-2">
+          <div className="landing-header-actions flex items-center gap-3">
+            <LanguageSwitcher />
             <Link className="hidden btn btn-secondary w-auto sm:inline-flex" href="#precios">
               Precios
             </Link>
