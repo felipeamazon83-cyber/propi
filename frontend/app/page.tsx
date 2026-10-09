@@ -44,7 +44,7 @@ export default function Home() {
             <span className="text-orange-400">gracias cuente.</span>
           </h1>
           <p className="mx-auto mt-7 max-w-2xl text-lg leading-8 text-slate-300">
-            Propi ayuda a restaurantes, hoteles y equipos de servicio a recibir propinas digitales con una experiencia sencilla, segura y memorable.
+            Propi ayuda a restaurantes, hoteles y equipos de servicio a recibir propinas digitales con una experiencia sencilla y segura.
           </p>
           <div className="mt-9 flex flex-col justify-center gap-3 sm:flex-row">
             <Link className="btn btn-primary w-auto" href="/register">
