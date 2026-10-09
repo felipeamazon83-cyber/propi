@@ -1,9 +1,13 @@
+import os
 import io
 import qrcode
 from PIL import Image, ImageDraw, ImageFont
 
+# Definir la ruta base del proyecto para no fallar en Render/Linux
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+ASSETS_DIR = os.path.join(BASE_DIR, "assets")
 
-# --- Función original para el QR simple ---
+
 def png(url: str) -> bytes:
     qr = qrcode.QRCode(
         version=1,
@@ -20,62 +24,67 @@ def png(url: str) -> bytes:
     return buffer.getvalue()
 
 
-# --- Nueva función para la tarjeta/peana de mesa (A6 300 DPI) ---
 def generate_table_card_png(
     url: str, location_name: str, business_name: str
 ) -> bytes:
-    # 1. Tamaño A6 en píxeles a 300 DPI (alta resolución para imprenta)
+    # Canvas A6 a 300 DPI (Fondo Blanco Limpio)
     width, height = 1240, 1748
-    card = Image.new("RGBA", (width, height), "#0F172A")
+    card = Image.new("RGBA", (width, height), "white")
     draw = ImageDraw.Draw(card)
 
-    # 2. Cargar fuentes con respaldo en caso de no encontrar archivos .ttf
-    try:
-        font_title = ImageFont.truetype("assets/fonts/Inter-Bold.ttf", 64)
-        font_sub = ImageFont.truetype("assets/fonts/Inter-Medium.ttf", 42)
-        font_cta = ImageFont.truetype("assets/fonts/Inter-Bold.ttf", 40)
-        font_small = ImageFont.truetype("assets/fonts/Inter-Regular.ttf", 34)
-    except IOError:
-        font_title = ImageFont.load_default()
-        font_sub = ImageFont.load_default()
-        font_cta = ImageFont.load_default()
-        font_small = ImageFont.load_default()
+    # Rutas absolutas a fuentes
+    font_bold_path = os.path.join(ASSETS_DIR, "fonts", "Inter-Bold.ttf")
+    font_medium_path = os.path.join(ASSETS_DIR, "fonts", "Inter-Medium.ttf")
 
-    # 3. Logo o texto superior de Propi
+    # Intentar cargar tipografías en tamaños gigantes para 300 DPI
     try:
-        logo = Image.open("assets/propi-logo.png").convert("RGBA")
-        logo_w = 340
+        font_title = ImageFont.truetype(font_bold_path, 65)
+        font_sub = ImageFont.truetype(font_medium_path, 45)
+        font_cta = ImageFont.truetype(font_bold_path, 42)
+        font_small = ImageFont.truetype(font_medium_path, 36)
+    except IOError:
+        # Respaldo con tamaño proporcional en caso de no existir .ttf
+        font_title = ImageFont.load_default(size=65)
+        font_sub = ImageFont.load_default(size=45)
+        font_cta = ImageFont.load_default(size=42)
+        font_small = ImageFont.load_default(size=36)
+
+    # 1. Logo superior Propi
+    logo_path = os.path.join(ASSETS_DIR, "propi-logo.png")
+    if os.path.exists(logo_path):
+        logo = Image.open(logo_path).convert("RGBA")
+        logo_w = 380
         aspect_ratio = logo.height / logo.width
         logo = logo.resize(
             (logo_w, int(logo_w * aspect_ratio)), Image.Resampling.LANCZOS
         )
-        card.paste(logo, ((width - logo_w) // 2, 100), mask=logo)
-    except IOError:
+        card.paste(logo, ((width - logo_w) // 2, 90), mask=logo)
+    else:
         draw.text(
-            (width // 2, 120),
-            "🧡 propi",
+            (width // 2, 110),
+            "propi",
             fill="#F97316",
             font=font_title,
             anchor="mm",
         )
 
-    # 4. Nombres del negocio y la ubicación/mesa
+    # 2. Textos de Encabezado (Azul Marino y Gris)
     draw.text(
-        (width // 2, 280), business_name, fill="white", font=font_title, anchor="mm"
+        (width // 2, 270), business_name, fill="#0F172A", font=font_title, anchor="mm"
     )
     draw.text(
         (width // 2, 350),
         location_name,
-        fill="#94A3B8",
+        fill="#64748B",
         font=font_sub,
         anchor="mm",
     )
 
-    # 5. Generar QR de alta precisión
+    # 3. Código QR Ajustado (Azul Marino sobre Fondo Blanco)
     qr = qrcode.QRCode(
         version=2,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=18,
+        box_size=15,
         border=2,
     )
     qr.add_data(url)
@@ -84,31 +93,38 @@ def generate_table_card_png(
         "RGBA"
     )
 
-    # Insertar logo del corazón en el centro del QR si existe
-    try:
-        heart = Image.open("assets/propi-heart.png").convert("RGBA")
-        heart_size = int(qr_img.width * 0.22)
+    # Insertar corazón en el centro si existe la imagen
+    heart_path = os.path.join(ASSETS_DIR, "propi-heart.png")
+    if os.path.exists(heart_path):
+        heart = Image.open(heart_path).convert("RGBA")
+        heart_size = int(qr_img.width * 0.24)
         heart = heart.resize(
             (heart_size, heart_size), Image.Resampling.LANCZOS
         )
-        pos = ((qr_img.width - heart_size) // 2, (qr_img.height - heart_size) // 2)
-        qr_img.paste(heart, pos, mask=heart)
-    except IOError:
-        pass
+        
+        # Fondo blanco redondo/cuadrado detrás del corazón para que no choque con los módulos del QR
+        bg_heart = Image.new("RGBA", (heart_size + 10, heart_size + 10), "white")
+        pos_bg = ((qr_img.width - (heart_size + 10)) // 2, (qr_img.height - (heart_size + 10)) // 2)
+        qr_img.paste(bg_heart, pos_bg)
 
-    # Marco blanco alrededor del QR
-    frame_padding = 40
-    frame_w = qr_img.width + (frame_padding * 2)
-    frame_h = qr_img.height + (frame_padding * 2)
-    frame = Image.new("RGBA", (frame_w, frame_h), "white")
-    frame.paste(qr_img, (frame_padding, frame_padding))
+        pos_heart = ((qr_img.width - heart_size) // 2, (qr_img.height - heart_size) // 2)
+        qr_img.paste(heart, pos_heart, mask=heart)
+
+    # Marco con borde azul marino elegante
+    border_width = 4
+    frame_w = qr_img.width + 40
+    frame_h = qr_img.height + 40
+    frame = Image.new("RGBA", (frame_w, frame_h), "#0F172A")
+    inner_white = Image.new("RGBA", (frame_w - (border_width * 2), frame_h - (border_width * 2)), "white")
+    frame.paste(inner_white, (border_width, border_width))
+    frame.paste(qr_img, (20, 20))
 
     qr_x = (width - frame_w) // 2
-    card.paste(frame, (qr_x, 440))
+    card.paste(frame, (qr_x, 430))
 
-    # 6. Textos inferiores de llamada a la acción
+    # 4. Textos Inferiores Llamativos (Naranja y Azul Marino)
     draw.text(
-        (width // 2, 1340),
+        (width // 2, 1330),
         "¿TE HA GUSTADO EL SERVICIO?",
         fill="#F97316",
         font=font_cta,
@@ -116,22 +132,22 @@ def generate_table_card_png(
     )
 
     draw.text(
-        (width // 2, 1430),
+        (width // 2, 1420),
         "Escanea con tu cámara",
-        fill="white",
+        fill="#0F172A",
         font=font_sub,
         anchor="mm",
     )
 
     draw.text(
-        (width // 2, 1500),
-        "o acerca tu móvil aquí 📲",
-        fill="#94A3B8",
+        (width // 2, 1490),
+        "o acerca tu móvil aquí para dejar propina",
+        fill="#64748B",
         font=font_small,
         anchor="mm",
     )
 
-    # 7. Retornar en formato PNG
+    # 5. Exportar PNG a 300 DPI
     buffer = io.BytesIO()
     card.save(buffer, format="PNG", dpi=(300, 300))
     return buffer.getvalue()
