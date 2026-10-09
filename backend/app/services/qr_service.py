@@ -42,7 +42,7 @@ def generate_table_card_png(
     card = Image.new("RGBA", (width, height), "#0F172A")
     draw = ImageDraw.Draw(card)
 
-    # 2. Tipografías proporcionales grandes
+    # 2. Carga de tipografías con respaldo de tamaño para Pillow
     font_bold_path = os.path.join(ASSETS_DIR, "fonts", "Inter-Bold.ttf")
     font_medium_path = os.path.join(ASSETS_DIR, "fonts", "Inter-Medium.ttf")
 
@@ -52,10 +52,18 @@ def generate_table_card_png(
         font_cta = ImageFont.truetype(font_bold_path, 48)
         font_small = ImageFont.truetype(font_medium_path, 34)
     except IOError:
-        font_title = ImageFont.load_default()
-        font_sub = ImageFont.load_default()
-        font_cta = ImageFont.load_default()
-        font_small = ImageFont.load_default()
+        try:
+            # En Pillow 9.2+ se puede definir tamaño en load_default()
+            font_title = ImageFont.load_default(size=64)
+            font_sub = ImageFont.load_default(size=42)
+            font_cta = ImageFont.load_default(size=48)
+            font_small = ImageFont.load_default(size=34)
+        except TypeError:
+            # Fallback para versiones anteriores de Pillow
+            font_title = ImageFont.load_default()
+            font_sub = ImageFont.load_default()
+            font_cta = ImageFont.load_default()
+            font_small = ImageFont.load_default()
 
     # 3. Cargar Logo superior de Propi desde assets
     logo_path = os.path.join(ASSETS_DIR, "propi-logo.png")
