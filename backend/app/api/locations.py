@@ -31,7 +31,7 @@ def serialize(location: Location):
         ),
         "employee_percentage": float(location.employee_percentage),
         "suggested_amounts": location.suggested_amounts,
-        "url": f"{settings.app_url}/r/{location.public_token}",
+        "url": f"{settings.app_url}/l/{location.public_token}",
     }
 
 
