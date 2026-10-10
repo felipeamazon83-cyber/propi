@@ -84,7 +84,7 @@ export default function SettingsPage() {
         return;
       }
 
-      // Consulta directa al nuevo endpoint unificado
+      // Consulta directa al endpoint unificado
       const summary = await api<SettingsSummary>(
         `/businesses/${businesses[0].id}/settings-summary`,
         {},
@@ -235,34 +235,26 @@ export default function SettingsPage() {
     }
   }
 
-  // Función corregida y unificada para la activación de IBAN de empleados
+  // Función sincronizada exactamente con el endpoint GET de FastAPI en employee.py
   async function handleReissueLink(employee: Employee) {
     if (!business) return;
 
     try {
-      let url = employee.onboarding_url;
-
-      if (!url) {
-        try {
-          const res = await api<{ onboarding_url: string }>(
-            `/businesses/${business.id}/employees/${employee.id}/onboarding-link`,
-            {},
-            true
-          );
-          url = res.onboarding_url;
-        } catch {
-          // Fallback al endpoint secundario si el primero no está presente
-          const res = await api<{ onboarding_url: string }>(
-            `/businesses/${business.id}/employees/${employee.id}/stripe-onboarding`,
-            { method: 'POST' },
-            true
-          );
-          url = res.onboarding_url;
-        }
+      // 1. Si el objeto ya posee un enlace en memoria, se reutiliza
+      if (employee.onboarding_url) {
+        setActiveModalLink({ name: employee.name, url: employee.onboarding_url });
+        return;
       }
 
-      if (url) {
-        setActiveModalLink({ name: employee.name, url });
+      // 2. Llamada GET al router definido en FastAPI (@router.get("/{employee_id}/onboarding-link"))
+      const res = await api<{ onboarding_url: string }>(
+        `/businesses/${business.id}/employees/${employee.id}/onboarding-link`,
+        { method: 'GET' },
+        true
+      );
+
+      if (res?.onboarding_url) {
+        setActiveModalLink({ name: employee.name, url: res.onboarding_url });
       } else {
         showMessage('No se pudo obtener el enlace de registro de Stripe.', true);
       }
@@ -270,7 +262,7 @@ export default function SettingsPage() {
       showMessage(
         caught instanceof Error
           ? caught.message
-          : 'No se pudo generar un nuevo enlace de vinculación.',
+          : 'No se pudo generar el enlace de vinculación.',
         true
       );
     }
