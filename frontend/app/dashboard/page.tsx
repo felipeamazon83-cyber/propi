@@ -184,21 +184,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-          <a className="btn btn-secondary w-full sm:w-auto" href="/dashboard/settings">
-            Ajustes del negocio
-          </a>
-          <button
-            type="button"
-            className="btn border border-red-500/20 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20 w-full sm:w-auto"
-            onClick={() => {
-              localStorage.removeItem('token');
-              window.location.href = '/login';
-            }}
-          >
-            Cerrar sesión
-          </button>
-        </div>
+
       </div>
 
       {/* Mensajes Globales */}
