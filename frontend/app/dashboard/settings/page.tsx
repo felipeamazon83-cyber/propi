@@ -296,22 +296,7 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        {/* Botones a la derecha: Dashboard + Cerrar Sesión */}
-        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-          <a className="btn btn-secondary w-full sm:w-auto" href="/dashboard">
-            Volver al dashboard
-          </a>
-          <button
-            type="button"
-            className="btn border border-red-500/20 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20 w-full sm:w-auto"
-            onClick={() => {
-              localStorage.removeItem('token');
-              window.location.href = '/login';
-            }}
-          >
-            Cerrar sesión
-          </button>
-        </div>
+        
       </header>
 
       {error && <p className="mt-5 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400">{error}</p>}
