@@ -361,7 +361,7 @@ export default function SettingsPage() {
           </label>
 
           <label className="sm:col-span-2 block">
-            ¿Quién asume los costes del servicio (0,10 € + comisión de procesamiento)?
+            ¿Quién asume los costes del servicio?
             <p className="mt-1 text-xs font-normal text-slate-400">
               Define si la tasa de gestión y procesamiento la cubre el negocio o se añade al total que paga el cliente.
             </p>
