@@ -235,16 +235,37 @@ export default function SettingsPage() {
     }
   }
 
+  // Función corregida y unificada para la activación de IBAN de empleados
   async function handleReissueLink(employee: Employee) {
     if (!business) return;
 
     try {
-      const res = await api<{ onboarding_url: string }>(
-        `/businesses/${business.id}/employees/${employee.id}/onboarding-link`,
-        {},
-        true
-      );
-      setActiveModalLink({ name: employee.name, url: res.onboarding_url });
+      let url = employee.onboarding_url;
+
+      if (!url) {
+        try {
+          const res = await api<{ onboarding_url: string }>(
+            `/businesses/${business.id}/employees/${employee.id}/onboarding-link`,
+            {},
+            true
+          );
+          url = res.onboarding_url;
+        } catch {
+          // Fallback al endpoint secundario si el primero no está presente
+          const res = await api<{ onboarding_url: string }>(
+            `/businesses/${business.id}/employees/${employee.id}/stripe-onboarding`,
+            { method: 'POST' },
+            true
+          );
+          url = res.onboarding_url;
+        }
+      }
+
+      if (url) {
+        setActiveModalLink({ name: employee.name, url });
+      } else {
+        showMessage('No se pudo obtener el enlace de registro de Stripe.', true);
+      }
     } catch (caught) {
       showMessage(
         caught instanceof Error
@@ -262,19 +283,17 @@ export default function SettingsPage() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  if (loading) return <main className="glow mx-auto min-h-screen max-w-5xl p-5 sm:p-8">Cargando configuración…</main>;
+  if (loading) return <main className="glow mx-auto min-h-screen max-w-5xl p-5 sm:p-8 text-slate-300">Cargando configuración…</main>;
 
   return (
     <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
-   <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+      <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          {/* Título sin el logo de Propi */}
           <p className="text-sm font-bold text-orange-300">
             · Configuración
           </p>
 
           <div className="mt-3 flex items-center gap-4">
-            {/* Logo propio del Restaurante */}
             {logoPreview ? (
               <img
                 src={logoPreview}
@@ -288,22 +307,20 @@ export default function SettingsPage() {
             )}
 
             <div>
-              <h1 className="text-3xl font-black sm:text-4xl">{business ? business.name : 'Configura tu negocio'}</h1>
+              <h1 className="text-3xl font-black sm:text-4xl text-white">{business ? business.name : 'Configura tu negocio'}</h1>
               <p className="mt-1 text-sm text-slate-400">
                 Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.
               </p>
             </div>
           </div>
         </div>
-
-        
       </header>
 
       {error && <p className="mt-5 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400">{error}</p>}
       {message && <p className="mt-5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-emerald-400">{message}</p>}
 
       <section className="card mt-6 sm:mt-8">
-        <h2 className="text-xl font-bold">1. Datos del negocio</h2>
+        <h2 className="text-xl font-bold text-white">1. Datos del negocio</h2>
         <form onSubmit={saveBusiness} className="mt-4 grid gap-3 sm:grid-cols-2">
           <label>
             Nombre comercial
@@ -314,7 +331,7 @@ export default function SettingsPage() {
             <input className="field mt-1" name="legal_name" defaultValue={business?.legal_name || ''} />
           </label>
 
-          {/* Subida de Logo Personalizado del Restaurante */}
+          {/* Subida de Logo Personalizado */}
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-slate-300">Logo del Restaurante</label>
             <div className="mt-2 flex items-center gap-4">
@@ -350,21 +367,31 @@ export default function SettingsPage() {
             Moneda
             <input className="field mt-1" name="currency" required maxLength={3} defaultValue={business?.currency || 'EUR'} />
           </label>
-          <label className="sm:col-span-2">
-            Asignación de comisión por servicio
-            <select className="field mt-1" name="fee_payer" defaultValue={business?.fee_payer || 'business'}>
+
+          <label className="sm:col-span-2 block">
+            ¿Quién asume los costes del servicio (0,10 € + comisión de procesamiento)?
+            <p className="mt-1 text-xs font-normal text-slate-400">
+              Define si la tasa de gestión y procesamiento la cubre el negocio o se añade al total que paga el cliente.
+            </p>
+            <select
+              className="field mt-2 w-full"
+              name="fee_payer"
+              key={business?.fee_payer || 'business'}
+              defaultValue={business?.fee_payer || 'business'}
+            >
               <option value="business">El Restaurante (Se descuenta del total recaudado)</option>
               <option value="customer">El Cliente (Se le añade un recargo de 0,10 € + gastos de procesamiento al pagar)</option>
             </select>
           </label>
+
           <button className="btn btn-primary sm:col-span-2">{business ? 'Guardar datos' : 'Crear mi negocio'}</button>
         </form>
       </section>
 
-     {business && (
+      {business && (
         <>
           <section className="card mt-5">
-            <h2 className="text-xl font-bold">2. Equipo y cuenta de cobro</h2>
+            <h2 className="text-xl font-bold text-white">2. Equipo y cuenta de cobro</h2>
             <p className="mt-1 text-sm text-slate-400">
               Stripe recopila las cuentas bancarias de forma segura; Propi nunca las almacena.
             </p>
@@ -403,35 +430,9 @@ export default function SettingsPage() {
                     ) : (
                       <button
                         type="button"
-                        onClick={async () => {
-                          try {
-                            // Intentar abrir el enlace directo si handleReissueLink o la API devuelve la URL
-                            if (typeof handleReissueLink === 'function') {
-                              const res = await handleReissueLink(employee);
-                              if (res?.onboarding_url) {
-                                window.location.href = res.onboarding_url;
-                                return;
-                              }
-                            }
-
-                            // Fallback directo a la API de onboarding del empleado
-                            const result = await api<{ onboarding_url: string }>(
-                              `/businesses/${business.id}/employees/${employee.id}/stripe-onboarding`,
-                              { method: 'POST' },
-                              true
-                            );
-                            if (result?.onboarding_url) {
-                              window.location.href = result.onboarding_url;
-                            }
-                          } catch (err) {
-                            showMessage(
-                              err instanceof Error ? err.message : 'No se pudo abrir el enlace de onboarding.',
-                              true
-                            );
-                          }
-                        }}
+                        onClick={() => void handleReissueLink(employee)}
                         className="ml-1 flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2.5 py-0.5 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-500/30 active:scale-95 cursor-pointer"
-                        title="Haz clic para vincular el IBAN del empleado"
+                        title="Haz clic para ver o copiar el enlace de vinculación de IBAN"
                       >
                         <span>Pendiente IBAN</span>
                         <span>🔗</span>
@@ -460,7 +461,7 @@ export default function SettingsPage() {
           </section>
 
           <section className="card mt-5">
-            <h2 className="text-xl font-bold">3. Mesa, QR y NFC</h2>
+            <h2 className="text-xl font-bold text-white">3. Mesa, QR y NFC</h2>
             <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={addLocation}>
               <input className="field" name="name" required placeholder="Mesa 1 / Barra / Terraza" />
               <select className="field" name="type">
@@ -496,7 +497,6 @@ export default function SettingsPage() {
               </button>
             </form>
 
-            {/* Guía interactiva de configuración NFC */}
             <div className="mt-6 rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4 sm:p-5">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/20 text-lg">
@@ -582,8 +582,8 @@ export default function SettingsPage() {
                   : location.url;
 
                 return (
-                  <article className="rounded-xl border border-gray-200 p-4" key={location.id}>
-                    <b>{location.name}</b>
+                  <article className="rounded-xl border border-white/10 bg-white/5 p-4" key={location.id}>
+                    <b className="text-white">{location.name}</b>
                     <p className="mt-1 text-sm text-slate-400">
                       {location.distribution_mode} · {location.employee_percentage}% empleado ·{' '}
                       {location.suggested_amounts.join(' €, ')} €
@@ -604,7 +604,6 @@ export default function SettingsPage() {
                         Copiar URL NFC
                       </button>
 
-                      {/* Botón único de Descargar Tarjeta Mesa */}
                       <a
                         className="btn btn-primary inline-flex items-center gap-1.5"
                         href={`${apiUrl}/public/locations/${location.public_token}/card.png`}
