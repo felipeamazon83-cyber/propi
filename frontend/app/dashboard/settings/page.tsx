@@ -235,18 +235,11 @@ export default function SettingsPage() {
     }
   }
 
-  // Función sincronizada exactamente con el endpoint GET de FastAPI en employee.py
+  // Función corregida: Siempre solicita un enlace GET fresco al backend y maneja caducidades
   async function handleReissueLink(employee: Employee) {
     if (!business) return;
 
     try {
-      // 1. Si el objeto ya posee un enlace en memoria, se reutiliza
-      if (employee.onboarding_url) {
-        setActiveModalLink({ name: employee.name, url: employee.onboarding_url });
-        return;
-      }
-
-      // 2. Llamada GET al router definido en FastAPI (@router.get("/{employee_id}/onboarding-link"))
       const res = await api<{ onboarding_url: string }>(
         `/businesses/${business.id}/employees/${employee.id}/onboarding-link`,
         { method: 'GET' },
@@ -259,12 +252,20 @@ export default function SettingsPage() {
         showMessage('No se pudo obtener el enlace de registro de Stripe.', true);
       }
     } catch (caught) {
-      showMessage(
-        caught instanceof Error
-          ? caught.message
-          : 'No se pudo generar el enlace de vinculación.',
-        true
-      );
+      const errorMsg = caught instanceof Error ? caught.message : '';
+
+      if (
+        errorMsg.includes('caducado') ||
+        errorMsg.includes('400') ||
+        errorMsg.includes('404')
+      ) {
+        showMessage(
+          `El enlace de vinculación para ${employee.name} ha caducado o no se completó. Por favor, elimina al empleado (pulsando la ✕) y vuelve a añadirlo para generar un enlace totalmente nuevo.`,
+          true
+        );
+      } else {
+        showMessage(errorMsg || 'No se pudo generar el enlace de vinculación.', true);
+      }
     }
   }
 
