@@ -53,15 +53,18 @@ def create_employee(
 ):
     business = owned_business(business_id, user, db)
 
-    # 1. Crear la cuenta Express del empleado en Stripe Connect
     stripe_account_id = None
     onboarding_url = None
 
     try:
+        # 1. Crear la cuenta Express individual para el empleado
         stripe_account = stripe.Account.create(
             type="express",
             country=business.country or "ES",
-            capabilities={"transfers": {"requested": True}},
+            business_type="individual",  # Le indica a Stripe que es una persona física (empleado)
+            capabilities={
+                "transfers": {"requested": True},
+            },
             metadata={
                 "business_id": str(business.id),
                 "employee_name": payload.name,
@@ -69,12 +72,13 @@ def create_employee(
         )
         stripe_account_id = stripe_account.id
 
-        # 2. Generar el enlace de vinculación para que el empleado configure su IBAN
+        # 2. Generar el enlace de onboarding
         account_link = stripe.AccountLink.create(
             account=stripe_account.id,
-            refresh_url=f"{settings.app_url}/dashboard?onboarding=refresh",
-            return_url=f"{settings.app_url}/dashboard?onboarding=success",
+            refresh_url=f"{settings.app_url}/dashboard/settings?onboarding=refresh",
+            return_url=f"{settings.app_url}/dashboard/settings?onboarding=success",
             type="account_onboarding",
+            collection_options={"fields": "currently_due"},  # Exige rellenar datos pendientes (IBAN)
         )
         onboarding_url = account_link.url
     except Exception as exc:
@@ -101,7 +105,7 @@ def create_employee(
         "active": employee.active,
         "stripe_account_id": employee.stripe_account_id,
         "stripe_onboarding_completed": employee.stripe_onboarding_completed,
-        "onboarding_url": onboarding_url,  # Enlace devuelto para compartir con el empleado
+        "onboarding_url": onboarding_url,
     }
 
 
@@ -112,7 +116,7 @@ def get_employee_onboarding_link(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    """Genera un nuevo enlace de onboarding si el anterior caducó o el empleado lo solicita de nuevo."""
+    """Genera un nuevo enlace de onboarding. Si el empleado no tenía cuenta de Stripe, la crea automáticamente."""
     business = owned_business(business_id, user, db)
 
     try:
@@ -130,18 +134,34 @@ def get_employee_onboarding_link(
         )
     )
 
-    if not employee or not employee.stripe_account_id:
+    if not employee:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Empleado o cuenta de Stripe no encontrada",
+            detail="Empleado no encontrado",
         )
 
     try:
+        # Recuperación automática: Si la cuenta de Stripe no existía previa a esta llamada, la genera
+        if not employee.stripe_account_id:
+            stripe_account = stripe.Account.create(
+                type="express",
+                country=business.country or "ES",
+                business_type="individual",
+                capabilities={"transfers": {"requested": True}},
+                metadata={
+                    "business_id": str(business.id),
+                    "employee_name": employee.name,
+                },
+            )
+            employee.stripe_account_id = stripe_account.id
+            db.commit()
+
         account_link = stripe.AccountLink.create(
             account=employee.stripe_account_id,
-            refresh_url=f"{settings.app_url}/dashboard?onboarding=refresh",
-            return_url=f"{settings.app_url}/dashboard?onboarding=success",
+            refresh_url=f"{settings.app_url}/dashboard/settings?onboarding=refresh",
+            return_url=f"{settings.app_url}/dashboard/settings?onboarding=success",
             type="account_onboarding",
+            collection_options={"fields": "currently_due"},
         )
         return {"onboarding_url": account_link.url}
     except Exception as exc:
@@ -222,12 +242,10 @@ def delete_employee(
             detail="Empleado no encontrado",
         )
 
-    # Eliminar o desvincular la cuenta en Stripe Connect si existe
     if employee.stripe_account_id:
         try:
             stripe.Account.delete(employee.stripe_account_id)
         except Exception:
-            # Por si ya fue eliminada o no permite borrado físico en modo prueba
             pass
 
     db.delete(employee)
