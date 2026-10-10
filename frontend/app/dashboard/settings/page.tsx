@@ -361,12 +361,12 @@ export default function SettingsPage() {
         </form>
       </section>
 
-      {business && (
+     {business && (
         <>
           <section className="card mt-5">
             <h2 className="text-xl font-bold">2. Equipo y cuenta de cobro</h2>
             <p className="mt-1 text-sm text-slate-400">
-              Stripe recopila las cuentas bancarias de forma segura; TIP nunca las almacena.
+              Stripe recopila las cuentas bancarias de forma segura; Propi nunca las almacena.
             </p>
             <button
               className="btn btn-secondary mt-3"
@@ -403,9 +403,35 @@ export default function SettingsPage() {
                     ) : (
                       <button
                         type="button"
-                        onClick={() => handleReissueLink(employee)}
-                        className="ml-1 flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2.5 py-0.5 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-500/30"
-                        title="Haz clic para ver o copiar el enlace de vinculación"
+                        onClick={async () => {
+                          try {
+                            // Intentar abrir el enlace directo si handleReissueLink o la API devuelve la URL
+                            if (typeof handleReissueLink === 'function') {
+                              const res = await handleReissueLink(employee);
+                              if (res?.onboarding_url) {
+                                window.location.href = res.onboarding_url;
+                                return;
+                              }
+                            }
+
+                            // Fallback directo a la API de onboarding del empleado
+                            const result = await api<{ onboarding_url: string }>(
+                              `/businesses/${business.id}/employees/${employee.id}/stripe-onboarding`,
+                              { method: 'POST' },
+                              true
+                            );
+                            if (result?.onboarding_url) {
+                              window.location.href = result.onboarding_url;
+                            }
+                          } catch (err) {
+                            showMessage(
+                              err instanceof Error ? err.message : 'No se pudo abrir el enlace de onboarding.',
+                              true
+                            );
+                          }
+                        }}
+                        className="ml-1 flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2.5 py-0.5 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-500/30 active:scale-95 cursor-pointer"
+                        title="Haz clic para vincular el IBAN del empleado"
                       >
                         <span>Pendiente IBAN</span>
                         <span>🔗</span>
