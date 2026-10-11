@@ -31,31 +31,19 @@ def list_employees(
         select(Employee).where(Employee.business_id == business.id)
     ).all()
 
-    response = []
-    for e in employees:
-        is_completed = e.stripe_onboarding_completed
-
-        # Verificación en tiempo real si tiene cuenta asociada
-        if e.stripe_account_id and not is_completed:
-            try:
-                account = stripe.Account.retrieve(e.stripe_account_id)
-                if account.payouts_enabled or account.details_submitted:
-                    is_completed = True
-                    e.stripe_onboarding_completed = True
-                    db.commit()
-            except Exception:
-                pass
-
-        response.append({
+    # Devolvemos estrictamente el estado guardado en la base de datos local.
+    # El estado solo cambiará cuando el onboarding se complete correctamente.
+    return [
+        {
             "id": str(e.id),
             "name": e.name,
             "photo_url": e.photo_url,
             "active": e.active,
             "stripe_account_id": e.stripe_account_id,
-            "stripe_onboarding_completed": is_completed,
-        })
-
-    return response
+            "stripe_onboarding_completed": e.stripe_onboarding_completed,
+        }
+        for e in employees
+    ]
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
