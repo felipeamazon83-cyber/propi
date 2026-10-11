@@ -163,7 +163,8 @@ def get_settings_summary(
             "name": emp.name,
             "active": getattr(emp, "active", True),
             "stripe_account_id": getattr(emp, "stripe_account_id", None),
-            "stripe_onboarding_completed": bool(getattr(emp, "stripe_account_id", None)),
+            # Respetamos estrictamente el booleano real guardado en la base de datos
+            "stripe_onboarding_completed": bool(getattr(emp, "stripe_onboarding_completed", False)),
             "onboarding_url": getattr(emp, "onboarding_url", None),
         }
         for emp in employees
