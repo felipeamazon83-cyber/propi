@@ -178,12 +178,28 @@ def execute_employee_payout(
             destination=stripe_account,
             description=f"Pago de propinas acumuladas - {employee.name}",
         )
+
+        # 5. ACTUALIZAR SUPABASE: Marcar propinas pendientes de este empleado como 'paid' y guardar el transfer_id
+        pending_tips = db.scalars(
+            select(Tip).where(
+                cast(Tip.employee_id, PG_UUID) == e_uuid,
+                Tip.status == "pending"
+            )
+        ).all()
+
+        for tip in pending_tips:
+            tip.status = "paid"
+            tip.stripe_transfer_id = transfer.id
+
+        db.commit()
+
         return {
             "status": "success",
-            "message": f"Transferencia de {payload.amount} {currency.upper()} realizada correctamente.",
+            "message": f"Transferencia de {payload.amount} {currency.upper()} realizada y registrada correctamente.",
             "transfer_id": transfer.id,
         }
     except stripe.error.StripeError as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Error en Stripe: {e.user_message or str(e)}",
