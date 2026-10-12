@@ -301,6 +301,19 @@ class Tip(Base):
         nullable=False,
     )
 
+    # --- NUEVOS CAMPOS PARA CONTROL DE PAYOUT ---
+    payout_status: Mapped[str] = mapped_column(
+        String(16),
+        default="pending",
+        nullable=False,
+    )
+
+    paid_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+    # --------------------------------------------
+
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(
         String(255),
         unique=True,
