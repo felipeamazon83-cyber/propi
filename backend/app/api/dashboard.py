@@ -1,4 +1,3 @@
-
 import os
 from datetime import datetime
 from typing import Optional
@@ -85,11 +84,10 @@ def get_dashboard_summary(
     for emp in employees:
         e_uuid = emp.id if isinstance(emp.id, UUID) else UUID(str(emp.id))
 
-        # Sumar propinas ya transferidas al empleado (payout_status == 'paid')
-        emp_stats = db.execute(
+        # A. Propinas ya transferidas al empleado (payout_status == 'paid')
+        paid_stats = db.execute(
             select(
-                func.coalesce(func.sum(Tip.amount), 0.0).label("emp_total"),
-                func.count(Tip.id).label("emp_count"),
+                func.coalesce(func.sum(Tip.amount), 0.0).label("paid_total"),
             ).where(
                 cast(Tip.employee_id, PG_UUID) == e_uuid,
                 Tip.status == "paid",
@@ -97,7 +95,18 @@ def get_dashboard_summary(
             )
         ).first()
 
-        # Calcular saldo pendiente exacto que el negocio le debe al empleado (payout_status == 'pending')
+        # B. Propinas totales recibidas por el empleado (todas las con status == 'paid') para el contador y totales
+        emp_stats = db.execute(
+            select(
+                func.coalesce(func.sum(Tip.amount), 0.0).label("emp_total"),
+                func.count(Tip.id).label("emp_count"),
+            ).where(
+                cast(Tip.employee_id, PG_UUID) == e_uuid,
+                Tip.status == "paid",
+            )
+        ).first()
+
+        # C. Calcular saldo pendiente exacto que el negocio le debe al empleado (payout_status == 'pending')
         pending_stats = db.execute(
             select(
                 func.coalesce(func.sum(Tip.connected_account_payout), 0.0).label("pending_total"),
@@ -112,7 +121,7 @@ def get_dashboard_summary(
             {
                 "employee_id": str(emp.id),
                 "name": emp.name,
-                "total_amount": float(emp_stats.emp_total) if emp_stats else 0.0,
+                "total_amount": float(paid_stats.paid_total) if paid_stats else 0.0,  # Propinas ya pagadas
                 "tips_count": emp_stats.emp_count if emp_stats else 0,
                 "pending_amount": float(pending_stats.pending_total) if pending_stats else 0.0,
                 "stripe_account_id": getattr(emp, "stripe_account_id", None),
@@ -224,6 +233,8 @@ def execute_employee_payout(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Error en Stripe: {e.user_message or str(e)}",
         )
+
+
 # --------------------------------------------------------------------------
 # Métodos antiguos (mantenidos opcionalmente por compatibilidad)
 # --------------------------------------------------------------------------
