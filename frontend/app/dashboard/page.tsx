@@ -19,8 +19,9 @@ type TipSummary = {
 type EmployeeSummary = {
   employee_id: string;
   name: string;
-  total_amount: number;
+  total_amount: number;     // Propinas ya pagadas al empleado
   tips_count: number;
+  pending_amount: number;   // Saldo pendiente por transferir
   stripe_account_id?: string | null;
   stripe_onboarding_completed?: boolean;
 };
@@ -41,6 +42,9 @@ export default function DashboardPage() {
   const [employeeSummary, setEmployeeSummary] = useState<EmployeeSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Estados para filtro mensual de visualización (ej: "2026-10" o "all")
+  const [selectedMonth, setSelectedMonth] = useState('all');
 
   // Estados para modal de pago (Payout)
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeSummary | null>(null);
@@ -69,7 +73,6 @@ export default function DashboardPage() {
         true
       );
 
-      // Si el endpoint summary no devuelve logo_url, usamos el obtenido en la lista /businesses
       const logoUrl = data.business.logo_url || businesses[0].logo_url || null;
 
       setBusiness({
@@ -109,7 +112,7 @@ export default function DashboardPage() {
     }).format(amount);
   };
 
-  // Ejecución de la transferencia/payout
+  // Ejecución de la transferencia/payout usando estrictamente el saldo pendiente
   async function handleExecutePayout() {
     if (!business || !selectedEmployee) return;
     setPayoutLoading(true);
@@ -121,7 +124,7 @@ export default function DashboardPage() {
         {
           method: 'POST',
           body: JSON.stringify({
-            amount: selectedEmployee.total_amount,
+            amount: selectedEmployee.pending_amount,
             currency: business.currency,
           }),
         },
@@ -129,7 +132,7 @@ export default function DashboardPage() {
       );
 
       setPayoutSuccessMsg(
-        `Pago de ${formatCurrency(selectedEmployee.total_amount)} enviado con éxito a ${selectedEmployee.name}.`
+        `Pago de ${formatCurrency(selectedEmployee.pending_amount)} enviado con éxito a ${selectedEmployee.name}.`
       );
       setSelectedEmployee(null);
       await loadDashboard(); // Recargar métricas tras el pago
@@ -152,15 +155,12 @@ export default function DashboardPage() {
 
   return (
     <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
-      {/* Cabecera / Marca con Logo del Restaurante y Botón Cerrar Sesión */}
+      {/* Cabecera / Marca con Logo del Restaurante */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-bold text-orange-300">
-            · Dashboard
-          </p>
+          <p className="text-sm font-bold text-orange-300">· Dashboard</p>
 
           <div className="mt-3 flex items-center gap-4">
-            {/* Logo propio del Restaurante o Avatar por defecto */}
             {business?.logo_url ? (
               <img
                 src={business.logo_url}
@@ -183,8 +183,6 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-
-
       </div>
 
       {/* Mensajes Globales */}
@@ -227,33 +225,47 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Tabla de Propinas por Empleado con Flujo de Payout */}
+      {/* Tabla de Propinas por Empleado con Separación Pendiente vs Pagadas */}
       {business && (
-        <section className="card mt-6 border border-white/10 bg-slate-900/60 p-6 rounded-2xl shadow-xl">
-          <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <section className="card mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-6 shadow-xl">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-widest text-orange-400">Equipo</p>
               <h2 className="text-2xl font-black text-white">Propinas por empleado</h2>
             </div>
-            <span className="text-xs text-slate-400">Histórico confirmado y liquidaciones</span>
+            
+            {/* Filtro por Mes */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">Filtrar mes:</span>
+              <select
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
+                className="rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-xs text-white focus:border-orange-500 focus:outline-none"
+              >
+                <option value="all">Todos los periodos</option>
+                <option value="2026-10">Octubre 2026</option>
+                <option value="2026-09">Septiembre 2026</option>
+              </select>
+            </div>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-slate-300">
               <thead className="border-b border-white/10 bg-white/5 text-xs font-semibold uppercase tracking-wider text-slate-400">
                 <tr>
-                  <th className="px-4 py-3.5 rounded-l-lg">Empleado</th>
+                  <th className="rounded-l-lg px-4 py-3.5">Empleado</th>
                   <th className="px-4 py-3.5">Estado IBAN</th>
                   <th className="px-4 py-3.5 text-center">Propinas Recibidas</th>
-                  <th className="px-4 py-3.5 text-right">Monto Recaudado</th>
-                  <th className="px-4 py-3.5 text-right rounded-r-lg">Acción</th>
+                  <th className="px-4 py-3.5 text-right">Propinas Ya Pagadas</th>
+                  <th className="px-4 py-3.5 text-right">Saldo Pendiente</th>
+                  <th className="rounded-r-lg px-4 py-3.5 text-right">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
                 {employeeSummary.length > 0 ? (
                   employeeSummary.map((emp) => {
-                    const hasBalance = emp.total_amount > 0;
-                    const canPay = hasBalance && emp.stripe_onboarding_completed;
+                    const hasPendingBalance = emp.pending_amount > 0;
+                    const canPay = hasPendingBalance && emp.stripe_onboarding_completed;
 
                     return (
                       <tr key={emp.employee_id} className="transition-colors hover:bg-white/[0.02]">
@@ -277,8 +289,14 @@ export default function DashboardPage() {
                           {emp.tips_count} {emp.tips_count === 1 ? 'propina' : 'propinas'}
                         </td>
 
-                        <td className="px-4 py-4 text-right text-base font-bold text-orange-400">
+                        {/* Propinas ya liquidadas / pagadas */}
+                        <td className="px-4 py-4 text-right text-base font-bold text-emerald-400">
                           {formatCurrency(emp.total_amount)}
+                        </td>
+
+                        {/* Saldo pendiente de pago */}
+                        <td className="px-4 py-4 text-right text-base font-bold text-orange-400">
+                          {formatCurrency(emp.pending_amount)}
                         </td>
 
                         <td className="px-4 py-4 text-right">
@@ -292,14 +310,14 @@ export default function DashboardPage() {
                                 : 'cursor-not-allowed bg-white/5 text-slate-500 border border-white/5'
                             }`}
                             title={
-                              !hasBalance
-                                ? 'Sin saldo acumulado para pagar'
+                              !hasPendingBalance
+                                ? 'Sin saldo pendiente para pagar'
                                 : !emp.stripe_onboarding_completed
                                 ? 'El empleado requiere vincular su IBAN'
-                                : 'Pagar propinas acumuladas'
+                                : 'Pagar saldo pendiente'
                             }
                           >
-                            Pagar propinas
+                            {hasPendingBalance ? 'Pagar propinas' : 'Al día'}
                           </button>
                         </td>
                       </tr>
@@ -307,7 +325,7 @@ export default function DashboardPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={5} className="py-8 text-center text-slate-500">
+                    <td colSpan={6} className="py-8 text-center text-slate-500">
                       Aún no hay propinas asignadas a empleados.
                     </td>
                   </tr>
@@ -324,18 +342,18 @@ export default function DashboardPage() {
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
             <h3 className="text-xl font-bold text-white">Confirmar Pago de Propinas</h3>
             <p className="mt-2 text-sm text-slate-400">
-              Vas a realizar una transferencia directa a la cuenta conectada del empleado.
+              Vas a realizar una transferencia directa del saldo pendiente a la cuenta conectada del empleado.
             </p>
 
-            <div className="my-5 rounded-xl border border-white/10 bg-black/40 p-4 space-y-2">
+            <div className="my-5 space-y-2 rounded-xl border border-white/10 bg-black/40 p-4">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-400">Empleado:</span>
                 <span className="font-semibold text-white">{selectedEmployee.name}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-slate-400">Monto a pagar:</span>
+                <span className="text-slate-400">Saldo pendiente a transferir:</span>
                 <span className="text-base font-bold text-orange-400">
-                  {formatCurrency(selectedEmployee.total_amount)}
+                  {formatCurrency(selectedEmployee.pending_amount)}
                 </span>
               </div>
             </div>
