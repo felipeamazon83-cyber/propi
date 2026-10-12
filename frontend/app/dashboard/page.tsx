@@ -254,7 +254,6 @@ export default function DashboardPage() {
               <thead className="border-b border-white/10 bg-white/5 text-xs font-semibold uppercase tracking-wider text-slate-400">
                 <tr>
                   <th className="rounded-l-lg px-4 py-3.5">Empleado</th>
-                  <th className="px-4 py-3.5">Estado IBAN</th>
                   <th className="px-4 py-3.5 text-center">Propinas Recibidas</th>
                   <th className="px-4 py-3.5 text-right">Propinas Ya Pagadas</th>
                   <th className="px-4 py-3.5 text-right">Saldo Pendiente</th>
@@ -270,20 +269,6 @@ export default function DashboardPage() {
                     return (
                       <tr key={emp.employee_id} className="transition-colors hover:bg-white/[0.02]">
                         <td className="px-4 py-4 font-semibold text-white">{emp.name}</td>
-
-                        <td className="px-4 py-4">
-                          {emp.stripe_onboarding_completed ? (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400">
-                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
-                              IBAN Listo
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-300">
-                              <span className="h-1.5 w-1.5 rounded-full bg-amber-400"></span>
-                              Pendiente IBAN
-                            </span>
-                          )}
-                        </td>
 
                         <td className="px-4 py-4 text-center text-slate-400">
                           {emp.tips_count} {emp.tips_count === 1 ? 'propina' : 'propinas'}
@@ -325,7 +310,7 @@ export default function DashboardPage() {
                   })
                 ) : (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-500">
+                    <td colSpan={5} className="py-8 text-center text-slate-500">
                       Aún no hay propinas asignadas a empleados.
                     </td>
                   </tr>
