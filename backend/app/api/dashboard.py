@@ -1,4 +1,6 @@
+
 import os
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -56,7 +58,7 @@ def get_dashboard_summary(
     # 1. Validar propiedad del negocio
     business = get_user_business(b_uuid, user_uuid, db)
 
-    # 2. Métricas globales del negocio (Propinas confirmadas/paid)
+    # 2. Métricas globales del negocio (Propinas pagadas por el cliente)
     global_stats = db.execute(
         select(
             func.coalesce(func.sum(Tip.amount), 0.0).label("total_amount"),
@@ -83,7 +85,7 @@ def get_dashboard_summary(
     for emp in employees:
         e_uuid = emp.id if isinstance(emp.id, UUID) else UUID(str(emp.id))
 
-        # Sumar propinas del empleado
+        # Sumar propinas ya transferidas al empleado (payout_status == 'paid')
         emp_stats = db.execute(
             select(
                 func.coalesce(func.sum(Tip.amount), 0.0).label("emp_total"),
@@ -91,6 +93,18 @@ def get_dashboard_summary(
             ).where(
                 cast(Tip.employee_id, PG_UUID) == e_uuid,
                 Tip.status == "paid",
+                Tip.payout_status == "paid",
+            )
+        ).first()
+
+        # Calcular saldo pendiente exacto que el negocio le debe al empleado (payout_status == 'pending')
+        pending_stats = db.execute(
+            select(
+                func.coalesce(func.sum(Tip.connected_account_payout), 0.0).label("pending_total"),
+            ).where(
+                cast(Tip.employee_id, PG_UUID) == e_uuid,
+                Tip.status == "paid",
+                Tip.payout_status == "pending",
             )
         ).first()
 
@@ -100,6 +114,7 @@ def get_dashboard_summary(
                 "name": emp.name,
                 "total_amount": float(emp_stats.emp_total) if emp_stats else 0.0,
                 "tips_count": emp_stats.emp_count if emp_stats else 0,
+                "pending_amount": float(pending_stats.pending_total) if pending_stats else 0.0,
                 "stripe_account_id": getattr(emp, "stripe_account_id", None),
                 "stripe_onboarding_completed": getattr(emp, "stripe_onboarding_completed", False),
             }
@@ -179,17 +194,21 @@ def execute_employee_payout(
             description=f"Pago de propinas acumuladas - {employee.name}",
         )
 
-        # 5. ACTUALIZAR SUPABASE: Marcar propinas pendientes de este empleado como 'paid' y guardar el transfer_id
-        pending_tips = db.scalars(
+        # 5. ACTUALIZAR SUPABASE: Marcar las propinas pendientes como 'paid', registrar transfer_id y estampar paid_at
+        unpaid_tips = db.scalars(
             select(Tip).where(
+                cast(Tip.business_id, PG_UUID) == b_uuid,
                 cast(Tip.employee_id, PG_UUID) == e_uuid,
-                Tip.status == "pending"
+                Tip.status == "paid",
+                Tip.payout_status == "pending",
             )
         ).all()
 
-        for tip in pending_tips:
-            tip.status = "paid"
+        now_utc = datetime.utcnow()
+        for tip in unpaid_tips:
+            tip.payout_status = "paid"
             tip.stripe_transfer_id = transfer.id
+            tip.paid_at = now_utc
 
         db.commit()
 
@@ -197,6 +216,7 @@ def execute_employee_payout(
             "status": "success",
             "message": f"Transferencia de {payload.amount} {currency.upper()} realizada y registrada correctamente.",
             "transfer_id": transfer.id,
+            "tips_updated": len(unpaid_tips),
         }
     except stripe.error.StripeError as e:
         db.rollback()
@@ -204,8 +224,6 @@ def execute_employee_payout(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Error en Stripe: {e.user_message or str(e)}",
         )
-
-
 # --------------------------------------------------------------------------
 # Métodos antiguos (mantenidos opcionalmente por compatibilidad)
 # --------------------------------------------------------------------------
