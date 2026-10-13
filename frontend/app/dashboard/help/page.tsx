@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from "react";
-import { Search, ChevronDown, ChevronUp, HelpCircle, Mail } from "lucide-react";
 
 export default function HelpPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -85,7 +84,9 @@ export default function HelpPage() {
     <div className="max-w-4xl mx-auto p-6 space-y-8">
       <div className="text-center space-y-3">
         <div className="inline-flex items-center justify-center p-3 bg-indigo-50 text-indigo-600 rounded-full mb-1">
-          <HelpCircle className="w-8 h-8" />
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
         </div>
         <h1 className="text-3xl font-bold text-gray-900">Centro de ayuda</h1>
         <p className="text-gray-600 max-w-lg mx-auto">
@@ -93,7 +94,9 @@ export default function HelpPage() {
         </p>
 
         <div className="relative max-w-md mx-auto mt-6">
-          <Search className="absolute left-3.5 top-3 text-gray-400 w-5 h-5" />
+          <svg className="absolute left-3.5 top-3.5 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
           <input
             type="text"
             placeholder="¿Qué necesitas saber?"
@@ -128,7 +131,11 @@ export default function HelpPage() {
                     <h3 className="text-base font-medium text-gray-900">{faq.question}</h3>
                   </div>
                   <span className="ml-4 flex-shrink-0 text-gray-400">
-                    {isOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    {isOpen ? (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+                    ) : (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                    )}
                   </span>
                 </button>
 
@@ -153,7 +160,9 @@ export default function HelpPage() {
             href="mailto:soporte@propi.app"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-indigo-900 font-medium rounded-xl shadow hover:bg-indigo-50 transition-colors"
           >
-            <Mail className="w-4 h-4" />
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
             Contactar con soporte
           </a>
         </div>
