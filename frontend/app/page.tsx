@@ -1,3 +1,6 @@
+'use client';
+
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { LanguageSwitcher } from '../components/language-switcher';
 
@@ -19,6 +22,21 @@ const features = [
 ];
 
 export default function Home() {
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
+  const [mensaje, setMensaje] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const mailtoUrl = `mailto:soportepropi@gmail.com?subject=${encodeURIComponent(
+      `Consulta de ${nombre} - Landing Propi`
+    )}&body=${encodeURIComponent(
+      `Nombre: ${nombre}\nEmail: ${email}\n\nMensaje:\n${mensaje}`
+    )}`;
+
+    window.location.href = mailtoUrl;
+  };
+
   return (
     <main className="glow min-h-screen">
       <div className="mx-auto max-w-6xl px-5 py-6 sm:px-8">
@@ -169,25 +187,34 @@ export default function Home() {
             </a>
           </div>
 
-          <form
-            className="grid gap-3"
-            action="mailto:felipeamazon83@gmail.com"
-            method="post"
-            encType="text/plain"
-          >
+          <form className="grid gap-3" onSubmit={handleSubmit}>
             <label className="text-sm font-bold text-slate-200">
               Tu nombre
-              <input className="field mt-1" name="Nombre" required placeholder="Nombre y apellido" />
+              <input
+                className="field mt-1"
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                required
+                placeholder="Nombre y apellido"
+              />
             </label>
             <label className="text-sm font-bold text-slate-200">
               Tu email
-              <input className="field mt-1" name="Email" type="email" required placeholder="tu@email.com" />
+              <input
+                className="field mt-1"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="tu@email.com"
+              />
             </label>
             <label className="text-sm font-bold text-slate-200">
               Mensaje
               <textarea
                 className="field mt-1 min-h-28 resize-y"
-                name="Mensaje"
+                value={mensaje}
+                onChange={(e) => setMensaje(e.target.value)}
                 required
                 placeholder="¿En qué podemos ayudarte?"
               />
