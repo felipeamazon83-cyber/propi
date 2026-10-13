@@ -160,17 +160,17 @@ export default function HelpPage() {
           Contacta con el equipo de soporte y cuéntanos qué necesitas para ayudarte al instante.
         </p>
         <div>
-          <a
-            href="mailto:soportepropi@gmail.com?subject=Soporte%20Propi%20-%20Consulta%20desde%20el%20panel"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-orange-400 text-slate-950 font-bold rounded-xl shadow hover:bg-orange-300 transition-colors text-sm"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
-            Contactar con soporte
-          </a>
+         <a
+  href="https://mail.google.com/mail/?view=cm&fs=1&to=soportepropi@gmail.com&su=Soporte%20Propi%20-%20Consulta%20desde%20el%20panel"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-orange-400 text-slate-950 font-bold rounded-xl shadow hover:bg-orange-300 transition-colors text-sm"
+>
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  </svg>
+  Contactar con soporte
+</a>
         </div>
       </div>
     </div>
