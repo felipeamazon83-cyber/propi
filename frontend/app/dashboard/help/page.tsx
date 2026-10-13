@@ -10,62 +10,62 @@ export default function HelpPage() {
     {
       category: "1. Mi negocio",
       question: "¿Cómo configuro mi restaurante?",
-      answer: "Puedes configurar los datos básicos, el nombre comercial y la moneda directamente desde la sección de Configuración de tu negocio en el panel de control."
+      answer: "En la sección '1. Datos del negocio' de Configuración, puedes indicar tu Nombre comercial, Razón social, País, Moneda y subir el logo de tu establecimiento. No olvides pulsar en 'Guardar datos' para aplicar los cambios."
     },
     {
       category: "1. Mi negocio",
       question: "¿Cómo añado empleados?",
-      answer: "Dirígete a la sección de Empleados en tu menú lateral, haz clic en 'Añadir empleado', completa su nombre y datos requeridos para generar su ficha."
+      answer: "En '2. Equipo y cuenta de cobro', escribe el nombre en la casilla 'Nombre del empleado' y haz clic en 'Añadir'. Se creará una etiqueta con el botón 'Pendiente IBAN 🔗'. Al hacer clic sobre él, copiarás un enlace único para enviarle por WhatsApp o correo. El empleado abrirá este enlace una sola vez para guardar su cuenta bancaria de forma segura."
     },
     {
       category: "1. Mi negocio",
       question: "¿Cómo conecto mi cuenta de cobro?",
-      answer: "Para procesar las propinas, debes conectar tu cuenta empresarial a través de la integración oficial de Stripe disponible en la sección de configuración de pagos."
+      answer: "En el bloque '2. Equipo y cuenta de cobro', haz clic en el botón 'Gestionar Stripe'. Esto te redirigirá a la pasarela segura de Stripe para vincular la cuenta bancaria de tu restaurante."
     },
     {
       category: "2. Mesas y códigos",
       question: "¿Cómo creo una mesa con QR?",
-      answer: "Crea una nueva ubicación o mesa desde tu panel, genera el código QR asociado a su token público y descárgalo listo para imprimir."
+      answer: "En la sección '3. Mesa, QR y NFC', selecciona el tipo de ubicación, elige si el cliente escoge empleado o si es fijo, define el porcentaje y las propinas sugeridas, y pulsa 'Crear QR/NFC'. La mesa aparecerá abajo con la opción 'Tarjeta Mesa 🎨' para descargar o imprimir el diseño del QR."
     },
     {
       category: "2. Mesas y códigos",
-      question: "¿Cómo utilizo NFC?",
-      answer: "Vincula la URL pública de la ubicación o mesa generada en tu panel directamente a la etiqueta NFC para que los clientes puedan escanearla con el móvil."
+      question: "¿Cómo utilizo las etiquetas NFC?",
+      answer: "Sigue los 3 pasos indicados en tu panel: 1. Compra pegatinas NFC neutras (NTAG213 o NTAG215). 2. Descarga la app gratuita 'NFC Tools' en tu móvil. 3. En la lista de mesas creadas, pulsa 'Copiar URL NFC', abre NFC Tools, ve a 'Escribir' → 'Añadir registro' → 'URL', pega el enlace y acerca tu teléfono a la pegatina para grabarla."
     },
     {
       category: "3. Reparto y tarifas",
       question: "¿Cómo se reparten las propinas?",
-      answer: "Las propinas se asignan al empleado correspondiente según la lectura del QR/NFC, o se distribuyen de acuerdo con las reglas configuradas en el sistema."
+      answer: "Las propinas se asignan al empleado correspondiente según la mesa o QR escaneado. En tu menú principal 'Propinas & Equipo' podrás consultar el desglose en la tabla 'Propinas por empleado' con sus totales recibidos, pagados y saldo pendiente."
     },
     {
       category: "3. Reparto y tarifas",
       question: "¿Quién paga la tarifa del servicio?",
-      answer: "Depende de tu configuración de negocio ('fee_payer'). Si está configurado para el cliente, el sistema calcula automáticamente un recargo en el checkout para cubrir tu comisión fija y las tasas de pasarela, asegurando que el empleado reciba su propina íntegra."
+      answer: "Puedes elegirlo en el selector '¿Quién asume los costes del servicio?' en los Datos del negocio. Si seleccionas 'El Cliente', se le añadirá un recargo de 0,10 € + gastos de procesamiento al pagar, para que el empleado reciba la propina completa."
     },
     {
       category: "3. Reparto y tarifas",
       question: "¿Cómo recibe el empleado su dinero?",
-      answer: "A través de transferencias automáticas mediante Stripe Connect. El dinero de las propinas procesadas se transfiere directamente a la cuenta conectada del empleado según el flujo establecido."
+      answer: "Stripe gestiona el envío de fondos de forma directa a la cuenta bancaria que el empleado registró mediante su enlace personal. Propi recopila las cuentas con la máxima seguridad y nunca las almacena en sus servidores."
     },
     {
       category: "4. Gestión y solución de problemas",
       question: "¿Puedo cambiar una mesa o un empleado?",
-      answer: "Sí, puedes editar la información, nombres y estados activos de tus empleados o ubicaciones en cualquier momento desde sus respectivas secciones de gestión."
+      answer: "Sí. Para eliminar un empleado o una mesa creada, pulsa sobre la 'X' o el botón 'Eliminar' junto a su nombre en la sección de Configuración."
     },
     {
       category: "4. Gestión y solución de problemas",
       question: "¿Qué hago si un QR no funciona?",
-      answer: "Comprueba que la URL asociada sea correcta y que la ubicación se encuentre en estado 'activa' dentro de tu panel de administración."
+      answer: "Haz clic en el botón 'Probar QR ↗' que aparece en la tarjeta de cada mesa dentro del panel para comprobar que la página de pago abre correctamente."
     },
     {
       category: "4. Gestión y solución de problemas",
       question: "¿Qué hago si tengo un problema con Stripe?",
-      answer: "Revisa el estado de la conexión de tu cuenta en la configuración de pagos y asegúrate de no tener datos o verificación pendientes en tu panel de Stripe."
+      answer: "Haz clic en 'Gestionar Stripe' en la sección de Equipo para revisar el estado de la conexión o comprobar si falta algún dato por verificar en Stripe."
     },
     {
       category: "4. Gestión y solución de problemas",
       question: "¿Cómo contacto con soporte?",
-      answer: "Si necesitas asistencia adicional que no encuentres aquí, puedes escribirnos directamente a nuestro correo de soporte técnico."
+      answer: "Si tienes dudas adicionales, puedes pulsar el botón 'Contactar con soporte' al final de este centro de ayuda para enviarnos un correo electrónico directamente."
     }
   ];
 
@@ -81,20 +81,22 @@ export default function HelpPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8">
+    <div className="max-w-4xl mx-auto p-6 md:p-10 space-y-8 text-slate-100">
+      {/* Cabecera */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center justify-center p-3 bg-indigo-50 text-indigo-600 rounded-full mb-1">
+        <div className="inline-flex items-center justify-center p-3 bg-orange-400/10 text-orange-400 rounded-full mb-1 border border-orange-400/20">
           <svg className="w-8 h-8" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </div>
-        <h1 className="text-3xl font-bold text-gray-900">Centro de ayuda</h1>
-        <p className="text-gray-600 max-w-lg mx-auto">
+        <h1 className="text-3xl font-bold text-orange-400 tracking-tight">Centro de ayuda</h1>
+        <p className="text-slate-400 max-w-lg mx-auto text-sm">
           Resuelve tus dudas sobre cómo configurar y utilizar Propi de forma rápida y sencilla.
         </p>
 
+        {/* Buscador */}
         <div className="relative max-w-md mx-auto mt-6">
-          <svg className="absolute left-3.5 top-3.5 text-gray-400 w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <svg className="absolute left-3.5 top-3.5 text-slate-400 w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
           <input
@@ -102,15 +104,16 @@ export default function HelpPage() {
             placeholder="¿Qué necesitas saber?"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-11 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-800 placeholder-gray-400"
+            className="w-full pl-11 pr-4 py-3 bg-[#0b2344] border border-white/10 rounded-xl shadow-inner focus:outline-none focus:ring-2 focus:ring-orange-400 focus:border-transparent text-slate-100 placeholder-slate-400 text-sm"
           />
         </div>
       </div>
 
+      {/* Lista de Acordeones */}
       <div className="space-y-4">
         {filteredFaqs.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl border border-gray-100 shadow-sm">
-            <p className="text-gray-500">No hemos encontrado resultados para tu búsqueda.</p>
+          <div className="text-center py-12 bg-[#0b2344]/80 rounded-2xl border border-white/10 shadow-sm">
+            <p className="text-slate-400 text-sm">No hemos encontrado resultados para tu búsqueda.</p>
           </div>
         ) : (
           filteredFaqs.map((faq, index) => {
@@ -118,29 +121,29 @@ export default function HelpPage() {
             return (
               <div
                 key={index}
-                className="bg-white border border-gray-200/80 rounded-xl shadow-sm overflow-hidden transition-all duration-200 hover:border-gray-300"
+                className="bg-[#0b2344] border border-white/10 rounded-2xl shadow-md overflow-hidden transition-all duration-200 hover:border-orange-400/30"
               >
                 <button
                   onClick={() => toggleAccordion(index)}
                   className="w-full px-6 py-4 text-left flex items-center justify-between focus:outline-none"
                 >
                   <div className="space-y-1">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-orange-400">
                       {faq.category}
                     </span>
-                    <h3 className="text-base font-medium text-gray-900">{faq.question}</h3>
+                    <h3 className="text-base font-medium text-slate-100">{faq.question}</h3>
                   </div>
-                  <span className="ml-4 flex-shrink-0 text-gray-400">
+                  <span className="ml-4 flex-shrink-0 text-orange-400 bg-orange-400/10 p-2 rounded-xl border border-orange-400/20">
                     {isOpen ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" /></svg>
                     ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
                     )}
                   </span>
                 </button>
 
                 {isOpen && (
-                  <div className="px-6 pb-4 pt-1 text-gray-600 text-sm border-t border-gray-100 bg-gray-50/50">
+                  <div className="px-6 pb-5 pt-2 text-slate-300 text-sm border-t border-white/10 bg-[#07182f]/60 leading-relaxed">
                     {faq.answer}
                   </div>
                 )}
@@ -150,15 +153,16 @@ export default function HelpPage() {
         )}
       </div>
 
-      <div className="bg-gradient-to-r from-indigo-900 to-slate-900 rounded-2xl p-8 text-white text-center space-y-4 shadow-lg">
-        <h3 className="text-xl font-semibold">¿No encuentras tu respuesta?</h3>
-        <p className="text-indigo-200 text-sm max-w-md mx-auto">
+      {/* Tarjeta de Contacto */}
+      <div className="bg-gradient-to-r from-[#0b2344] to-[#07182f] rounded-2xl p-8 text-center space-y-4 shadow-xl border border-white/10">
+        <h3 className="text-xl font-semibold text-orange-400">¿No encuentras tu respuesta?</h3>
+        <p className="text-slate-300 text-sm max-w-md mx-auto">
           Contacta con el equipo de soporte y cuéntanos qué necesitas para ayudarte al instante.
         </p>
         <div>
           <a
             href="mailto:soporte@propi.app"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-indigo-900 font-medium rounded-xl shadow hover:bg-indigo-50 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-orange-400 text-slate-950 font-bold rounded-xl shadow hover:bg-orange-300 transition-colors text-sm"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
