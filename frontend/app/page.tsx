@@ -187,7 +187,7 @@ export default function Home() {
             </a>
           </div>
 
-          <form className="grid gap-3" onSubmit={handleSubmit}>
+         <form className="grid gap-3" onSubmit={handleSubmit}>
             <label className="text-sm font-bold text-slate-200">
               Tu nombre
               <input
@@ -223,7 +223,7 @@ export default function Home() {
               Enviar mensaje <span>→</span>
             </button>
             <p className="text-xs leading-5 text-slate-500">
-              Al enviar se abrirá tu aplicación de correo con el mensaje preparado.
+              Al enviar se abrirá Gmail o tu aplicación de correo con los datos rellenados.
             </p>
           </form>
         </section>
