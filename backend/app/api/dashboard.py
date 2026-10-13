@@ -20,13 +20,11 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 router = APIRouter(tags=["dashboard"])
 
 
-# Schemas para el Payout
 class PayoutRequest(BaseModel):
     amount: float
     currency: Optional[str] = "EUR"
 
 
-# Función auxiliar para validar la propiedad del negocio
 def get_user_business(business_id: UUID, user_id: UUID, db: Session) -> Business:
     business = db.scalar(
         select(Business).where(
@@ -43,7 +41,7 @@ def get_user_business(business_id: UUID, user_id: UUID, db: Session) -> Business
 
 
 # --------------------------------------------------------------------------
-# 1. Endpoint Unificado Dashboard Summary
+# 1. Endpoint Unificado Dashboard Summary (Optimizado sin bucle N+1)
 # --------------------------------------------------------------------------
 @router.get("/businesses/{business_id}/dashboard-summary")
 def get_dashboard_summary(
@@ -57,7 +55,7 @@ def get_dashboard_summary(
     # 1. Validar propiedad del negocio
     business = get_user_business(b_uuid, user_uuid, db)
 
-    # 2. Métricas globales del negocio (Propinas pagadas por el cliente)
+    # 2. Métricas globales del negocio en una sola consulta
     global_stats = db.execute(
         select(
             func.coalesce(func.sum(Tip.amount), 0.0).label("total_amount"),
@@ -72,7 +70,7 @@ def get_dashboard_summary(
     total_count = global_stats.total_count if global_stats else 0
     average = (total_amount / total_count) if total_count > 0 else 0.0
 
-    # 3. Obtener todos los empleados del negocio
+    # 3. Obtener todos los empleados activos
     employees = db.scalars(
         select(Employee).where(
             cast(Employee.business_id, PG_UUID) == b_uuid,
@@ -80,50 +78,65 @@ def get_dashboard_summary(
         )
     ).all()
 
+    if not employees:
+        return {
+            "business": {
+                "id": str(business.id),
+                "name": business.name,
+                "currency": getattr(business, "currency", "EUR"),
+            },
+            "summary": {
+                "total_amount": total_amount,
+                "total_count": total_count,
+                "average": round(average, 2),
+            },
+            "by_employee": [],
+        }
+
+    e_uuids = [emp.id if isinstance(emp.id, UUID) else UUID(str(emp.id)) for emp in employees]
+
+    # 4. CONSULTA UNIFICADA (Evita bucles N+1): Agrupa las estadísticas de todos los empleados de un solo golpe
+    tips_stats = db.execute(
+        select(
+            Tip.employee_id,
+            func.count(Tip.id).label("emp_count"),
+            func.coalesce(
+                func.sum(case((Tip.payout_status == "paid", Tip.amount), else_=0.0)), 0.0
+            ).label("paid_total"),
+            func.coalesce(
+                func.sum(case((Tip.payout_status == "pending", Tip.connected_account_payout), else_=0.0)), 0.0
+            ).label("pending_total"),
+        )
+        .where(
+            cast(Tip.business_id, PG_UUID) == b_uuid,
+            cast(Tip.employee_id, PG_UUID).in_(e_uuids),
+            Tip.status == "paid",
+        )
+        .group_by(Tip.employee_id)
+    ).all()
+
+    # Convertimos los resultados en un diccionario de acceso rápido por employee_id
+    stats_map = {
+        str(row.employee_id): {
+            "emp_count": row.emp_count,
+            "paid_total": float(row.paid_total),
+            "pending_total": float(row.pending_total),
+        }
+        for row in tips_stats
+    }
+
     by_employee = []
     for emp in employees:
-        e_uuid = emp.id if isinstance(emp.id, UUID) else UUID(str(emp.id))
-
-        # A. Propinas ya transferidas al empleado (payout_status == 'paid')
-        paid_stats = db.execute(
-            select(
-                func.coalesce(func.sum(Tip.amount), 0.0).label("paid_total"),
-            ).where(
-                cast(Tip.employee_id, PG_UUID) == e_uuid,
-                Tip.status == "paid",
-                Tip.payout_status == "paid",
-            )
-        ).first()
-
-        # B. Propinas totales recibidas por el empleado (todas las con status == 'paid') para el contador y totales
-        emp_stats = db.execute(
-            select(
-                func.coalesce(func.sum(Tip.amount), 0.0).label("emp_total"),
-                func.count(Tip.id).label("emp_count"),
-            ).where(
-                cast(Tip.employee_id, PG_UUID) == e_uuid,
-                Tip.status == "paid",
-            )
-        ).first()
-
-        # C. Calcular saldo pendiente exacto que el negocio le debe al empleado (payout_status == 'pending')
-        pending_stats = db.execute(
-            select(
-                func.coalesce(func.sum(Tip.connected_account_payout), 0.0).label("pending_total"),
-            ).where(
-                cast(Tip.employee_id, PG_UUID) == e_uuid,
-                Tip.status == "paid",
-                Tip.payout_status == "pending",
-            )
-        ).first()
+        emp_id_str = str(emp.id)
+        emp_data = stats_map.get(emp_id_str, {"emp_count": 0, "paid_total": 0.0, "pending_total": 0.0})
 
         by_employee.append(
             {
-                "employee_id": str(emp.id),
+                "employee_id": emp_id_str,
                 "name": emp.name,
-                "total_amount": float(paid_stats.paid_total) if paid_stats else 0.0,  # Propinas ya pagadas
-                "tips_count": emp_stats.emp_count if emp_stats else 0,
-                "pending_amount": float(pending_stats.pending_total) if pending_stats else 0.0,
+                "total_amount": emp_data["paid_total"],
+                "tips_count": emp_data["emp_count"],
+                "pending_amount": emp_data["pending_total"],
                 "stripe_account_id": getattr(emp, "stripe_account_id", None),
                 "stripe_onboarding_completed": getattr(emp, "stripe_onboarding_completed", False),
             }
@@ -159,10 +172,8 @@ def execute_employee_payout(
     b_uuid = business_id if isinstance(business_id, UUID) else UUID(str(business_id))
     e_uuid = employee_id if isinstance(employee_id, UUID) else UUID(str(employee_id))
 
-    # 1. Validar propiedad del negocio
     business = get_user_business(b_uuid, user_uuid, db)
 
-    # 2. Obtener el empleado
     employee = db.scalar(
         select(Employee).where(
             cast(Employee.id, PG_UUID) == e_uuid,
@@ -176,7 +187,6 @@ def execute_employee_payout(
             detail="Empleado no encontrado.",
         )
 
-    # 3. Verificar que el empleado tenga cuenta de Stripe configurada
     stripe_account = getattr(employee, "stripe_account_id", None)
     if not stripe_account:
         raise HTTPException(
@@ -190,12 +200,10 @@ def execute_employee_payout(
             detail="El monto a transferir debe ser mayor a 0.",
         )
 
-    # 4. Convertir monto a céntimos (Stripe trabaja en la unidad monetaria más pequeña)
     amount_in_cents = int(round(payload.amount * 100))
     currency = payload.currency.lower() if payload.currency else "eur"
 
     try:
-        # Transferencia Stripe Connect
         transfer = stripe.Transfer.create(
             amount=amount_in_cents,
             currency=currency,
@@ -203,7 +211,6 @@ def execute_employee_payout(
             description=f"Pago de propinas acumuladas - {employee.name}",
         )
 
-        # 5. ACTUALIZAR SUPABASE: Marcar las propinas pendientes como 'paid', registrar transfer_id y estampar paid_at
         unpaid_tips = db.scalars(
             select(Tip).where(
                 cast(Tip.business_id, PG_UUID) == b_uuid,
@@ -233,87 +240,3 @@ def execute_employee_payout(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Error en Stripe: {e.user_message or str(e)}",
         )
-
-
-# --------------------------------------------------------------------------
-# Métodos antiguos (mantenidos opcionalmente por compatibilidad)
-# --------------------------------------------------------------------------
-@router.get("/tips/summary")
-def get_tip_summary(
-    user: UUID = Depends(current_user),
-    db: Session = Depends(get_db),
-):
-    user_uuid = user if isinstance(user, UUID) else UUID(str(user))
-    business_ids = db.scalars(
-        select(Business.id).where(cast(Business.owner_id, PG_UUID) == user_uuid)
-    ).all()
-
-    if not business_ids:
-        return {"count": 0, "tip_total": 0.0, "average": 0.0}
-
-    b_uuids = [b if isinstance(b, UUID) else UUID(str(b)) for b in business_ids]
-
-    stats = db.execute(
-        select(
-            func.coalesce(func.sum(Tip.amount), 0.0).label("tip_total"),
-            func.count(Tip.id).label("count"),
-            func.coalesce(func.avg(Tip.amount), 0.0).label("average"),
-        ).where(
-            cast(Tip.business_id, PG_UUID).in_(b_uuids),
-            Tip.status == "paid",
-        )
-    ).first()
-
-    return {
-        "tip_total": float(stats.tip_total) if stats else 0.0,
-        "count": stats.count if stats else 0,
-        "average": float(stats.average) if stats else 0.0,
-    }
-
-
-@router.get("/tips/summary-by-employee")
-def get_tips_summary_by_employee(
-    user: UUID = Depends(current_user),
-    db: Session = Depends(get_db),
-):
-    user_uuid = user if isinstance(user, UUID) else UUID(str(user))
-    business_ids = db.scalars(
-        select(Business.id).where(cast(Business.owner_id, PG_UUID) == user_uuid)
-    ).all()
-
-    if not business_ids:
-        return []
-
-    b_uuids = [b if isinstance(b, UUID) else UUID(str(b)) for b in business_ids]
-    employees = db.scalars(
-        select(Employee).where(
-            cast(Employee.business_id, PG_UUID).in_(b_uuids),
-            Employee.active.is_(True),
-        )
-    ).all()
-
-    summary = []
-    for emp in employees:
-        e_uuid = emp.id if isinstance(emp.id, UUID) else UUID(str(emp.id))
-        stats = db.execute(
-            select(
-                func.coalesce(func.sum(Tip.amount), 0.0).label("total_amount"),
-                func.count(Tip.id).label("tip_count"),
-                func.max(Tip.created_at).label("last_tip_at"),
-            ).where(
-                cast(Tip.employee_id, PG_UUID) == e_uuid,
-                Tip.status == "paid",
-            )
-        ).first()
-
-        summary.append(
-            {
-                "employee_id": str(emp.id),
-                "employee_name": emp.name,
-                "total_amount": float(stats.total_amount) if stats else 0.0,
-                "tip_count": stats.tip_count if stats else 0,
-                "last_tip_at": stats.last_tip_at.isoformat() if stats and stats.last_tip_at else None,
-            }
-        )
-
-    return summary
