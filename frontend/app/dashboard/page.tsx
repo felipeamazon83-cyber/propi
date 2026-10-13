@@ -19,9 +19,9 @@ type TipSummary = {
 type EmployeeSummary = {
   employee_id: string;
   name: string;
-  total_amount: number;     // Propinas ya pagadas al empleado
+  total_amount: number;
   tips_count: number;
-  pending_amount: number;   // Saldo pendiente por transferir
+  pending_amount: number;
   stripe_account_id?: string | null;
   stripe_onboarding_completed?: boolean;
 };
@@ -43,10 +43,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Estados para filtro mensual de visualización (ej: "2026-10" o "all")
   const [selectedMonth, setSelectedMonth] = useState('all');
 
-  // Estados para modal de pago (Payout)
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeSummary | null>(null);
   const [payoutLoading, setPayoutLoading] = useState(false);
   const [payoutError, setPayoutError] = useState('');
@@ -54,19 +52,18 @@ export default function DashboardPage() {
 
   const loadDashboard = useCallback(async () => {
     try {
-      setLoading(true);
       setError('');
-
-      // 1. Obtener lista de negocios para extraer el ID activo
+      // 1. Petición optimizada de negocios
       const businesses = await api<{ id: string; logo_url?: string | null }[]>('/businesses', {}, true);
       if (!businesses || !businesses[0]) {
         setBusiness(null);
+        setLoading(false);
         return;
       }
 
       const activeBusinessId = businesses[0].id;
 
-      // 2. Consulta unificada al endpoint de resumen
+      // 2. Llamada directa al resumen
       const data = await api<DashboardSummaryResponse>(
         `/businesses/${activeBusinessId}/dashboard-summary`,
         {},
@@ -96,6 +93,7 @@ export default function DashboardPage() {
         caught instanceof Error ? caught.message : 'No se pudo cargar el dashboard.'
       );
     } finally {
+      // Nos aseguramos de quitar el estado de carga al terminar
       setLoading(false);
     }
   }, []);
@@ -104,7 +102,6 @@ export default function DashboardPage() {
     void loadDashboard();
   }, [loadDashboard]);
 
-  // Formateador auxiliar de moneda
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-ES', {
       style: 'currency',
@@ -112,7 +109,6 @@ export default function DashboardPage() {
     }).format(amount);
   };
 
-  // Ejecución de la transferencia/payout usando estrictamente el saldo pendiente
   async function handleExecutePayout() {
     if (!business || !selectedEmployee) return;
     setPayoutLoading(true);
@@ -135,7 +131,7 @@ export default function DashboardPage() {
         `Pago de ${formatCurrency(selectedEmployee.pending_amount)} enviado con éxito a ${selectedEmployee.name}.`
       );
       setSelectedEmployee(null);
-      await loadDashboard(); // Recargar métricas tras el pago
+      await loadDashboard();
     } catch (err) {
       setPayoutError(
         err instanceof Error ? err.message : 'Error al procesar la transferencia.'
@@ -147,15 +143,21 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="mx-auto max-w-5xl p-8 text-slate-300">
-        Cargando tu espacio…
+      <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10 text-slate-300">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 w-48 bg-white/5 rounded-lg"></div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="h-28 bg-white/5 rounded-2xl"></div>
+            <div className="h-28 bg-white/5 rounded-2xl"></div>
+            <div className="h-28 bg-white/5 rounded-2xl"></div>
+          </div>
+        </div>
       </main>
     );
   }
 
   return (
     <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
-      {/* Cabecera / Marca con Logo del Restaurante */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-bold text-orange-300">· Dashboard</p>
@@ -185,7 +187,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Mensajes Globales */}
       {error && (
         <p className="mt-5 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-red-200">
           {error}
@@ -198,7 +199,6 @@ export default function DashboardPage() {
         </p>
       )}
 
-      {/* Tarjetas Principales de Métricas */}
       {business && (
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           <article className="card">
@@ -225,7 +225,6 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Tabla de Propinas por Empleado con Separación Pendiente vs Pagadas */}
       {business && (
         <section className="card mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-6 shadow-xl">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -234,7 +233,6 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-black text-white">Propinas por empleado</h2>
             </div>
             
-            {/* Filtro por Mes */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-slate-400">Filtrar mes:</span>
               <select
@@ -274,12 +272,10 @@ export default function DashboardPage() {
                           {emp.tips_count} {emp.tips_count === 1 ? 'propina' : 'propinas'}
                         </td>
 
-                        {/* Propinas ya liquidadas / pagadas */}
                         <td className="px-4 py-4 text-right text-base font-bold text-emerald-400">
                           {formatCurrency(emp.total_amount)}
                         </td>
 
-                        {/* Saldo pendiente de pago */}
                         <td className="px-4 py-4 text-right text-base font-bold text-orange-400">
                           {formatCurrency(emp.pending_amount)}
                         </td>
@@ -294,13 +290,6 @@ export default function DashboardPage() {
                                 ? 'bg-orange-500 text-slate-950 hover:bg-orange-400 shadow-lg shadow-orange-500/20'
                                 : 'cursor-not-allowed bg-white/5 text-slate-500 border border-white/5'
                             }`}
-                            title={
-                              !hasPendingBalance
-                                ? 'Sin saldo pendiente para pagar'
-                                : !emp.stripe_onboarding_completed
-                                ? 'El empleado requiere vincular su IBAN'
-                                : 'Pagar saldo pendiente'
-                            }
                           >
                             {hasPendingBalance ? 'Pagar propinas' : 'Al día'}
                           </button>
@@ -321,7 +310,6 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {/* Modal Confirmación de Pago */}
       {selectedEmployee && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl">
