@@ -9,6 +9,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navItems = [
     { label: 'Propinas & Equipo', detail: 'Resumen', href: '/dashboard' },
     { label: 'Configuración', detail: 'Tu negocio', href: '/dashboard/settings' },
+    { label: 'Centro de ayuda', detail: 'Guías y soporte', href: '/dashboard/help' }, // <-- NUEVA LÍNEA AÑADIDA
   ];
 
   function handleLogout() {
