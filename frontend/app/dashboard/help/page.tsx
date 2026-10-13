@@ -40,7 +40,7 @@ export default function HelpPage() {
     {
       category: "3. Reparto y tarifas",
       question: "¿Quién paga la tarifa del servicio?",
-      answer: "Puedes elegirlo en el selector '¿Quién asume los costes del servicio?' en los Datos del negocio. Si seleccionas 'El Cliente', se le añadirá un recargo de 0,10 € + gastos de procesamiento al pagar, para que el empleado reciba la propina completa."
+      answer: "Puedes elegirlo en el selector '¿Quién asume los costes del servicio?' en los Datos del negocio. Si seleccionas 'El Cliente', se le añadirá un recargo de 0,10 € + gastos de procesamiento al pagar para que el empleado reciba la propina íntegra. Si seleccionas 'El Restaurante', el cliente pagará únicamente la propina que elija y las tarifas de procesamiento y comisión se descontarán directamente del importe que recibe el empleado."
     },
     {
       category: "3. Reparto y tarifas",
