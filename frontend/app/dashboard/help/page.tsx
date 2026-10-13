@@ -1,4 +1,5 @@
-"client"; // Si usas hooks como useState en Next.js App Router, recuerda marcarlo como cliente si es necesario
+'use client';
+
 import React, { useState } from "react";
 import { Search, ChevronDown, ChevronUp, HelpCircle, Mail } from "lucide-react";
 
