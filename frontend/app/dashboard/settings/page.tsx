@@ -281,33 +281,19 @@ export default function SettingsPage() {
   return (
     <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
       <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-bold text-orange-300">
-            · Configuración
-          </p>
+  <div>
+    <p className="text-sm font-bold text-orange-300">
+      · Configuración
+    </p>
 
-          <div className="mt-3 flex items-center gap-4">
-            {logoPreview ? (
-              <img
-                src={logoPreview}
-                alt={business?.name || 'Restaurante'}
-                className="h-14 w-14 rounded-xl border border-white/10 object-cover shadow-md"
-              />
-            ) : (
-              <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/5 text-2xl font-black text-orange-400">
-                {business?.name?.charAt(0) || 'R'}
-              </div>
-            )}
-
-            <div>
-              <h1 className="text-3xl font-black sm:text-4xl text-white">{business ? business.name : 'Configura tu negocio'}</h1>
-              <p className="mt-1 text-sm text-slate-400">
-                Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="mt-3">
+      <h1 className="text-3xl font-black sm:text-4xl text-white">{business ? business.name : 'Configura tu negocio'}</h1>
+      <p className="mt-1 text-sm text-slate-400">
+        Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.
+      </p>
+    </div>
+  </div>
+</header>
 
       {error && <p className="mt-5 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400">{error}</p>}
       {message && <p className="mt-5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-emerald-400">{message}</p>}
