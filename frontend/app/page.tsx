@@ -26,16 +26,10 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [mensaje, setMensaje] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const mailtoUrl = `mailto:soportepropi@gmail.com?subject=${encodeURIComponent(
-      `Consulta de ${nombre} - Landing Propi`
-    )}&body=${encodeURIComponent(
-      `Nombre: ${nombre}\nEmail: ${email}\n\nMensaje:\n${mensaje}`
-    )}`;
-
-    window.location.href = mailtoUrl;
-  };
+  // Construcción dinámica de la URL
+  const subject = encodeURIComponent(`Consulta de ${nombre || 'Usuario'} - Landing Propi`);
+  const body = encodeURIComponent(`Nombre: ${nombre}\nEmail: ${email}\n\nMensaje:\n${mensaje}`);
+  const mailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=soportepropi@gmail.com&su=${subject}&body=${body}`;
 
   return (
     <main className="glow min-h-screen">
@@ -187,7 +181,7 @@ export default function Home() {
             </a>
           </div>
 
-         <form className="grid gap-3" onSubmit={handleSubmit}>
+          <form className="grid gap-3" onSubmit={(e) => e.preventDefault()}>
             <label className="text-sm font-bold text-slate-200">
               Tu nombre
               <input
@@ -219,11 +213,18 @@ export default function Home() {
                 placeholder="¿En qué podemos ayudarte?"
               />
             </label>
-            <button className="btn btn-primary mt-2 w-full sm:w-auto" type="submit">
+            
+            <a
+              href={mailUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary mt-2 w-full sm:w-auto text-center inline-flex items-center justify-center gap-2"
+            >
               Enviar mensaje <span>→</span>
-            </button>
+            </a>
+
             <p className="text-xs leading-5 text-slate-500">
-              Al enviar se abrirá Gmail o tu aplicación de correo con los datos rellenados.
+              Al hacer clic se abrirá Gmail con los datos completados listos para enviar.
             </p>
           </form>
         </section>
