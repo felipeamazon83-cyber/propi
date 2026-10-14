@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const [payoutError, setPayoutError] = useState('');
   const [payoutSuccessMsg, setPayoutSuccessMsg] = useState('');
 
-  const loadDashboard = useCallback(async () => {
+ const loadDashboard = useCallback(async () => {
     try {
       setError('');
       // 1. Petición optimizada de negocios
@@ -70,7 +70,8 @@ export default function DashboardPage() {
         true
       );
 
-      const logoUrl = data.business.logo_url || businesses[0].logo_url || null;
+      // Priorizamos el logo_url de la lista de negocios que viene fresco de la BD
+      const logoUrl = businesses[0].logo_url || data.business?.logo_url || null;
 
       setBusiness({
         ...data.business,
