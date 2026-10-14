@@ -8,7 +8,7 @@
 /* Shared form feedback */
 .form-message{border-radius:.75rem;padding:.8rem 1rem;background:rgba(249,115,22,.12);color:#fed7aa}
 .form-error{border-radius:.75rem;padding:.8rem 1rem;background:rgba(248,113,113,.12);color:#fecaca}
-nav a{transition:opacity .2s ease}nav a:hover{opacity:.85}
+nav a{transition:opacity .2s ease}nav a:hover{opacity:.85}.mobile-menu-login{justify-content:center;text-align:center}.mobile-menu-login:hover{transform:none!important;opacity:1!important}@media(max-width:640px){.desktop-login,.desktop-language,.desktop-pricing{display:none!important}.mobile-menu-panel .language-switcher{font-family:var(--font-jakarta),sans-serif}.mobile-menu-panel .mobile-menu-login{width:100%!important;min-height:44px!important;margin-top:.2rem;padding:.7rem .8rem!important}}@media(min-width:641px){.mobile-menu-wrap{display:none!important}}
 
 /* Public tipping flow */
 .public-tip-shell{background:radial-gradient(circle at 50% 0,rgba(249,115,22,.18),transparent 38%),#07182f}

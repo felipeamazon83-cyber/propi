@@ -54,6 +54,7 @@ export default function Home() {
                 <div className="mobile-menu-panel">
                   <Link href="#precios" onClick={() => setIsMobileMenuOpen(false)}>Precios</Link>
                   <LanguageSwitcher />
+                  <Link className="mobile-menu-login btn btn-primary" href="/login" onClick={() => setIsMobileMenuOpen(false)}>Iniciar sesión</Link>
                 </div>
               )}
             </div>
@@ -61,7 +62,7 @@ export default function Home() {
             <Link className="desktop-pricing hidden btn btn-secondary w-auto sm:inline-flex" href="#precios">
               Precios
             </Link>
-            <Link className="btn btn-primary w-auto" href="/login">
+            <Link className="desktop-login btn btn-primary w-auto" href="/login">
               Iniciar sesión
             </Link>
           </div>
