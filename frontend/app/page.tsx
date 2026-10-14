@@ -34,9 +34,9 @@ export default function Home() {
   return (
     <main className="glow min-h-screen">
       <div className="mx-auto max-w-6xl px-5 py-6 sm:px-8">
-        <nav className="flex items-center justify-between">
+        <nav className="landing-header flex items-center justify-between">
           <Link href="/" className="brand-logo brand-logo-hero" aria-label="Propi">
-            <img src="/propi-logo.png" alt="Propi · Propinas que hacen la diferencia" />
+            <img src="/propi-logo-new.png" alt="Propi · Propinas que hacen la diferencia" />
           </Link>
           <div className="landing-header-actions flex items-center gap-3">
             <LanguageSwitcher />
