@@ -84,6 +84,7 @@ def get_dashboard_summary(
                 "id": str(business.id),
                 "name": business.name,
                 "currency": getattr(business, "currency", "EUR"),
+                "logo_url": getattr(business, "logo_url", None),
             },
             "summary": {
                 "total_amount": total_amount,
@@ -147,6 +148,7 @@ def get_dashboard_summary(
             "id": str(business.id),
             "name": business.name,
             "currency": getattr(business, "currency", "EUR"),
+            "logo_url": getattr(business, "logo_url", None),
         },
         "summary": {
             "total_amount": total_amount,
