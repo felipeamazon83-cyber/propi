@@ -25,6 +25,7 @@ export default function Home() {
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [mensaje, setMensaje] = useState('');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Construcción dinámica de la URL
   const subject = encodeURIComponent(`Consulta de ${nombre || 'Usuario'} - Landing Propi`);
@@ -39,8 +40,25 @@ export default function Home() {
             <img src="/propi-logo-new.png" alt="Propi · Propinas que hacen la diferencia" />
           </Link>
           <div className="landing-header-actions flex items-center gap-3">
-            <LanguageSwitcher />
-            <Link className="hidden btn btn-secondary w-auto sm:inline-flex" href="#precios">
+            <div className="mobile-menu-wrap">
+              <button
+                type="button"
+                className="mobile-menu-button"
+                aria-label={isMobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+                aria-expanded={isMobileMenuOpen}
+                onClick={() => setIsMobileMenuOpen((open) => !open)}
+              >
+                <span /><span /><span />
+              </button>
+              {isMobileMenuOpen && (
+                <div className="mobile-menu-panel">
+                  <Link href="#precios" onClick={() => setIsMobileMenuOpen(false)}>Precios</Link>
+                  <LanguageSwitcher />
+                </div>
+              )}
+            </div>
+            <div className="desktop-language"><LanguageSwitcher /></div>
+            <Link className="desktop-pricing hidden btn btn-secondary w-auto sm:inline-flex" href="#precios">
               Precios
             </Link>
             <Link className="btn btn-primary w-auto" href="/login">
