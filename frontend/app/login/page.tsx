@@ -53,7 +53,7 @@ export default function Login() {
         </div>
 
         <Link href="/" className="auth-brand" aria-label="Propi">
-          <img src="/propi-logo-transparent.jpg" alt="Propi · Propinas que hacen la diferencia" />
+          <img src="/propi-landing-logo.png" alt="Propi · Propinas que hacen la diferencia" />
         </Link>
 
         <div className="mt-10 text-center">
