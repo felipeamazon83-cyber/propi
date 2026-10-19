@@ -167,38 +167,58 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* PASO 4: Dashboard y Payouts */}
+        {/* PASO 4: Dashboard y Pago de Propinas */}
         {step === 4 && (
           <div className="flex flex-col gap-5 text-slate-300">
             <p className="text-sm text-slate-300 leading-relaxed">
-              Consulta el resumen de recaudación en tiempo real en tu <strong className="text-white">Dashboard</strong> y gestiona las liquidaciones de propinas para tu equipo.
+              Consulta las métricas en tiempo real desde tu <strong className="text-white">Dashboard</strong>. Cuando los clientes paguen propinas, verás el acumulado y la acción disponible para liquidar a cada empleado.
             </p>
 
-            <div className="rounded-xl border border-white/10 bg-[#07182f]/80 p-5 space-y-3">
+            <div className="rounded-xl border border-white/10 bg-[#07182f]/80 p-5 space-y-4">
+              {/* Resumen de Métricas */}
               <div className="grid grid-cols-3 gap-2 text-center text-xs">
                 <div className="bg-white/5 p-2.5 rounded-lg border border-white/5">
-                  <span className="block text-slate-400 text-[10px]">Acumuladas</span>
-                  <span className="font-bold text-emerald-400 text-sm">1,00 €</span>
+                  <span className="block text-slate-400 text-[10px]">Propinas acumuladas</span>
+                  <span className="font-bold text-amber-300 text-sm">3,00 €</span>
                 </div>
                 <div className="bg-white/5 p-2.5 rounded-lg border border-white/5">
-                  <span className="block text-slate-400 text-[10px]">Cantidad</span>
-                  <span className="font-bold text-white text-sm">1</span>
+                  <span className="block text-slate-400 text-[10px]">Cantidad de propinas</span>
+                  <span className="font-bold text-white text-sm">2</span>
                 </div>
                 <div className="bg-white/5 p-2.5 rounded-lg border border-white/5">
-                  <span className="block text-slate-400 text-[10px]">Promedio</span>
-                  <span className="font-bold text-white text-sm">1,00 €</span>
+                  <span className="block text-slate-400 text-[10px]">Promedio por propina</span>
+                  <span className="font-bold text-white text-sm">1,50 €</span>
                 </div>
               </div>
 
-              <div className="p-3 bg-white/5 rounded-lg border border-white/5 text-xs text-slate-300 space-y-1">
-                <div className="flex justify-between font-bold text-white">
-                  <span>Juan Perez</span>
-                  <span className="text-emerald-400">Saldo: 0,00 €</span>
+              {/* Simulación de la Tabla de Empleados */}
+              <div className="space-y-2 text-xs">
+                {/* Empleado con saldo pendiente */}
+                <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5">
+                  <div>
+                    <span className="font-bold text-white block">Juan Perez</span>
+                    <span className="text-[11px] text-slate-400">2 propinas · Saldo pendiente: <strong className="text-amber-300">2,00 €</strong></span>
+                  </div>
+                  <button className="px-3 py-1.5 rounded-lg bg-orange-500 font-bold text-white text-xs hover:bg-orange-600 transition-all shadow">
+                    Pagar propinas
+                  </button>
                 </div>
-                <p className="text-[11px] text-slate-400">
-                  Una vez que el cliente paga la propina desde el QR/NFC, se refleja en el panel. Pulsa <strong className="text-white">&quot;Al día&quot;</strong> para liquidar saldos pendientes.
-                </p>
+
+                {/* Empleado al día */}
+                <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/5 opacity-75">
+                  <div>
+                    <span className="font-bold text-white block">Teresa Melo</span>
+                    <span className="text-[11px] text-slate-400">0 propinas · Saldo pendiente: <strong className="text-slate-300">0,00 €</strong></span>
+                  </div>
+                  <span className="px-3 py-1.5 rounded-lg bg-white/10 text-slate-400 text-xs font-semibold">
+                    Al día
+                  </span>
+                </div>
               </div>
+
+              <p className="text-[11px] text-slate-400 leading-relaxed border-t border-white/5 pt-3">
+                💡 Al hacer clic en <strong className="text-orange-400">&quot;Pagar propinas&quot;</strong>, el sistema debitará automáticamente el dinero recaudado directamente al IBAN vinculado del empleado. Para aquellos sin saldo pendiente, aparecerá el estado <strong className="text-slate-300">&quot;Al día&quot;</strong>.
+              </p>
             </div>
 
             <div className="flex gap-3 mt-2">
