@@ -2,32 +2,29 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useTranslation } from '@/context/LanguageContext';
-import { LanguageSelector } from '@/components/LanguageSelector';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { t } = useTranslation();
 
   const navItems = [
     { 
-      label: t('Header.dashboard'), 
-      detail: t('Header.summaryDetail') || 'Resumen', 
+      label: 'Propinas & Equipo', 
+      detail: 'Resumen', 
       href: '/dashboard' 
     },
     { 
-      label: t('Header.settings'), 
-      detail: t('Header.settingsDetail') || 'Tu negocio', 
+      label: 'Configuración', 
+      detail: 'Tu negocio', 
       href: '/dashboard/settings' 
     },
     { 
-      label: t('Header.help'), 
-      detail: t('Header.helpDetail') || 'Guías y soporte', 
+      label: 'Centro de ayuda', 
+      detail: 'Guías y soporte', 
       href: '/dashboard/help' 
     },
     { 
-      label: t('Header.guide') || '🚀 Guía de inicio', 
-      detail: t('Header.guideDetail') || 'Paso a paso', 
+      label: '🚀 Guía de inicio', 
+      detail: 'Paso a paso', 
       href: '/onboarding' 
     },
   ];
@@ -94,32 +91,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
               />
             </svg>
-            <span>{t('Header.logout') || 'Cerrar sesión'}</span>
+            <span>Cerrar sesión</span>
           </button>
         </div>
       </aside>
 
-      {/* ÁREA PRINCIPAL CON HEADER SUPERIOR */}
+      {/* ÁREA PRINCIPAL */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Header superior con Botón de acceso a la Guía y Selector de Idioma */}
+        {/* Header superior limpio */}
         <header className="flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#0b2344]/50 px-6 backdrop-blur">
           <div className="text-xs font-medium text-slate-400">
             Propi Business Panel
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/onboarding"
-              className="flex items-center gap-2 rounded-lg border border-orange-400/30 bg-orange-400/10 px-3 py-1.5 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-400/20"
-            >
-              <span>🚀</span>
-              <span>{t('Header.guide') || 'Guía de inicio'}</span>
-            </Link>
-
-            <LanguageSelector />
-          </div>
+          {/* Botón de acceso rápido a la Guía */}
+          <Link
+            href="/onboarding"
+            className="flex items-center gap-2 rounded-lg border border-orange-400/30 bg-orange-400/10 px-3 py-1.5 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-400/20"
+          >
+            <span>🚀</span>
+            <span>Guía de inicio</span>
+          </Link>
         </header>
 
+        {/* Contenido de cada vista */}
         <main className="min-w-0 flex-1 p-6">{children}</main>
       </div>
     </div>
