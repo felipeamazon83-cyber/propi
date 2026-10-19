@@ -151,10 +151,10 @@ export default function Home() {
                 <p className="text-sm font-bold uppercase tracking-widest text-orange-300">
                   Comisión por propina recibida
                 </p>
-                <div className="mt-3 flex items-end gap-2">
-                  <span className="text-5xl font-black text-white">0,10 €</span>
-                  <span className="mb-1 text-sm text-slate-400">+ comisión de procesamiento</span>
-                </div>
+<div className="pricing-amount-row mt-3 flex items-end gap-2">
+> <span className="pricing-amount text-5xl font-black text-white">0,10 €</span>
+> <span className="pricing-processing mb-1 text-sm text-slate-400">+ comisión de procesamiento</span>
+  </div>
                 <p className="mt-3 max-w-sm text-sm leading-6 text-slate-400">
                   Configurable: la asume el cliente o el negocio.
                 </p>
