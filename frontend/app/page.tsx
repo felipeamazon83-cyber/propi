@@ -37,7 +37,7 @@ export default function Home() {
       <div className="mx-auto max-w-6xl px-5 py-6 sm:px-8">
         <nav className="landing-header flex items-center justify-between">
           <Link href="/" className="brand-logo brand-logo-hero" aria-label="Propi">
-            <img src="/propi-logo-new.png" alt="Propi · Propinas que hacen la diferencia" />
+            <img src="/propi-logo-transparent.jpg" alt="Propi · Propinas que hacen la diferencia" />
           </Link>
           <div className="landing-header-actions flex items-center gap-3">
             <div className="mobile-menu-wrap">
@@ -151,10 +151,10 @@ export default function Home() {
                 <p className="text-sm font-bold uppercase tracking-widest text-orange-300">
                   Comisión por propina recibida
                 </p>
-                <div className="mt-3 flex items-end gap-2">
-                  <span className="text-5xl font-black text-white">0,10 €</span>
-                  <span className="mb-1 text-sm text-slate-400">+ comisión de procesamiento</span>
-                </div>
+<div className="pricing-amount-row mt-3 flex items-end gap-2">
+> <span className="pricing-amount text-5xl font-black text-white">0,10 €</span>
+> <span className="pricing-processing mb-1 text-sm text-slate-400">+ comisión de procesamiento</span>
+  </div>
                 <p className="mt-3 max-w-sm text-sm leading-6 text-slate-400">
                   Configurable: la asume el cliente o el negocio.
                 </p>
