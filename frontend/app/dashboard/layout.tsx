@@ -7,9 +7,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
 
   const navItems = [
-    { label: 'Propinas & Equipo', detail: 'Resumen', href: '/dashboard' },
-    { label: 'Configuración', detail: 'Tu negocio', href: '/dashboard/settings' },
-    { label: 'Centro de ayuda', detail: 'Guías y soporte', href: '/dashboard/help' }, // <-- NUEVA LÍNEA AÑADIDA
+    { 
+      label: 'Propinas & Equipo', 
+      detail: 'Resumen', 
+      href: '/dashboard' 
+    },
+    { 
+      label: 'Configuración', 
+      detail: 'Tu negocio', 
+      href: '/dashboard/settings' 
+    },
+    { 
+      label: 'Centro de ayuda', 
+      detail: 'Guías y soporte', 
+      href: '/dashboard/help' 
+    },
+    { 
+      label: 'Guía de inicio', 
+      detail: 'Paso a paso', 
+      href: '/onboarding' 
+    },
   ];
 
   function handleLogout() {
@@ -19,6 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen flex-col bg-[#07182f] text-slate-100 md:flex-row">
+      {/* ASIDE / SIDEBAR */}
       <aside className="flex w-full flex-col justify-between border-b border-white/10 bg-[#0b2344]/95 px-4 py-4 backdrop-blur md:min-h-screen md:w-64 md:border-b-0 md:border-r md:px-5 md:py-7">
         <div>
           <div className="flex items-center justify-between md:block">
@@ -53,7 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
 
-        {/* Botón Cerrar sesión ubicado abajo de forma limpia */}
+        {/* Botón Cerrar sesión */}
         <div className="mt-6 border-t border-white/10 pt-4 md:mt-auto">
           <button
             type="button"
@@ -78,7 +96,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      <main className="min-w-0 flex-1">{children}</main>
+      {/* ÁREA PRINCIPAL */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        {/* Header superior limpio */}
+        <header className="flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#0b2344]/50 px-6 backdrop-blur">
+          <div className="text-xs font-medium text-slate-400">
+            Propi Business Panel
+          </div>
+        </header>
+
+        {/* Contenido de cada vista */}
+        <main className="min-w-0 flex-1 p-6">{children}</main>
+      </div>
     </div>
   );
 }
