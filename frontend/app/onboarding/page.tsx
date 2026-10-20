@@ -2,8 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslation } from '../../../context/LanguageContext';
-import { LanguageSelector } from '../../../components/LanguageSelector';
+import { useTranslation } from '../../context/LanguageContext';
+import { LanguageSelector } from '../../components/LanguageSelector';
 
 export default function OnboardingPage() {
   const { t } = useTranslation();
@@ -22,7 +22,7 @@ export default function OnboardingPage() {
         {/* Encabezado */}
         <div className="mb-6 text-center">
           <span className="text-xs font-bold uppercase tracking-widest text-orange-400">
-            {t('OnboardingGuide.stepTitle') || 'Guía de Inicio Rápido · Paso'} {step} {t('OnboardingGuide.of') || 'de'} 4
+            {t('OnboardingGuide.stepTitle') || 'Guía de Inicio Rápido · Paso'} {step} de 4
           </span>
           <h1 className="mt-2 text-2xl font-black text-white sm:text-3xl">
             {step === 1 && '1. Datos del Negocio y Stripe Connect'}
