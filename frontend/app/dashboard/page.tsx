@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { api } from '../../lib/api';
+import { useTranslation } from '../../context/LanguageContext';
 
 type Business = {
   id: string;
@@ -33,6 +34,8 @@ type DashboardSummaryResponse = {
 };
 
 export default function DashboardPage() {
+  const { t } = useTranslation();
+
   const [business, setBusiness] = useState<Business | null>(null);
   const [tipSummary, setTipSummary] = useState<TipSummary>({
     total_amount: 0,
@@ -50,7 +53,7 @@ export default function DashboardPage() {
   const [payoutError, setPayoutError] = useState('');
   const [payoutSuccessMsg, setPayoutSuccessMsg] = useState('');
 
- const loadDashboard = useCallback(async () => {
+  const loadDashboard = useCallback(async () => {
     try {
       setError('');
       // 1. Petición optimizada de negocios
@@ -94,7 +97,6 @@ export default function DashboardPage() {
         caught instanceof Error ? caught.message : 'No se pudo cargar el dashboard.'
       );
     } finally {
-      // Nos aseguramos de quitar el estado de carga al terminar
       setLoading(false);
     }
   }, []);
@@ -144,13 +146,13 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10 text-slate-300">
+      <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 text-slate-300 sm:px-5 sm:py-10">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 w-48 bg-white/5 rounded-lg"></div>
+          <div className="h-8 w-48 rounded-lg bg-white/5"></div>
           <div className="grid gap-4 sm:grid-cols-3">
-            <div className="h-28 bg-white/5 rounded-2xl"></div>
-            <div className="h-28 bg-white/5 rounded-2xl"></div>
-            <div className="h-28 bg-white/5 rounded-2xl"></div>
+            <div className="h-28 rounded-2xl bg-white/5"></div>
+            <div className="h-28 rounded-2xl bg-white/5"></div>
+            <div className="h-28 rounded-2xl bg-white/5"></div>
           </div>
         </div>
       </main>
@@ -161,7 +163,9 @@ export default function DashboardPage() {
     <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-bold text-orange-300">· Dashboard</p>
+          <p className="text-sm font-bold text-orange-300">
+            {t('DashboardMain.badge') || '· Dashboard'}
+          </p>
 
           <div className="mt-3 flex items-center gap-4">
             {business?.logo_url ? (
@@ -181,7 +185,7 @@ export default function DashboardPage() {
                 {business ? business.name : 'Configura tu negocio'}
               </h1>
               <p className="mt-1 text-sm text-slate-400">
-                Consulta el rendimiento de tu equipo y gestiona el pago de propinas.
+                {t('DashboardMain.subtitle') || 'Consulta el rendimiento de tu equipo y gestiona el pago de propinas.'}
               </p>
             </div>
           </div>
@@ -203,25 +207,37 @@ export default function DashboardPage() {
       {business && (
         <section className="mt-8 grid gap-4 sm:grid-cols-3">
           <article className="card">
-            <p className="text-sm text-slate-400">Propinas acumuladas</p>
+            <p className="text-sm text-slate-400">
+              {t('DashboardMain.accumulatedTips') || 'Propinas acumuladas'}
+            </p>
             <p className="mt-2 text-3xl font-black text-orange-300">
               {formatCurrency(tipSummary.total_amount)}
             </p>
-            <p className="mt-1 text-xs text-slate-500">Total recaudado</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('DashboardMain.totalCollected') || 'Total recaudado'}
+            </p>
           </article>
 
           <article className="card">
-            <p className="text-sm text-slate-400">Cantidad de propinas</p>
+            <p className="text-sm text-slate-400">
+              {t('DashboardMain.tipsCount') || 'Cantidad de propinas'}
+            </p>
             <p className="mt-2 text-3xl font-black text-white">{tipSummary.total_count}</p>
-            <p className="mt-1 text-xs text-slate-500">Pagos confirmados</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('DashboardMain.confirmedPayments') || 'Pagos confirmados'}
+            </p>
           </article>
 
           <article className="card">
-            <p className="text-sm text-slate-400">Promedio por propina</p>
+            <p className="text-sm text-slate-400">
+              {t('DashboardMain.avgPerTip') || 'Promedio por propina'}
+            </p>
             <p className="mt-2 text-3xl font-black text-white">
               {formatCurrency(tipSummary.average)}
             </p>
-            <p className="mt-1 text-xs text-slate-500">Media del periodo</p>
+            <p className="mt-1 text-xs text-slate-500">
+              {t('DashboardMain.periodAverage') || 'Media del periodo'}
+            </p>
           </article>
         </section>
       )}
@@ -230,20 +246,26 @@ export default function DashboardPage() {
         <section className="card mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-6 shadow-xl">
           <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-orange-400">Equipo</p>
-              <h2 className="text-2xl font-black text-white">Propinas por empleado</h2>
+              <p className="text-xs font-bold uppercase tracking-widest text-orange-400">
+                {t('DashboardMain.teamSection') || 'Equipo'}
+              </p>
+              <h2 className="text-2xl font-black text-white">
+                {t('DashboardMain.teamTips') || 'Propinas por empleado'}
+              </h2>
             </div>
-            
+
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400">Filtrar mes:</span>
+              <span className="text-xs text-slate-400">
+                {t('DashboardMain.filterMonth') || 'Filtrar mes:'}
+              </span>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
                 className="rounded-lg border border-white/10 bg-slate-800 px-3 py-1.5 text-xs text-white focus:border-orange-500 focus:outline-none"
               >
-                <option value="all">Todos los periodos</option>
-                <option value="2026-10">Octubre 2026</option>
-                <option value="2026-09">Septiembre 2026</option>
+                <option value="all">{t('DashboardMain.allPeriods') || 'Todos los periodos'}</option>
+                <option value="2026-10">{t('DashboardMain.october') || 'Octubre 2026'}</option>
+                <option value="2026-09">{t('DashboardMain.september') || 'Septiembre 2026'}</option>
               </select>
             </div>
           </div>
@@ -252,11 +274,21 @@ export default function DashboardPage() {
             <table className="w-full text-left text-sm text-slate-300">
               <thead className="border-b border-white/10 bg-white/5 text-xs font-semibold uppercase tracking-wider text-slate-400">
                 <tr>
-                  <th className="rounded-l-lg px-4 py-3.5">Empleado</th>
-                  <th className="px-4 py-3.5 text-center">Propinas Recibidas</th>
-                  <th className="px-4 py-3.5 text-right">Propinas Ya Pagadas</th>
-                  <th className="px-4 py-3.5 text-right">Saldo Pendiente</th>
-                  <th className="rounded-r-lg px-4 py-3.5 text-right">Acción</th>
+                  <th className="rounded-l-lg px-4 py-3.5">
+                    {t('DashboardMain.colEmployee') || 'Empleado'}
+                  </th>
+                  <th className="px-4 py-3.5 text-center">
+                    {t('DashboardMain.colReceived') || 'Propinas Recibidas'}
+                  </th>
+                  <th className="px-4 py-3.5 text-right">
+                    {t('DashboardMain.colPaid') || 'Propinas Ya Pagadas'}
+                  </th>
+                  <th className="px-4 py-3.5 text-right">
+                    {t('DashboardMain.colPending') || 'Saldo Pendiente'}
+                  </th>
+                  <th className="rounded-r-lg px-4 py-3.5 text-right">
+                    {t('DashboardMain.colAction') || 'Acción'}
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -289,10 +321,10 @@ export default function DashboardPage() {
                             className={`rounded-lg px-3.5 py-1.5 text-xs font-bold transition-all ${
                               canPay
                                 ? 'bg-orange-500 text-slate-950 hover:bg-orange-400 shadow-lg shadow-orange-500/20'
-                                : 'cursor-not-allowed bg-white/5 text-slate-500 border border-white/5'
+                                : 'cursor-not-allowed border border-white/5 bg-white/5 text-slate-500'
                             }`}
                           >
-                            {hasPendingBalance ? 'Pagar propinas' : 'Al día'}
+                            {hasPendingBalance ? 'Pagar propinas' : (t('DashboardMain.upToDate') || 'Al día')}
                           </button>
                         </td>
                       </tr>
