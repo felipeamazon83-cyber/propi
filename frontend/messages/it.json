@@ -23,8 +23,7 @@
     "next": "Passo successivo",
     "back": "Indietro",
     "finish": "Vai alla Dashboard Principale"
-  }
-  {
+  },
   "Settings": {
     "sectionBadge": "Impostazioni",
     "subtitle": "Modifica i dati della tua attività, integra Stripe e gestisci le tue posizioni QR.",
@@ -73,5 +72,4 @@
     "tableCard": "Scheda Tavolo 🎨",
     "delete": "Elimina"
   }
-}
 }
