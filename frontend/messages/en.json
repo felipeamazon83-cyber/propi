@@ -1,0 +1,27 @@
+{
+  "Header": {
+    "dashboard": "Tips & Team",
+    "summaryDetail": "Summary",
+    "settings": "Settings",
+    "settingsDetail": "Your business",
+    "help": "Help Center",
+    "helpDetail": "Guides & support",
+    "guide": "Getting Started Guide",
+    "guideDetail": "Step by step",
+    "logout": "Log out"
+  },
+  "Onboarding": {
+    "title": "Quick Start Guide",
+    "step1Nav": "Business & Stripe",
+    "step2Nav": "Team & IBAN",
+    "step3Nav": "Tables & QR",
+    "step4Nav": "Dashboard",
+    "step1Title": "1. Business Details and Stripe Connect",
+    "step2Title": "2. Team Management and IBAN Link",
+    "step3Title": "3. Tables, QR, and NFC Setup",
+    "step4Title": "4. Tip Tracking and Payouts from Dashboard",
+    "next": "Next step",
+    "back": "Back",
+    "finish": "Go to my Main Dashboard"
+  }
+}
