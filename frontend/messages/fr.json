@@ -1,0 +1,27 @@
+{
+  "Header": {
+    "dashboard": "Pourboires & Équipe",
+    "summaryDetail": "Aperçu",
+    "settings": "Configuration",
+    "settingsDetail": "Votre entreprise",
+    "help": "Centre d'aide",
+    "helpDetail": "Guides & support",
+    "guide": "Guide de démarrage",
+    "guideDetail": "Pas à pas",
+    "logout": "Se déconnecter"
+  },
+  "Onboarding": {
+    "title": "Guide de Démarrage Rapide",
+    "step1Nav": "Entreprise & Stripe",
+    "step2Nav": "Équipe & IBAN",
+    "step3Nav": "Tables & QR",
+    "step4Nav": "Tableau de bord",
+    "step1Title": "1. Données de l'Entreprise et Stripe Connect",
+    "step2Title": "2. Gestion d'Équipe et Lien IBAN",
+    "step3Title": "3. Configuration des Tables, QR et NFC",
+    "step4Title": "4. Suivi et Paiement des Pourboires",
+    "next": "Étape suivante",
+    "back": "Retour",
+    "finish": "Aller au Tableau de Bord Principal"
+  }
+}
