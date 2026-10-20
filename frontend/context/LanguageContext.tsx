@@ -36,24 +36,24 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const t = (key: string) => {
+  const t = (key: string): string => {
     const keys = key.split('.');
     let value = dictionaries[locale];
-    
+
     for (const k of keys) {
       value = value?.[k];
     }
-    
+
     // Fallback al español si no encuentra la clave
     if (!value) {
       let fallbackValue = dictionaries['es'];
       for (const k of keys) {
         fallbackValue = fallbackValue?.[k];
       }
-      return fallbackValue || key;
+      return typeof fallbackValue === 'string' ? fallbackValue : key;
     }
-    
-    return value;
+
+    return typeof value === 'string' ? value : key;
   };
 
   return (
