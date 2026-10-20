@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { LanguageSelector } from '../components/languageSelector';
+// Importación corregida apuntando al componente real con L mayúscula
+import { LanguageSelector } from '../components/LanguageSelector';
 
 const steps = [
   ['01', 'Crea tu negocio', 'Configura tu perfil y deja todo listo en minutos.'],
@@ -53,7 +54,8 @@ export default function Home() {
               {isMobileMenuOpen && (
                 <div className="mobile-menu-panel">
                   <Link href="#precios" onClick={() => setIsMobileMenuOpen(false)}>Precios</Link>
-                  <LanguageSwitcher />
+                  {/* Corregido: antes decía <LanguageSwitcher /> */}
+                  <LanguageSelector />
                   <Link className="mobile-menu-login btn btn-primary" href="/login" onClick={() => setIsMobileMenuOpen(false)}>Iniciar sesión</Link>
                 </div>
               )}
@@ -151,10 +153,10 @@ export default function Home() {
                 <p className="text-sm font-bold uppercase tracking-widest text-orange-300">
                   Comisión por propina recibida
                 </p>
-	<div className="pricing-amount-row mt-3 flex items-end gap-2">
-	  <span className="pricing-amount text-5xl font-black text-white">0,10 €</span>
-	  <span className="pricing-processing mb-1 text-sm text-slate-400">+ comisión de procesamiento</span>
-	</div>
+                <div className="pricing-amount-row mt-3 flex items-end gap-2">
+                  <span className="pricing-amount text-5xl font-black text-white">0,10 €</span>
+                  <span className="pricing-processing mb-1 text-sm text-slate-400">+ comisión de procesamiento</span>
+                </div>
                 <p className="mt-3 max-w-sm text-sm leading-6 text-slate-400">
                   Configurable: la asume el cliente o el negocio.
                 </p>
