@@ -1,0 +1,13 @@
+{
+  "Header": {
+    "dashboard": "Propinas & Equipo",
+    "summaryDetail": "Resumen",
+    "settings": "Configuración",
+    "settingsDetail": "Tu negocio",
+    "help": "Centro de ayuda",
+    "helpDetail": "Guías y soporte",
+    "guide": "Guía de inicio",
+    "guideDetail": "Paso a paso",
+    "logout": "Cerrar sesión"
+  }
+}
