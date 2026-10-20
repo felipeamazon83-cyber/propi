@@ -23,8 +23,8 @@
     "next": "Próximo passo",
     "back": "Voltar",
     "finish": "Ir para o Dashboard Principal"
-  }
-  {
+  },
+  
   "Settings": {
     "sectionBadge": "Configurações",
     "subtitle": "Ajuste os dados da sua empresa, integre o Stripe e gira os seus locais de QR.",
@@ -72,6 +72,6 @@
     "copyNfcUrl": "Copiar URL NFC",
     "tableCard": "Cartão de Mesa 🎨",
     "delete": "Eliminar"
-  }
+  
 }
 }
