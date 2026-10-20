@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
+import { useTranslation } from '../../../context/LanguageContext';
 
 type Business = {
   id: string;
@@ -46,6 +47,8 @@ type DeleteTarget = {
 } | null;
 
 export default function SettingsPage() {
+  const { t } = useTranslation();
+
   const [business, setBusiness] = useState<Business | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -235,7 +238,6 @@ export default function SettingsPage() {
     }
   }
 
-  // Función corregida: Siempre solicita un enlace GET fresco al backend y maneja caducidades
   async function handleReissueLink(employee: Employee) {
     if (!business) return;
 
@@ -281,38 +283,38 @@ export default function SettingsPage() {
   return (
     <main className="glow mx-auto min-h-screen max-w-5xl px-4 py-6 sm:px-5 sm:py-10">
       <header className="mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
-  <div>
-    <p className="text-sm font-bold text-orange-300">
-      · Configuración
-    </p>
+        <div>
+          <p className="text-sm font-bold text-orange-300">
+            · {t('Settings.sectionBadge')}
+          </p>
 
-    <div className="mt-3">
-      <h1 className="text-3xl font-black sm:text-4xl text-white">{business ? business.name : 'Configura tu negocio'}</h1>
-      <p className="mt-1 text-sm text-slate-400">
-        Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.
-      </p>
-    </div>
-  </div>
-</header>
+          <div className="mt-3">
+            <h1 className="text-3xl font-black sm:text-4xl text-white">{business ? business.name : 'Configura tu negocio'}</h1>
+            <p className="mt-1 text-sm text-slate-400">
+              {t('Settings.subtitle')}
+            </p>
+          </div>
+        </div>
+      </header>
 
       {error && <p className="mt-5 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-red-400">{error}</p>}
       {message && <p className="mt-5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 p-3 text-emerald-400">{message}</p>}
 
       <section className="card mt-6 sm:mt-8">
-        <h2 className="text-xl font-bold text-white">1. Datos del negocio</h2>
+        <h2 className="text-xl font-bold text-white">{t('Settings.section1Title')}</h2>
         <form onSubmit={saveBusiness} className="mt-4 grid gap-3 sm:grid-cols-2">
           <label>
-            Nombre comercial
+            {t('Settings.tradeName')}
             <input className="field mt-1" name="name" required defaultValue={business?.name || ''} />
           </label>
           <label>
-            Razón social
+            {t('Settings.legalName')}
             <input className="field mt-1" name="legal_name" defaultValue={business?.legal_name || ''} />
           </label>
 
           {/* Subida de Logo Personalizado */}
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-slate-300">Logo del Restaurante</label>
+            <label className="block text-sm font-medium text-slate-300">{t('Settings.logoLabel')}</label>
             <div className="mt-2 flex items-center gap-4">
               {logoPreview ? (
                 <img
@@ -333,24 +335,24 @@ export default function SettingsPage() {
                   onChange={handleImageChange}
                   className="text-xs text-slate-400 file:mr-3 file:rounded-lg file:border-0 file:bg-orange-500/20 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-orange-300 hover:file:bg-orange-500/30"
                 />
-                <span className="text-[11px] text-slate-500">Formatos: PNG, JPG o WEBP (Máx. 2 MB)</span>
+                <span className="text-[11px] text-slate-500">{t('Settings.logoFormats')}</span>
               </div>
             </div>
           </div>
 
           <label>
-            País
+            {t('Settings.country')}
             <input className="field mt-1" name="country" required maxLength={2} defaultValue={business?.country || 'ES'} />
           </label>
           <label>
-            Moneda
+            {t('Settings.currency')}
             <input className="field mt-1" name="currency" required maxLength={3} defaultValue={business?.currency || 'EUR'} />
           </label>
 
           <label className="sm:col-span-2 block">
-            ¿Quién asume los costes del servicio?
+            {t('Settings.feeTitle')}
             <p className="mt-1 text-xs font-normal text-slate-400">
-              Define si la tasa de gestión y procesamiento la cubre el negocio o se añade al total que paga el cliente.
+              {t('Settings.feeSubtitle')}
             </p>
             <select
               className="field mt-2 w-full"
@@ -358,21 +360,21 @@ export default function SettingsPage() {
               key={business?.fee_payer || 'business'}
               defaultValue={business?.fee_payer || 'business'}
             >
-              <option value="business">El Restaurante (Se descuenta del total recaudado)</option>
-              <option value="customer">El Cliente (Se le añade un recargo de 0,10 € + gastos de procesamiento al pagar)</option>
+              <option value="business">{t('Settings.feeMerchant')}</option>
+              <option value="customer">{t('Settings.feeCustomer')}</option>
             </select>
           </label>
 
-          <button className="btn btn-primary sm:col-span-2">{business ? 'Guardar datos' : 'Crear mi negocio'}</button>
+          <button className="btn btn-primary sm:col-span-2">{business ? t('Settings.saveData') : 'Crear mi negocio'}</button>
         </form>
       </section>
 
       {business && (
         <>
           <section className="card mt-5">
-            <h2 className="text-xl font-bold text-white">2. Equipo y cuenta de cobro</h2>
+            <h2 className="text-xl font-bold text-white">{t('Settings.section2Title')}</h2>
             <p className="mt-1 text-sm text-slate-400">
-              Stripe recopila las cuentas bancarias de forma segura; Propi nunca las almacena.
+              {t('Settings.stripeNotice')}
             </p>
             <button
               className="btn btn-secondary mt-3"
@@ -389,7 +391,7 @@ export default function SettingsPage() {
                 }
               }}
             >
-              {business.stripe_connected ? 'Gestionar Stripe' : 'Conectar Stripe'}
+              {business.stripe_connected ? t('Settings.manageStripe') : 'Conectar Stripe'}
             </button>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -400,7 +402,7 @@ export default function SettingsPage() {
                     className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3.5 py-2 text-slate-200"
                   >
                     <span className="font-semibold text-white">{employee.name}</span>
-                    <span className="text-xs opacity-60">· {employee.active ? 'Activo' : 'Inactivo'}</span>
+                    <span className="text-xs opacity-60">· {employee.active ? t('Settings.activeStatus') : 'Inactivo'}</span>
 
                     {employee.stripe_onboarding_completed ? (
                       <span className="ml-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-400">
@@ -413,7 +415,7 @@ export default function SettingsPage() {
                         className="ml-1 flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2.5 py-0.5 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-500/30 active:scale-95 cursor-pointer"
                         title="Haz clic para ver o copiar el enlace de vinculación de IBAN"
                       >
-                        <span>Pendiente IBAN</span>
+                        <span>{t('Settings.pendingIban')}</span>
                         <span>🔗</span>
                       </button>
                     )}
@@ -435,26 +437,26 @@ export default function SettingsPage() {
 
             <form className="mt-4 flex gap-2" onSubmit={addEmployee}>
               <input className="field" name="name" required placeholder="Nombre del empleado" />
-              <button className="btn btn-primary">Añadir</button>
+              <button className="btn btn-primary">{t('Settings.addMember')}</button>
             </form>
           </section>
 
           <section className="card mt-5">
-            <h2 className="text-xl font-bold text-white">3. Mesa, QR y NFC</h2>
+            <h2 className="text-xl font-bold text-white">{t('Settings.section3Title')}</h2>
             <form className="mt-4 grid gap-3 sm:grid-cols-2" onSubmit={addLocation}>
               <input className="field" name="name" required placeholder="Mesa 1 / Barra / Terraza" />
               <select className="field" name="type">
-                <option value="table">Mesa</option>
-                <option value="bar">Barra</option>
-                <option value="area">Zona</option>
+                <option value="table">{t('Settings.tableLabel')}</option>
+                <option value="bar">{t('Settings.barLabel')}</option>
+                <option value="area">{t('Settings.zoneLabel')}</option>
               </select>
               <select className="field" name="mode">
-                <option value="employee">Cliente elige empleado</option>
-                <option value="team">Fondo común de equipo</option>
-                <option value="custom">Reparto personalizado</option>
+                <option value="employee">{t('Settings.modeClientChoice')}</option>
+                <option value="team">{t('Settings.modePool')}</option>
+                <option value="custom">{t('Settings.modeCustom')}</option>
               </select>
               <select className="field" name="employee">
-                <option value="">Sin empleado fijo</option>
+                <option value="">{t('Settings.modeNoEmployee')}</option>
                 {employees
                   .filter((employee) => employee.active)
                   .map((employee) => (
@@ -464,15 +466,15 @@ export default function SettingsPage() {
                   ))}
               </select>
               <label>
-                % para empleado
+                {t('Settings.employeeShare')}
                 <input className="field mt-1" name="percentage" type="number" min="0" max="100" defaultValue="100" />
               </label>
               <label>
-                Propinas sugeridas
+                {t('Settings.suggestedTips')}
                 <input className="field mt-1" name="tips" defaultValue="1,2,3,5" />
               </label>
               <button className="btn btn-primary sm:col-span-2" disabled={!employees.length}>
-                Crear QR/NFC
+                {t('Settings.createQrNfc')}
               </button>
             </form>
 
@@ -482,8 +484,8 @@ export default function SettingsPage() {
                   📲
                 </span>
                 <div>
-                  <h3 className="text-base font-bold text-white">¿Quieres usar pegatinas o tarjetas NFC?</h3>
-                  <p className="text-xs text-slate-400">Configura tus propios chips NFC en menos de 1 minuto</p>
+                  <h3 className="text-base font-bold text-white">{t('Settings.nfcBoxTitle')}</h3>
+                  <p className="text-xs text-slate-400">{t('Settings.nfcBoxSubtitle')}</p>
                 </div>
               </div>
 
@@ -493,10 +495,10 @@ export default function SettingsPage() {
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
                       1
                     </span>
-                    Comprar pegatinas
+                    {t('Settings.nfcStep1Title')}
                   </div>
                   <p className="mt-1.5 text-xs text-slate-300">
-                    Consigue pegatinas NFC neutras (tipo <b className="text-white">NTAG213 o NTAG215</b>). Cuestan menos de 0,50 €/ud en Amazon.
+                    {t('Settings.nfcStep1Desc')}
                   </p>
                 </div>
 
@@ -505,10 +507,10 @@ export default function SettingsPage() {
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
                       2
                     </span>
-                    Descargar app gratuita
+                    {t('Settings.nfcStep2Title')}
                   </div>
                   <p className="mt-1.5 text-xs text-slate-300">
-                    Descarga <b className="text-white">NFC Tools</b> para grabar tus pegatinas fácilmente.
+                    {t('Settings.nfcStep2Desc')}
                   </p>
                   <div className="mt-2.5 flex flex-wrap gap-1.5">
                     <a
@@ -533,7 +535,7 @@ export default function SettingsPage() {
                       rel="noreferrer"
                       className="rounded bg-orange-500/20 px-2 py-1 text-[11px] font-semibold text-orange-300 transition-colors hover:bg-orange-500/30"
                     >
-                      Web oficial ↗
+                      {t('Settings.officialWeb')}
                     </a>
                   </div>
                 </div>
@@ -543,13 +545,11 @@ export default function SettingsPage() {
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400">
                       3
                     </span>
-                    Grabar la pegatina
+                    {t('Settings.nfcStep3Title')}
                   </div>
-                  <ol className="mt-1.5 list-inside list-decimal space-y-0.5 text-xs text-slate-300">
-                    <li>Copia la <b>URL NFC</b> de la mesa.</li>
-                    <li>Abre NFC Tools → <b>Escribir</b> → <b>Añadir registro</b> → <b>URL</b>.</li>
-                    <li>Pega la URL y acerca tu móvil a la pegatina.</li>
-                  </ol>
+                  <p className="mt-1.5 text-xs text-slate-300">
+                    {t('Settings.nfcStep3Desc')}
+                  </p>
                 </div>
               </div>
             </div>
@@ -569,7 +569,7 @@ export default function SettingsPage() {
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <a className="btn btn-secondary" href={publicUrl} target="_blank" rel="noreferrer">
-                        Probar QR ↗
+                        {t('Settings.testQr')}
                       </a>
                       <button
                         type="button"
@@ -580,7 +580,7 @@ export default function SettingsPage() {
                           );
                         }}
                       >
-                        Copiar URL NFC
+                        {t('Settings.copyNfcUrl')}
                       </button>
 
                       <a
@@ -591,7 +591,7 @@ export default function SettingsPage() {
                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        Tarjeta Mesa 🎨
+                        {t('Settings.tableCard')}
                       </a>
 
                       <button
@@ -599,7 +599,7 @@ export default function SettingsPage() {
                         className="btn ml-auto border border-red-500/20 bg-red-500/10 text-red-400 transition-colors hover:bg-red-500/20"
                         onClick={() => setDeleteModal({ type: 'location', id: location.id, name: location.name })}
                       >
-                        Eliminar
+                        {t('Settings.delete')}
                       </button>
                     </div>
                   </article>
