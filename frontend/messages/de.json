@@ -23,8 +23,8 @@
     "next": "Nächster Schritt",
     "back": "Zurück",
     "finish": "Zum Haupt-Dashboard"
-  }
-  {
+  },
+  
   "Settings": {
     "sectionBadge": "Einstellungen",
     "subtitle": "Passe deine Unternehmensdaten an, integriere Stripe und verwalte deine QR-Standorte.",
@@ -72,6 +72,6 @@
     "copyNfcUrl": "NFC-URL kopieren",
     "tableCard": "Tischkarte 🎨",
     "delete": "Löschen"
-  }
+  
 }
 }
