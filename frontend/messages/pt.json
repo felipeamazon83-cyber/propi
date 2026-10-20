@@ -1,0 +1,27 @@
+{
+  "Header": {
+    "dashboard": "Gorjetas & Equipa",
+    "summaryDetail": "Resumo",
+    "settings": "Configurações",
+    "settingsDetail": "O seu negócio",
+    "help": "Centro de Ajuda",
+    "helpDetail": "Guias e suporte",
+    "guide": "Guia de Início",
+    "guideDetail": "Passo a passo",
+    "logout": "Sair"
+  },
+  "Onboarding": {
+    "title": "Guia de Início Rápido",
+    "step1Nav": "Negócio & Stripe",
+    "step2Nav": "Equipa & IBAN",
+    "step3Nav": "Mesas & QR",
+    "step4Nav": "Dashboard",
+    "step1Title": "1. Dados do Negócio e Stripe Connect",
+    "step2Title": "2. Gestão de Equipa e Link IBAN",
+    "step3Title": "3. Configuração de Mesas, QR e NFC",
+    "step4Title": "4. Controlo e Pagamento de Gorjetas no Dashboard",
+    "next": "Próximo passo",
+    "back": "Voltar",
+    "finish": "Ir para o Dashboard Principal"
+  }
+}
