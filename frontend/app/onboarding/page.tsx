@@ -22,13 +22,13 @@ export default function OnboardingPage() {
         {/* Encabezado */}
         <div className="mb-6 text-center">
           <span className="text-xs font-bold uppercase tracking-widest text-orange-400">
-            {t('OnboardingGuide.stepTitle') || 'Guía de Inicio Rápido · Paso'} {step} de 4
+            {t('OnboardingGuide.stepTitle') || 'Guía de Inicio Rápido · Paso'} {step} {t('OnboardingGuide.of') || 'de'} 4
           </span>
           <h1 className="mt-2 text-2xl font-black text-white sm:text-3xl">
-            {step === 1 && '1. Datos del Negocio y Stripe Connect'}
-            {step === 2 && '2. Gestión de Equipo y Enlace IBAN'}
-            {step === 3 && '3. Configuración de Mesas, QR y NFC'}
-            {step === 4 && '4. Control y Pago de Propinas desde el Dashboard'}
+            {step === 1 && (t('OnboardingGuide.h1_step1') || '1. Datos del Negocio y Stripe Connect')}
+            {step === 2 && (t('OnboardingGuide.h1_step2') || '2. Gestión de Equipo y Enlace IBAN')}
+            {step === 3 && (t('OnboardingGuide.h1_step3') || '3. Configuración de Mesas, QR y NFC')}
+            {step === 4 && (t('OnboardingGuide.h1_step4') || '4. Control y Pago de Propinas desde el Dashboard')}
           </h1>
         </div>
 
@@ -64,22 +64,22 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className="flex flex-col gap-5 text-slate-300">
             <p className="text-sm leading-relaxed text-slate-300">
-              En la sección <strong className="text-white">1. Datos del negocio</strong> de Configuración, registra el Nombre Comercial, Razón Social, País y Moneda. Define quién asumirá los costes de servicio de procesamiento.
+              {t('OnboardingGuide.step1_desc') || 'En la sección Datos del negocio de Configuración, registra el Nombre Comercial, Razón Social, País y Moneda. Define quién asumirá los costes de servicio de procesamiento.'}
             </p>
             
             <div className="space-y-3 rounded-xl border border-white/10 bg-[#07182f]/80 p-5">
               <div className="flex items-center gap-3">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/20 text-sm font-bold text-orange-300">1</span>
                 <div>
-                  <p className="text-xs font-bold text-white">Configura tu perfil</p>
-                  <p className="text-xs text-slate-400">Rellena los datos básicos e sube el logo de tu local (PNG, JPG o WEBP).</p>
+                  <p className="text-xs font-bold text-white">{t('OnboardingGuide.step1_card1_title') || 'Configura tu perfil'}</p>
+                  <p className="text-xs text-slate-400">{t('OnboardingGuide.step1_card1_sub') || 'Rellena los datos básicos e sube el logo de tu local (PNG, JPG o WEBP).'}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 border-t border-white/5 pt-3">
                 <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/20 text-sm font-bold text-indigo-300">2</span>
                 <div>
-                  <p className="text-xs font-bold text-white">Haz clic en &quot;Gestionar Stripe&quot;</p>
-                  <p className="text-xs text-slate-400">Vincularás la cuenta bancaria de tu empresa para recibir los fondos de forma automática y segura.</p>
+                  <p className="text-xs font-bold text-white">{t('OnboardingGuide.step1_card2_title') || 'Haz clic en "Gestionar Stripe"'}</p>
+                  <p className="text-xs text-slate-400">{t('OnboardingGuide.step1_card2_sub') || 'Vincularás la cuenta bancaria de tu empresa para recibir los fondos de forma automática y segura.'}</p>
                 </div>
               </div>
             </div>
@@ -88,7 +88,7 @@ export default function OnboardingPage() {
               onClick={() => setStep(2)} 
               className="mt-2 w-full rounded-xl bg-orange-500 py-3 font-semibold text-white shadow-lg transition-all hover:bg-orange-600"
             >
-              {t('OnboardingGuide.nextStep') || 'Siguiente paso:'} Añadir equipo →
+              {t('OnboardingGuide.nextStep') || 'Siguiente paso:'} {t('OnboardingGuide.btn_add_team') || 'Añadir equipo →'}
             </button>
           </div>
         )}
@@ -97,21 +97,21 @@ export default function OnboardingPage() {
         {step === 2 && (
           <div className="flex flex-col gap-5 text-slate-300">
             <p className="text-sm leading-relaxed text-slate-300">
-              En la sección <strong className="text-white">2. Equipo y cuenta de cobro</strong>, crea los perfiles de tus empleados para que puedan recibir sus propinas directamente.
+              {t('OnboardingGuide.step2_desc') || 'En la sección Equipo y cuenta de cobro, crea los perfiles de tus empleados para que puedan recibir sus propinas directamente.'}
             </p>
 
             <div className="space-y-4 rounded-xl border border-white/10 bg-[#07182f]/80 p-5">
               <div className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3 text-xs">
-                <span className="font-semibold text-white">Eduardo Fernandez · Activo</span>
+                <span className="font-semibold text-white">Eduardo Fernandez · {t('OnboardingGuide.active') || 'Activo'}</span>
                 <span className="flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/20 px-2.5 py-1 text-[11px] font-bold text-amber-300">
-                  Pendiente IBAN 🔗
+                  {t('OnboardingGuide.pending_iban') || 'Pendiente IBAN 🔗'}
                 </span>
               </div>
               
               <ul className="list-disc space-y-2 pl-4 text-xs text-slate-400">
-                <li>Al escribir el nombre y pulsar <strong className="text-white">&quot;Añadir&quot;</strong>, se genera el registro del trabajador.</li>
-                <li>Haz clic sobre la etiqueta <strong className="text-amber-300">&quot;Pendiente IBAN&quot;</strong> para copiar su enlace de invitación personalizado.</li>
-                <li>Envia este enlace a tu empleado para que introduzca de forma 100% privada y segura sus datos bancarios a través de Stripe (Propi nunca los almacena).</li>
+                <li>{t('OnboardingGuide.step2_bullet1') || 'Al escribir el nombre y pulsar "Añadir", se genera el registro del trabajador.'}</li>
+                <li>{t('OnboardingGuide.step2_bullet2') || 'Haz clic sobre la etiqueta "Pendiente IBAN" para copiar su enlace de invitación personalizado.'}</li>
+                <li>{t('OnboardingGuide.step2_bullet3') || 'Envía este enlace a tu empleado para que introduzca de forma 100% privada y segura sus datos bancarios a través de Stripe (Propi nunca los almacena).'}</li>
               </ul>
             </div>
 
@@ -126,7 +126,7 @@ export default function OnboardingPage() {
                 onClick={() => setStep(3)} 
                 className="w-2/3 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:bg-orange-600"
               >
-                {t('OnboardingGuide.nextStep') || 'Siguiente paso:'} Crear mesas →
+                {t('OnboardingGuide.nextStep') || 'Siguiente paso:'} {t('OnboardingGuide.btn_create_tables') || 'Crear mesas →'}
               </button>
             </div>
           </div>
@@ -136,25 +136,25 @@ export default function OnboardingPage() {
         {step === 3 && (
           <div className="flex flex-col gap-5 text-slate-300">
             <p className="text-sm leading-relaxed text-slate-300">
-              En la sección <strong className="text-white">3. Mesa, QR y NFC</strong>, configura cada punto de cobro (Mesas, Barra o Terraza) e imprime sus identificadores o grábalos en pegatinas NFC.
+              {t('OnboardingGuide.step3_desc') || 'En la sección Mesa, QR y NFC, configura cada punto de cobro (Mesas, Barra o Terraza) e imprime sus identificadores o grábalos en pegatinas NFC.'}
             </p>
 
             <div className="space-y-3 rounded-xl border border-white/10 bg-[#07182f]/80 p-5 text-xs">
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-slate-300">
                 <div className="rounded-lg border border-white/5 bg-white/5 p-2.5">
-                  <span className="block font-bold text-white">1. Asignación</span>
-                  Elige si el cliente escoge al empleado o si la mesa pertenece a un empleado fijo.
+                  <span className="block font-bold text-white">{t('OnboardingGuide.step3_card1_title') || '1. Asignación'}</span>
+                  {t('OnboardingGuide.step3_card1_sub') || 'Elige si el cliente escoge al empleado o si la mesa pertenece a un empleado fijo.'}
                 </div>
                 <div className="rounded-lg border border-white/5 bg-white/5 p-2.5">
-                  <span className="block font-bold text-white">2. Propinas Sugeridas</span>
-                  Establece las sugerencias rápidas (ej. 1, 2, 3, 5 €) y el % asignado.
+                  <span className="block font-bold text-white">{t('OnboardingGuide.step3_card2_title') || '2. Propinas Sugeridas'}</span>
+                  {t('OnboardingGuide.step3_card2_sub') || 'Establece las sugerencias rápidas (ej. 1, 2, 3, 5 €) y el % asignado.'}
                 </div>
               </div>
 
               <div className="flex flex-wrap justify-center gap-2 border-t border-white/10 pt-2">
-                <span className="rounded-lg bg-white/10 px-3 py-1 text-slate-200">🔍 Probar QR</span>
-                <span className="rounded-lg bg-white/10 px-3 py-1 text-slate-200">🔗 Copiar URL NFC</span>
-                <span className="rounded-lg bg-orange-500 px-3 py-1 font-bold text-white">🎨 Tarjeta Mesa</span>
+                <span className="rounded-lg bg-white/10 px-3 py-1 text-slate-200">🔍 {t('OnboardingGuide.test_qr') || 'Probar QR'}</span>
+                <span className="rounded-lg bg-white/10 px-3 py-1 text-slate-200">🔗 {t('OnboardingGuide.copy_nfc') || 'Copiar URL NFC'}</span>
+                <span className="rounded-lg bg-orange-500 px-3 py-1 font-bold text-white">🎨 {t('OnboardingGuide.table_card') || 'Tarjeta Mesa'}</span>
               </div>
             </div>
 
@@ -179,22 +179,22 @@ export default function OnboardingPage() {
         {step === 4 && (
           <div className="flex flex-col gap-5 text-slate-300">
             <p className="text-sm leading-relaxed text-slate-300">
-              Consulta las métricas en tiempo real desde tu <strong className="text-white">Dashboard</strong>. Cuando los clientes paguen propinas, verás el acumulado y la acción disponible para liquidar a cada empleado.
+              {t('OnboardingGuide.step4_desc') || 'Consulta las métricas en tiempo real desde tu Dashboard. Cuando los clientes paguen propinas, verás el acumulado y la acción disponible para liquidar a cada empleado.'}
             </p>
 
             <div className="space-y-4 rounded-xl border border-white/10 bg-[#07182f]/80 p-5">
               {/* Resumen de Métricas */}
               <div className="grid grid-cols-3 gap-2 text-center text-xs">
                 <div className="rounded-lg border border-white/5 bg-white/5 p-2.5">
-                  <span className="block text-[10px] text-slate-400">Propinas acumuladas</span>
+                  <span className="block text-[10px] text-slate-400">{t('OnboardingGuide.accumulated_tips') || 'Propinas acumuladas'}</span>
                   <span className="text-sm font-bold text-amber-300">3,00 €</span>
                 </div>
                 <div className="rounded-lg border border-white/5 bg-white/5 p-2.5">
-                  <span className="block text-[10px] text-slate-400">Cantidad de propinas</span>
+                  <span className="block text-[10px] text-slate-400">{t('OnboardingGuide.tips_count') || 'Cantidad de propinas'}</span>
                   <span className="text-sm font-bold text-white">2</span>
                 </div>
                 <div className="rounded-lg border border-white/5 bg-white/5 p-2.5">
-                  <span className="block text-[10px] text-slate-400">Promedio por propina</span>
+                  <span className="block text-[10px] text-slate-400">{t('OnboardingGuide.avg_tip') || 'Promedio por propina'}</span>
                   <span className="text-sm font-bold text-white">1,50 €</span>
                 </div>
               </div>
@@ -205,10 +205,10 @@ export default function OnboardingPage() {
                 <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 p-3">
                   <div>
                     <span className="block font-bold text-white">Juan Perez</span>
-                    <span className="text-[11px] text-slate-400">2 propinas · Saldo pendiente: <strong className="text-amber-300">2,00 €</strong></span>
+                    <span className="text-[11px] text-slate-400">2 {t('OnboardingGuide.tips') || 'propinas'} · {t('OnboardingGuide.pending_balance') || 'Saldo pendiente'}: <strong className="text-amber-300">2,00 €</strong></span>
                   </div>
                   <button className="rounded-lg bg-orange-500 px-3 py-1.5 text-xs font-bold text-white shadow transition-all hover:bg-orange-600">
-                    Pagar propinas
+                    {t('OnboardingGuide.pay_tips') || 'Pagar propinas'}
                   </button>
                 </div>
 
@@ -216,16 +216,16 @@ export default function OnboardingPage() {
                 <div className="flex items-center justify-between rounded-lg border border-white/5 bg-white/5 p-3 opacity-75">
                   <div>
                     <span className="block font-bold text-white">Teresa Melo</span>
-                    <span className="text-[11px] text-slate-400">0 propinas · Saldo pendiente: <strong className="text-slate-300">0,00 €</strong></span>
+                    <span className="text-[11px] text-slate-400">0 {t('OnboardingGuide.tips') || 'propinas'} · {t('OnboardingGuide.pending_balance') || 'Saldo pendiente'}: <strong className="text-slate-300">0,00 €</strong></span>
                   </div>
                   <span className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-slate-400">
-                    Al día
+                    {t('OnboardingGuide.up_to_date') || 'Al día'}
                   </span>
                 </div>
               </div>
 
               <p className="border-t border-white/5 pt-3 text-[11px] leading-relaxed text-slate-400">
-                💡 Al hacer clic en <strong className="text-orange-400">&quot;Pagar propinas&quot;</strong>, el sistema debitará automáticamente el dinero recaudado directamente al IBAN vinculado del empleado. Para aquellos sin saldo pendiente, aparecerá el estado <strong className="text-slate-300">&quot;Al día&quot;</strong>.
+                💡 {t('OnboardingGuide.payout_tip_note') || 'Al hacer clic en "Pagar propinas", el sistema debitará automáticamente el dinero recaudado directamente al IBAN vinculado del empleado.'}
               </p>
             </div>
 
