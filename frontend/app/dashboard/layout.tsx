@@ -3,9 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-// 1. Importaciones con rutas relativas limpias
+// 1. Importaciones con rutas relativas limpias (sin LanguageSelector)
 import { useTranslation } from '../../context/LanguageContext';
-import { LanguageSelector } from '../../components/LanguageSelector';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -103,14 +102,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* ÁREA PRINCIPAL */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Header superior con Selector de Idioma */}
+        {/* Header superior limpio sin el selector de idioma */}
         <header className="flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#0b2344]/50 px-6 backdrop-blur">
           <div className="text-xs font-medium text-slate-400">
             Propi Business Panel
           </div>
-
-          {/* Selector de idiomas a la derecha */}
-          <LanguageSelector />
         </header>
 
         {/* Contenido de cada vista */}
