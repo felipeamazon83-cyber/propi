@@ -23,8 +23,8 @@
     "next": "Siguiente paso",
     "back": "Atrás",
     "finish": "Ir a mi Panel General"
-  }
-  {
+  },
+  
   "Settings": {
     "sectionBadge": "Configuración",
     "subtitle": "Ajusta los datos de tu empresa, integra Stripe y gestiona tus ubicaciones QR.",
@@ -72,6 +72,6 @@
     "copyNfcUrl": "Copiar URL NFC",
     "tableCard": "Tarjeta Mesa 🎨",
     "delete": "Eliminar"
-  }
+  
 }
 }
