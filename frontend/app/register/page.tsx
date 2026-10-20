@@ -3,8 +3,11 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
+import { useTranslation } from '../../context/LanguageContext';
+import { LanguageSelector } from '../../components/LanguageSelector';
 
 export default function Register() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -34,15 +37,46 @@ export default function Register() {
   }
 
   return (
-    <main className="glow flex min-h-screen items-center justify-center px-5 py-12">
+    <main className="glow relative flex min-h-screen flex-col items-center justify-center px-5 py-12">
+      {/* Selector de idioma en la esquina superior */}
+      <div className="absolute top-6 right-6">
+        <LanguageSelector />
+      </div>
+
       <div className="w-full max-w-md">
+        {/* Botón de volver a la página principal */}
+        <div className="mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-slate-400 transition-colors hover:text-orange-300"
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            <span>{t('Auth.backHome') || 'Volver a la página principal'}</span>
+          </Link>
+        </div>
+
         <Link href="/" className="auth-brand" aria-label="Propi">
           <img src="/propi-logo-new.png" alt="Propi · Propinas que hacen la diferencia" />
         </Link>
+
         <div className="mt-10 text-center">
-          <p className="text-sm font-bold uppercase tracking-widest text-orange-300">Empieza hoy</p>
-          <h1 className="mt-3 text-4xl font-black">Crea tu espacio Propi</h1>
-          <p className="mt-3 text-slate-400">Lleva la experiencia de tu equipo al siguiente nivel.</p>
+          <p className="text-sm font-bold uppercase tracking-widest text-orange-300">
+            {t('Auth.registerTitle') || 'Empieza hoy'}
+          </p>
+          <h1 className="mt-3 text-4xl font-black">
+            {t('Auth.registerSubtitle') || 'Crea tu espacio Propi'}
+          </h1>
+          <p className="mt-3 text-slate-400">
+            {t('Auth.registerDesc') || 'Lleva la experiencia de tu equipo al siguiente nivel.'}
+          </p>
         </div>
 
         {/* Botón de Google */}
@@ -70,7 +104,7 @@ export default function Register() {
                 d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.7-2.3-6.6-5.3L1.7 15C3.6 18.8 7.4 23 12 23z"
               />
             </svg>
-            Registrarse con Google
+            <span>{t('Auth.registerGoogle') || 'Registrarse con Google'}</span>
           </button>
         </div>
 
@@ -79,13 +113,13 @@ export default function Register() {
             <div className="w-full border-t border-white/10"></div>
           </div>
           <div className="relative bg-[#0b0f17] px-3 text-xs uppercase tracking-wider text-slate-500">
-            o con tu email
+            {t('Auth.orEmail') || 'o con tu email'}
           </div>
         </div>
 
         <form onSubmit={submit} className="card flex flex-col gap-4">
           <label>
-            Email
+            {t('Auth.emailLabel') || 'Email'}
             <input
               className="field mt-2"
               type="email"
@@ -96,7 +130,7 @@ export default function Register() {
             />
           </label>
           <label>
-            Contraseña
+            {t('Auth.passwordLabel') || 'Contraseña'}
             <input
               className="field mt-2"
               type="password"
@@ -108,13 +142,15 @@ export default function Register() {
             />
           </label>
           {message && <p className="form-message">{message}</p>}
-          <button className="btn btn-primary mt-2 w-full">Crear cuenta gratis</button>
+          <button className="btn btn-primary mt-2 w-full">
+            {t('Auth.registerAction') || 'Crear cuenta gratis'}
+          </button>
         </form>
 
         <p className="mt-6 text-center text-slate-400">
-          ¿Ya tienes cuenta?{' '}
+          {t('Auth.hasAccount') || '¿Ya tienes cuenta?'}{' '}
           <Link className="font-bold text-orange-300" href="/login">
-            Entrar
+            {t('Auth.loginLink') || 'Entrar.'}
           </Link>
         </p>
       </div>
