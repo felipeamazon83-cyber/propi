@@ -3,8 +3,11 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import Link from 'next/link';
+import { useTranslation } from '../../context/LanguageContext';
+import { LanguageSelector } from '../../components/LanguageSelector';
 
 export default function Login() {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,7 +34,12 @@ export default function Login() {
   }
 
   return (
-    <main className="glow relative flex min-h-screen items-center justify-center px-5 py-12">
+    <main className="glow relative flex min-h-screen flex-col items-center justify-center px-5 py-12">
+      {/* Barra superior con selector de idioma opcional */}
+      <div className="absolute top-6 right-6">
+        <LanguageSelector />
+      </div>
+
       <div className="w-full max-w-md">
         {/* Botón de volver a la Landing Page */}
         <div className="mb-6">
@@ -48,7 +56,7 @@ export default function Login() {
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
             </svg>
-            <span>Volver a la página principal</span>
+            <span>{t('Auth.backHome') || 'Volver a la página principal'}</span>
           </Link>
         </div>
 
@@ -58,11 +66,13 @@ export default function Login() {
 
         <div className="mt-10 text-center">
           <p className="text-sm font-bold uppercase tracking-widest text-orange-300">
-            Bienvenido de nuevo
+            {t('Auth.loginTitle') || 'Bienvenido de nuevo'}
           </p>
-          <h1 className="mt-3 text-4xl font-black">Entra a tu espacio</h1>
+          <h1 className="mt-3 text-4xl font-black">
+            {t('Auth.loginSubtitle') || 'Entra a tu espacio'}
+          </h1>
           <p className="mt-3 text-slate-400">
-            Gestiona tu equipo y tus propinas desde un solo lugar.
+            {t('Auth.loginDesc') || 'Gestiona tu equipo y tus propinas desde un solo lugar.'}
           </p>
         </div>
 
@@ -91,7 +101,7 @@ export default function Login() {
                 d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.7-2.3-6.6-5.3L1.7 15C3.6 18.8 7.4 23 12 23z"
               />
             </svg>
-            Continuar con Google
+            <span>{t('Auth.googleBtn') || 'Continuar con Google'}</span>
           </button>
         </div>
 
@@ -100,13 +110,13 @@ export default function Login() {
             <div className="w-full border-t border-white/10"></div>
           </div>
           <div className="relative bg-[#0b0f17] px-3 text-xs uppercase tracking-wider text-slate-500">
-            o con tu email
+            {t('Auth.orEmail') || 'o con tu email'}
           </div>
         </div>
 
         <form onSubmit={submit} className="card flex flex-col gap-4">
           <label>
-            Email
+            {t('Auth.emailLabel') || 'Email'}
             <input
               className="field mt-2"
               type="email"
@@ -117,7 +127,7 @@ export default function Login() {
             />
           </label>
           <label>
-            Contraseña
+            {t('Auth.passwordLabel') || 'Contraseña'}
             <input
               className="field mt-2"
               type="password"
@@ -128,13 +138,15 @@ export default function Login() {
             />
           </label>
           {error && <p className="form-error">{error}</p>}
-          <button className="btn btn-primary mt-2 w-full">Entrar a Propi</button>
+          <button className="btn btn-primary mt-2 w-full">
+            {t('Auth.loginAction') || 'Entrar a Propi'}
+          </button>
         </form>
 
         <p className="mt-6 text-center text-slate-400">
-          ¿Aún no tienes cuenta?{' '}
+          {t('Auth.noAccount') || '¿Aún no tienes cuenta?'}{' '}
           <Link className="font-bold text-orange-300" href="/register">
-            Crear cuenta
+            {t('Auth.createAccountLink') || 'Crear cuenta'}
           </Link>
         </p>
       </div>
