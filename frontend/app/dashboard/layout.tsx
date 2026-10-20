@@ -3,28 +3,33 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+// 1. Importaciones con rutas relativas limpias
+import { useTranslation } from '../../context/LanguageContext';
+import { LanguageSelector } from '../../components/LanguageSelector';
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { t } = useTranslation(); // 2. Hook de traducción
 
   const navItems = [
     { 
-      label: 'Propinas & Equipo', 
-      detail: 'Resumen', 
+      label: t('Header.dashboard') || 'Propinas & Equipo', 
+      detail: t('Header.summaryDetail') || 'Resumen', 
       href: '/dashboard' 
     },
     { 
-      label: 'Configuración', 
-      detail: 'Tu negocio', 
+      label: t('Header.settings') || 'Configuración', 
+      detail: t('Header.settingsDetail') || 'Tu negocio', 
       href: '/dashboard/settings' 
     },
     { 
-      label: 'Centro de ayuda', 
-      detail: 'Guías y soporte', 
+      label: t('Header.help') || 'Centro de ayuda', 
+      detail: t('Header.helpDetail') || 'Guías y soporte', 
       href: '/dashboard/help' 
     },
     { 
-      label: 'Guía de inicio', 
-      detail: 'Paso a paso', 
+      label: t('Header.guide') || 'Guía de inicio', 
+      detail: t('Header.guideDetail') || 'Paso a paso', 
       href: '/onboarding' 
     },
   ];
@@ -71,7 +76,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
         </div>
 
-        {/* Botón Cerrar sesión */}
+        {/* Botón Cerrar sesión traducido */}
         <div className="mt-6 border-t border-white/10 pt-4 md:mt-auto">
           <button
             type="button"
@@ -91,18 +96,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
               />
             </svg>
-            <span>Cerrar sesión</span>
+            <span>{t('Header.logout') || 'Cerrar sesión'}</span>
           </button>
         </div>
       </aside>
 
       {/* ÁREA PRINCIPAL */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Header superior limpio */}
+        {/* Header superior con Selector de Idioma */}
         <header className="flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#0b2344]/50 px-6 backdrop-blur">
           <div className="text-xs font-medium text-slate-400">
             Propi Business Panel
           </div>
+
+          {/* Selector de idiomas a la derecha */}
+          <LanguageSelector />
         </header>
 
         {/* Contenido de cada vista */}
