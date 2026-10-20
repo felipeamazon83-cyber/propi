@@ -24,7 +24,6 @@
     "back": "Voltar",
     "finish": "Ir para o Dashboard Principal"
   },
-  
   "Settings": {
     "sectionBadge": "Configurações",
     "subtitle": "Ajuste os dados da sua empresa, integre o Stripe e gira os seus locais de QR.",
@@ -33,7 +32,7 @@
     "legalName": "Razão social",
     "logoLabel": "Logótipo do Restaurante",
     "selectFile": "Selecionar ficheiro",
-    "noFile": "Nenhum ficheiro selecionado",
+    "noFile": "Nenum ficheiro selecionado",
     "logoFormats": "Formatos: PNG, JPG ou WEBP (Máx. 2 MB)",
     "country": "País",
     "currency": "Moeda",
@@ -72,6 +71,5 @@
     "copyNfcUrl": "Copiar URL NFC",
     "tableCard": "Cartão de Mesa 🎨",
     "delete": "Eliminar"
-  
-}
+  }
 }
