@@ -23,8 +23,8 @@
     "next": "Next step",
     "back": "Back",
     "finish": "Go to my Main Dashboard"
-  }
-  {
+  },
+  
   "Settings": {
     "sectionBadge": "Settings",
     "subtitle": "Adjust your company details, integrate Stripe, and manage your QR locations.",
@@ -72,6 +72,6 @@
     "copyNfcUrl": "Copy NFC URL",
     "tableCard": "Table Card 🎨",
     "delete": "Delete"
-  }
+  
 }
 }
