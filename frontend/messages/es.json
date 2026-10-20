@@ -9,5 +9,19 @@
     "guide": "Guía de inicio",
     "guideDetail": "Paso a paso",
     "logout": "Cerrar sesión"
+  },
+  "Onboarding": {
+    "title": "Guía de Inicio Rápido",
+    "step1Nav": "Negocio & Stripe",
+    "step2Nav": "Equipo & IBAN",
+    "step3Nav": "Mesas & QR",
+    "step4Nav": "Dashboard",
+    "step1Title": "1. Datos del Negocio y Stripe Connect",
+    "step2Title": "2. Gestión de Equipo y Enlace IBAN",
+    "step3Title": "3. Configuración de Mesas, QR y NFC",
+    "step4Title": "4. Control y Pago de Propinas desde el Dashboard",
+    "next": "Siguiente paso",
+    "back": "Atrás",
+    "finish": "Ir a mi Panel General"
   }
 }
