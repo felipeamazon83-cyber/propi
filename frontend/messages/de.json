@@ -1,0 +1,27 @@
+{
+  "Header": {
+    "dashboard": "Trinkgelder & Team",
+    "summaryDetail": "Zusammenfassung",
+    "settings": "Einstellungen",
+    "settingsDetail": "Dein Unternehmen",
+    "help": "Hilfe-Center",
+    "helpDetail": "Anleitungen & Support",
+    "guide": "Erste Schritte",
+    "guideDetail": "Schritt für Schritt",
+    "logout": "Abmelden"
+  },
+  "Onboarding": {
+    "title": "Schnellstart-Anleitung",
+    "step1Nav": "Geschäft & Stripe",
+    "step2Nav": "Team & IBAN",
+    "step3Nav": "Tische & QR",
+    "step4Nav": "Dashboard",
+    "step1Title": "1. Geschäftsdaten und Stripe Connect",
+    "step2Title": "2. Teamverwaltung und IBAN-Link",
+    "step3Title": "3. Einrichtung von Tischen, QR und NFC",
+    "step4Title": "4. Trinkgeld-Tracking und Auszahlung im Dashboard",
+    "next": "Nächster Schritt",
+    "back": "Zurück",
+    "finish": "Zum Haupt-Dashboard"
+  }
+}
