@@ -38,7 +38,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   const t = (key: string): string => {
     const keys = key.split('.');
-    let value = dictionaries[locale];
+    let value = dictionaries[locale] || dictionaries['es'];
 
     for (const k of keys) {
       value = value?.[k];
@@ -63,10 +63,22 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Hook seguro con fallback para evitar que Vercel rompa la build en SSR
 export function useTranslation() {
   const context = useContext(LanguageContext);
   if (!context) {
-    throw new Error('useTranslation debe ser usado dentro de un LanguageProvider');
+    return {
+      locale: 'es',
+      setLocale: () => {},
+      t: (key: string) => {
+        const keys = key.split('.');
+        let value: any = es;
+        for (const k of keys) {
+          value = value?.[k];
+        }
+        return typeof value === 'string' ? value : key;
+      },
+    };
   }
   return context;
 }
