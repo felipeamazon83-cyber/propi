@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { LanguageSwitcher } from '../components/language-switcher';
+import { LanguageSelector } from '../components/languageSelector';
 
 const steps = [
   ['01', 'Crea tu negocio', 'Configura tu perfil y deja todo listo en minutos.'],
@@ -58,7 +58,7 @@ export default function Home() {
                 </div>
               )}
             </div>
-            <div className="desktop-language"><LanguageSwitcher /></div>
+            <div className="desktop-language"><LanguageSelector /></div>
             <Link className="desktop-pricing hidden btn btn-secondary w-auto sm:inline-flex" href="#precios">
               Precios
             </Link>
