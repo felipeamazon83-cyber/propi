@@ -23,8 +23,8 @@
     "next": "Étape suivante",
     "back": "Retour",
     "finish": "Aller au Tableau de Bord Principal"
-  }
-  {
+  },
+  
   "Settings": {
     "sectionBadge": "Configuration",
     "subtitle": "Ajustez les données de votre entreprise, intégrez Stripe et gérez vos emplacements QR.",
@@ -72,6 +72,6 @@
     "copyNfcUrl": "Copier l'URL NFC",
     "tableCard": "Carte de Table 🎨",
     "delete": "Supprimer"
-  }
+  
 }
 }
