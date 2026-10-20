@@ -1,0 +1,27 @@
+{
+  "Header": {
+    "dashboard": "Mance & Team",
+    "summaryDetail": "Riepilogo",
+    "settings": "Impostazioni",
+    "settingsDetail": "La tua attività",
+    "help": "Centro assistenza",
+    "helpDetail": "Guide e supporto",
+    "guide": "Guida iniziale",
+    "guideDetail": "Passo dopo passo",
+    "logout": "Disconnettersi"
+  },
+  "Onboarding": {
+    "title": "Guida di Avvio Rapido",
+    "step1Nav": "Attività & Stripe",
+    "step2Nav": "Team & IBAN",
+    "step3Nav": "Tavoli & QR",
+    "step4Nav": "Dashboard",
+    "step1Title": "1. Dati dell'Attività e Stripe Connect",
+    "step2Title": "2. Gestione del Team e Link IBAN",
+    "step3Title": "3. Configurazione Tavoli, QR e NFC",
+    "step4Title": "4. Controllo e Pagamento Mance dalla Dashboard",
+    "next": "Passo successivo",
+    "back": "Indietro",
+    "finish": "Vai alla Dashboard Principale"
+  }
+}
