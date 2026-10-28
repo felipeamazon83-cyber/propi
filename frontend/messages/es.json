@@ -116,10 +116,21 @@
     "noAnswer": "¿No encuentras tu respuesta?",
     "contactSupport": "Contacta con el equipo de soporte y cuéntanos qué necesitas para ayudarte al instante."
  },
-    "Settings": {
+  
+  "Settings": {
+    "subtitle": "Configura los datos de tu establecimiento, equipo y pasarela de cobros.",
     "section1Title": "1. Datos del negocio",
+    "tradeName": "Nombre Comercial",
+    "legalName": "Razón Social",
+    "logoLabel": "Logotipo del establecimiento",
+    "logoFormats": "Formatos admitidos: PNG, JPG o WEBP (máx. 2MB)",
+    "country": "País",
+    "currency": "Moneda",
+    "feeTitle": "Costes del servicio",
+    "feeSubtitle": "Define quién asume las comisiones de procesamiento de las propinas.",
+    "feeCustomer": "El cliente asume el coste (se añade un pequeño recargo al pagar)",
+    "feeMerchant": "El restaurante asume el coste (se descuenta de la propina)",
     "section2Title": "2. Equipo y cuenta de cobro",
-    "section3Title": "3. Mesa, QR y NFC",
     "stripeNotice": "Conecta tu cuenta de Stripe para procesar los cobros y transferencias automáticamente.",
     "manageStripe": "Gestionar Stripe",
     "activeStatus": "Activo",
@@ -127,6 +138,7 @@
     "ibanReady": "IBAN Listo",
     "addEmployee": "Añadir",
     "employeeNamePlaceholder": "Nombre del empleado",
+    "section3Title": "3. Mesa, QR y NFC",
     "tableLabel": "Número o Nombre de la Mesa",
     "tableNamePlaceholder": "Mesa 1 / Barra / Terraza",
     "modeClientChoice": "El cliente escoge empleado",
@@ -143,6 +155,7 @@
     "feePayerClient": "El Cliente (recargo adicional al pagar)",
     "feePayerMerchant": "El Restaurante (descuento directo de la propina)",
     "saveData": "Guardar datos"
+  
   
   },
   "OnboardingGuide": {
