@@ -12,6 +12,10 @@ export default function Home() {
   const [mensaje, setMensaje] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Estados para controlar el envío de Web3Forms
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitResult, setSubmitResult] = useState<{ success: boolean; message: string } | null>(null);
+
   // Pasos de "Cómo funciona" usando traducciones
   const steps = [
     ['01', t('Landing.step1Title') || 'Crea tu negocio', t('Landing.step1Desc') || 'Configura tu perfil y deja todo listo en minutos.'],
@@ -31,10 +35,53 @@ export default function Home() {
     t('Landing.feature8') || 'Asistencia 24/7',
   ];
 
-  // Construcción dinámica de la URL para Gmail
-  const subject = encodeURIComponent(`Consulta de ${nombre || 'Usuario'} - Landing Propi`);
-  const body = encodeURIComponent(`Nombre: ${nombre}\nEmail: ${email}\n\nMensaje:\n${mensaje}`);
-  const mailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=soportepropi@gmail.com&su=${subject}&body=${body}`;
+  // Función para manejar el envío con Web3Forms
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitResult(null);
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify({
+          access_key: 'ce840065-af84-4b07-b4e9-bb215b2436b5',
+          name: nombre,
+          email: email,
+          message: mensaje,
+          subject: `Nueva consulta de ${nombre} desde la Landing de Propi`,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setSubmitResult({
+          success: true,
+          message: '¡Mensaje enviado con éxito! Nos pondremos en contacto contigo pronto.',
+        });
+        setNombre('');
+        setEmail('');
+        setMensaje('');
+      } else {
+        setSubmitResult({
+          success: false,
+          message: result.message || 'Hubo un error al enviar el mensaje. Inténtalo de nuevo.',
+        });
+      }
+    } catch (error) {
+      setSubmitResult({
+        success: false,
+        message: 'Error de red al intentar enviar el formulario. Verifica tu conexión.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <main className="glow min-h-screen">
@@ -228,7 +275,7 @@ export default function Home() {
               {t('Landing.contactSubtitle') || '¿Tienes alguna pregunta?'}
             </h2>
             <p className="mt-4 leading-7 text-slate-300">
-              {t('Landing.contactSubtitle') || 'Escríbenos y te responderemos directamente. También puedes contactarnos por WhatsApp.'}
+              {t('Landing.contactText') || 'Escríbenos y te responderemos directamente. También puedes contactarnos por WhatsApp.'}
             </p>
             <a
               className="btn btn-primary mt-6 w-full sm:w-auto"
@@ -240,7 +287,7 @@ export default function Home() {
             </a>
           </div>
 
-          <form className="grid gap-3" onSubmit={(e) => e.preventDefault()}>
+          <form className="grid gap-3" onSubmit={handleSubmit}>
             <label className="text-sm font-bold text-slate-200">
               {t('Landing.namePlaceholder') || 'Tu nombre'}
               <input
@@ -273,17 +320,22 @@ export default function Home() {
               />
             </label>
 
-            <a
-              href={mailUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn btn-primary mt-2 w-full sm:w-auto text-center inline-flex items-center justify-center gap-2"
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn btn-primary mt-2 w-full sm:w-auto text-center inline-flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
-              {t('Landing.sendMsg') || 'Enviar mensaje'} <span>→</span>
-            </a>
+              {isSubmitting ? 'Enviando...' : (t('Landing.sendMsg') || 'Enviar mensaje')} <span>→</span>
+            </button>
 
-            <p className="text-xs leading-5 text-slate-500">
-              {t('Landing.mailNotice') || 'Al hacer clic se abrirá Gmail con los datos completados listos para enviar.'}
+            {submitResult && (
+              <p className={`text-xs leading-5 p-3 rounded-xl mt-2 ${submitResult.success ? 'bg-green-500/20 text-green-300 border border-green-500/30' : 'bg-red-500/20 text-red-300 border border-red-500/30'}`}>
+                {submitResult.message}
+              </p>
+            )}
+
+            <p className="text-xs leading-5 text-slate-500 mt-1">
+              {t('Landing.mailNotice') || 'Tus datos se enviarán de forma segura directamente a nuestro equipo.'}
             </p>
           </form>
         </section>
