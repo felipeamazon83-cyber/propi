@@ -30,7 +30,7 @@
     "mobileExperienceTitle": "Escanea. Elige. Agradece.",
     "mobileExperienceDesc": "Una experiencia móvil pensada para completarse en segundos, sin apps ni registros.",
     "teamTitle": "Más que una propina.",
-    "teamDesc": "Haz visible el trabajo de tu equipo y convierte cada agradecimiento en motivación.",
+    "teamDesc": "Haz visible el trabajo di tu equipo y convierte cada agradecimiento en motivación.",
     "footerBrand": "Propi · Propinas digitales para equipos que dejan huella.",
     "pricingTitle": "Precios claros",
     "pricingSubtitle": "Todo lo que necesitas para recibir más gracias. Sin cuotas ocultas. Empieza con una comisión sencilla y configurable para que elijas quién la asume.",
@@ -100,6 +100,12 @@
   "HelpCenter": {
     "title": "Centro de ayuda",
     "subtitle": "Resuelve tus dudas sobre cómo configurar y utilizar Propi de forma rápida y sencilla.",
+    "searchPlaceholder": "¿Qué estás buscando?",
+    "noResults": "No se encontraron resultados para tu búsqueda.",
+    "cat1": "1. Mi negocio",
+    "cat2": "2. Mesas y códigos",
+    "cat3": "3. Reparto y comisiones",
+    "cat4": "4. Gestión y solución de problemas",
     "q1": "¿Cómo configuro mi restaurante?",
     "q2": "¿Cómo añado empleados?",
     "a2": "En '2. Equipo y cuenta de cobro', escribe el nombre en la casilla 'Nombre del empleado' y haz clic en 'Añadir'. Se creará una etiqueta con el botón 'Pendiente IBAN 🔗'. Al hacer clic sobre él, copiarás un enlace único para enviarle por WhatsApp o correo. El empleado abrirá este enlace una sola vez para guardar su cuenta bancaria de forma segura.",
@@ -115,8 +121,7 @@
     "q12": "¿Cómo contacto con soporte?",
     "noAnswer": "¿No encuentras tu respuesta?",
     "contactSupport": "Contacta con el equipo de soporte y cuéntanos qué necesitas para ayudarte al instante."
- },
-  
+  },
   "Settings": {
     "subtitle": "Configura los datos de tu establecimiento, equipo y pasarela de cobros.",
     "section1Title": "1. Datos del negocio",
@@ -147,16 +152,25 @@
     "employeeShare": "Porcentaje asignado al equipo (%)",
     "suggestedTips": "Propinas sugeridas (€)",
     "createQr": "Crear QR/NFC",
+    "createQrNfc": "Crear QR / NFC",
     "testQr": "Probar QR ↗",
     "copyNfc": "Copiar URL NFC",
+    "copyNfcUrl": "Copiar URL NFC",
     "tableCard": "Tarjeta Mesa 🎨",
     "delete": "Eliminar",
     "feePayerLabel": "¿Quién asume los costes del servicio?",
     "feePayerClient": "El Cliente (recargo adicional al pagar)",
     "feePayerMerchant": "El Restaurante (descuento directo de la propina)",
-    "saveData": "Guardar datos"
-  
-  
+    "saveData": "Guardar datos",
+    "nfcBoxTitle": "Guía de configuración de pegatinas NFC",
+    "nfcBoxSub": "Sigue estos 3 pasos para programar tus tags NFC y colocarlos en las mesas.",
+    "nfcStep1Title": "1. Consigue tags NFC",
+    "nfcStep1Desc": "Compra pegatinas o tarjetas NFC compatibles (NTAG213 o NTAG215).",
+    "nfcStep2Title": "2. Descarga una app de escritura",
+    "nfcStep2Desc": "Usa aplicaciones gratuitas en tu móvil para programar el enlace.",
+    "nfcStep3Title": "3. Copia y graba el enlace",
+    "nfcStep3Desc": "Copia la URL del botón de cada mesa y escríbela acercando tu móvil al tag NFC.",
+    "officialWeb": "Web oficial"
   },
   "OnboardingGuide": {
     "stepTitle": "Guía de Inicio Rápido · Paso",
@@ -202,5 +216,20 @@
     "pay_tips": "Pagar propinas",
     "up_to_date": "Al día",
     "payout_tip_note": "Al hacer clic en 'Pagar propinas', el sistema debitará automáticamente el dinero recaudado directamente al IBAN vinculado del empleado."
+  },
+  "CustomerPay": {
+    "leaveTipHere": "DEJA AQUÍ TU PROPINA 🧡",
+    "whoAttendedYou": "¿Quién te atendió?",
+    "changePerson": "← Cambiar persona",
+    "thanksForVisit": "Gracias por tu visita 🧡",
+    "wouldYouLikeTip": "¿Quieres dejar una propina?",
+    "customAmountPlaceholder": "Otro importe (€)",
+    "payWithApplePayOrCard": "Pagar propina con Apple Pay / Tarjeta",
+    "processing": "Procesando pago...",
+    "thankYouTitle": "¡Muchas gracias!",
+    "thankYouSub": "Tu propina ha sido enviada con éxito.",
+    "backToHome": "Volver al inicio",
+    "serviceFeeNotice": "Incluye gastos de gestión de servicio.",
+    "tableLabel": "Mesa"
   }
 }
