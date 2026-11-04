@@ -131,7 +131,8 @@
     "q12": "¿Cómo contacto con soporte?",
     "a12": "Puedes escribirnos mediante el formulario de contacto de la página principal o enviando un correo directamente a soportepropi@gmail.com.",
     "noAnswer": "¿No encuentras tu respuesta?",
-    "contactSupport": "Contacta con el equipo de soporte y cuéntanos qué necesitas para ayudarte al instante."
+    "contactSupport": "Contacta con el equipo de soporte y cuéntanos qué necesitas para ayudarte al instante.",
+    "contactBtn": "Contactar con soporte"
   },
   "Settings": {
     "sectionBadge": "Configuración",
