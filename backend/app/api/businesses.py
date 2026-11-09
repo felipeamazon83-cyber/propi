@@ -124,7 +124,6 @@ def get_settings_summary(
 ):
     user_uuid = user if isinstance(user, UUID) else UUID(str(user))
 
-    # Valida ownership del negocio
     business = owned_business(
         business_id,
         user_uuid,
@@ -133,7 +132,6 @@ def get_settings_summary(
 
     b_uuid = business.id if isinstance(business.id, UUID) else UUID(str(business.id))
 
-    # 1. Configuración de comisiones (TipSetting)
     setting = db.scalar(
         select(TipSetting).where(cast(TipSetting.business_id, PG_UUID) == b_uuid)
     )
@@ -150,7 +148,6 @@ def get_settings_summary(
         "stripe_connected": bool(business.stripe_account_id),
     }
 
-    # 2. Lista de empleados
     employees = db.scalars(
         select(Employee)
         .where(cast(Employee.business_id, PG_UUID) == b_uuid)
@@ -163,14 +160,13 @@ def get_settings_summary(
             "name": emp.name,
             "active": getattr(emp, "active", True),
             "stripe_account_id": getattr(emp, "stripe_account_id", None),
-            # Respetamos estrictamente el booleano real guardado en la base de datos
             "stripe_onboarding_completed": bool(getattr(emp, "stripe_onboarding_completed", False)),
+            "stripe_status": getattr(emp, "stripe_status", "pending"),
             "onboarding_url": getattr(emp, "onboarding_url", None),
         }
         for emp in employees
     ]
 
-    # 3. Lista de ubicaciones (Mesas / QRs)
     locations = db.scalars(
         select(Location)
         .where(cast(Location.business_id, PG_UUID) == b_uuid)
@@ -216,7 +212,6 @@ def update_business(
         exclude_unset=True,
     )
 
-    # Extraer fee_payer para gestionarlo en TipSetting mediante UPSERT
     fee_payer = data.pop("fee_payer", None)
 
     for field, value in data.items():
@@ -252,7 +247,6 @@ def update_business(
     db.commit()
     db.refresh(business)
 
-    # Consultar valor final persistido para la respuesta
     updated_setting = db.scalar(
         select(TipSetting).where(cast(TipSetting.business_id, PG_UUID) == b_uuid)
     )
