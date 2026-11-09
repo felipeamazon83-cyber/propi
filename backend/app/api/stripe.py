@@ -16,7 +16,7 @@ def create_connect_onboarding(
     user: str = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    """Crea/reutiliza la cuenta Express del negocio y devuelve la URL de onboarding segura de Stripe."""
+    """Crea/reutiliza la cuenta conectada con control de aplicación para forzar la verificación de identidad."""
     business = owned_business(business_id, user, db)
 
     if not settings.stripe_secret_key:
@@ -26,21 +26,25 @@ def create_connect_onboarding(
 
     stripe.api_key = settings.stripe_secret_key
 
-    # 1. Crear cuenta Express solicitando explícitamente la verificación de identidad
+    # 1. Crear cuenta con controlador de aplicación para exigir DNI y requisitos de inmediato
     if not business.stripe_account_id:
         account = stripe.Account.create(
-            type="express",
-            country=business.country or "ES",
-            capabilities={
-                "card_payments": {"requested": True},
-                "transfers": {"requested": True},
-                "identity_verification": {"requested": True},
+            controller={
+                "losses": {"payments": "application"},
+                "fees": {"payer": "application"},
+                "requirement_collection": "application",
+                "stripe_dashboard": {"type": "none"},
             },
+            capabilities={
+                "transfers": {"requested": True},
+            },
+            country=business.country or "ES",
+            business_type="individual",
         )
         business.stripe_account_id = account.id
         db.commit()
 
-    # 2. Generar enlace de onboarding recopilando todos los requisitos pendientes
+    # 2. Generar enlace de onboarding recopilando todos los campos requeridos
     link = stripe.AccountLink.create(
         account=business.stripe_account_id,
         refresh_url=f"{settings.app_url}/dashboard",
