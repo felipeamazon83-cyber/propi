@@ -7,5 +7,5 @@ httpx==0.28.1
 stripe==11.4.1
 qrcode[pil]==8.0
 pytest==8.3.4
-
+resend
 supabase>=2.10.0
