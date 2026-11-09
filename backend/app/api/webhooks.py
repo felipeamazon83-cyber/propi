@@ -89,7 +89,7 @@ def record_paid_tip(
         # PROPI ABSORBE CUALQUIER VARIACIÓN DE LA TARJETA
         propi_net_margin_cents = customer_total_cents - tip_cents - stripe_fee_cents
     else:
-        # PROPI GARANTIZA SUS 10 CÉNTIMOS
+        # PROPI GARANTIZA SU 10 CÉNTIMOS
         propi_net_margin_cents = propi_base_fee_cents
         # EL EMPLEADO/NEGOCIO ABSORBE STRIPE Y PROPI
         connected_payout_cents = max(
@@ -154,25 +154,35 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     obj, kind = event["data"]["object"], event["type"]
 
     try:
-        # 1. Actualización de onboarding de Empleado (Connect)
+        # 1. Actualización de onboarding de Empleado (Connect)[cite: 10]
         if kind == "account.updated":
             account_id = obj.get("id")
-            details_submitted = obj.get("details_submitted", False)
+            charges_enabled = obj.get("charges_enabled", False)
             payouts_enabled = obj.get("payouts_enabled", False)
+            
+            # Verificamos si hay requisitos pendientes (como el DNI o datos fiscales)
+            requirements = obj.get("requirements", {})
+            currently_due = requirements.get("currently_due", [])
 
-            if details_submitted or payouts_enabled:
-                employee = db.scalar(
-                    select(Employee).where(Employee.stripe_account_id == account_id)
-                )
-                if employee and not employee.stripe_onboarding_completed:
+            employee = db.scalar(
+                select(Employee).where(Employee.stripe_account_id == account_id)
+            )
+            
+            if employee:
+                # Solo se considera plenamente activo si permite cobros/pagos y no tiene nada pendiente
+                is_fully_active = charges_enabled and payouts_enabled and not currently_due
+
+                if is_fully_active and not employee.stripe_onboarding_completed:
                     employee.stripe_onboarding_completed = True
+                    db.commit()
+                elif not is_fully_active and employee.stripe_onboarding_completed:
+                    employee.stripe_onboarding_completed = False
                     db.commit()
 
         # 2. Checkout Session completado
         elif kind == "checkout.session.completed" and obj.get("payment_status") == "paid":
             payment_intent_id = obj.get("payment_intent")
             if payment_intent_id:
-                # Recuperamos el intent expandiendo latest_charge para tener la tarifa real
                 intent = stripe.PaymentIntent.retrieve(
                     payment_intent_id,
                     expand=["latest_charge.balance_transaction"],
