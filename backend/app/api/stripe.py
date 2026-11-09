@@ -26,7 +26,7 @@ def create_connect_onboarding(
 
     stripe.api_key = settings.stripe_secret_key
 
-    # 1. Crear cuenta Express con API v1
+    # 1. Crear cuenta Express solicitando explícitamente la verificación de identidad
     if not business.stripe_account_id:
         account = stripe.Account.create(
             type="express",
@@ -34,12 +34,13 @@ def create_connect_onboarding(
             capabilities={
                 "card_payments": {"requested": True},
                 "transfers": {"requested": True},
+                "identity_verification": {"requested": True},
             },
         )
         business.stripe_account_id = account.id
         db.commit()
 
-    # 2. Generar enlace de onboarding
+    # 2. Generar enlace de onboarding recopilando todos los requisitos pendientes
     link = stripe.AccountLink.create(
         account=business.stripe_account_id,
         refresh_url=f"{settings.app_url}/dashboard",
