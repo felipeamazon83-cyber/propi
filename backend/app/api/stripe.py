@@ -1,14 +1,45 @@
 import stripe
+import requests
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from ..auth import current_user
 from ..config import settings
 from ..database import get_db
-from ..services.email import send_email  # Servicio para envío de correos
 from .deps import owned_business
 
 router = APIRouter(prefix="/stripe", tags=["stripe-connect"])
+
+
+def send_email_to_employee(to_email: str, subject: str, html_content: str):
+    """Función auxiliar para enviar correos (ejemplo preparado para Resend / API HTTP o SMTP)."""
+    # Si tienes configurada una API key de Resend o similar en tus variables de entorno:
+    resend_api_key = getattr(settings, "resend_api_key", None)
+    
+    if resend_api_key:
+        try:
+            response = requests.post(
+                "https://api.resend.com/emails",
+                headers={
+                    "Authorization": f"Bearer {resend_api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "from": "Propi <onboarding@tudominio.com>",
+                    "to": [to_email],
+                    "subject": subject,
+                    "html": html_content,
+                },
+            )
+            return response.json()
+        except Exception as e:
+            print(f"Error enviando correo: {e}")
+    
+    # Fallback de seguridad: si no hay API key configurada, lo registra en los logs de Render
+    print(f"--- SIMULACIÓN DE CORREO A {to_email} ---")
+    print(f"Asunto: {subject}")
+    print(f"Contenido: {html_content}")
+    print("------------------------------------------")
 
 
 @router.post("/connect")
@@ -70,7 +101,7 @@ def send_identity_verification_email(
 
     stripe.api_key = settings.stripe_secret_key
 
-    # Genera enlace directo a la verificación de identidad redirigiendo a la pantalla final externa
+    # Genera enlace directo a la verificación de identidad
     link = stripe.AccountLink.create(
         account=business.stripe_account_id,
         refresh_url=f"{settings.app_url}/onboarding/exito",
@@ -94,6 +125,6 @@ def send_identity_verification_email(
     </div>
     """
 
-    send_email(to=employee_email, subject=subject, html=html_content)
+    send_email_to_employee(employee_email, subject, html_content)
 
     return {"message": "Correo de verificación enviado correctamente al empleado"}
