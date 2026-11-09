@@ -1,3 +1,4 @@
+import os
 import stripe
 import requests
 from fastapi import APIRouter, Depends, HTTPException
@@ -12,9 +13,8 @@ router = APIRouter(prefix="/stripe", tags=["stripe-connect"])
 
 
 def send_email_to_employee(to_email: str, subject: str, html_content: str):
-    """Función auxiliar para enviar correos (ejemplo preparado para Resend / API HTTP o SMTP)."""
-    # Si tienes configurada una API key de Resend o similar en tus variables de entorno:
-    resend_api_key = getattr(settings, "resend_api_key", None)
+    """Función auxiliar para enviar correos de forma segura usando Resend."""
+    resend_api_key = os.getenv("RESEND_API_KEY") or getattr(settings, "resend_api_key", None)
     
     if resend_api_key:
         try:
@@ -25,17 +25,18 @@ def send_email_to_employee(to_email: str, subject: str, html_content: str):
                     "Content-Type": "application/json",
                 },
                 json={
-                    "from": "Propi <onboarding@tudominio.com>",
+                    "from": "Propi <onboarding@resend.dev>",
                     "to": [to_email],
                     "subject": subject,
                     "html": html_content,
                 },
             )
+            print("Respuesta de Resend:", response.status_code, response.text)
             return response.json()
         except Exception as e:
-            print(f"Error enviando correo: {e}")
+            print(f"Error enviando correo con Resend: {e}")
     
-    # Fallback de seguridad: si no hay API key configurada, lo registra en los logs de Render
+    # Fallback en logs si no hay API key configurada
     print(f"--- SIMULACIÓN DE CORREO A {to_email} ---")
     print(f"Asunto: {subject}")
     print(f"Contenido: {html_content}")
@@ -101,7 +102,7 @@ def send_identity_verification_email(
 
     stripe.api_key = settings.stripe_secret_key
 
-    # Genera enlace directo a la verificación de identidad
+    # Genera enlace directo a la verificación de identidad (currently_due)
     link = stripe.AccountLink.create(
         account=business.stripe_account_id,
         refresh_url=f"{settings.app_url}/onboarding/exito",
