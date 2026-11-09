@@ -45,6 +45,9 @@ def create_connect_onboarding(
         refresh_url=f"{settings.app_url}/dashboard",
         return_url=f"{settings.app_url}/dashboard",
         type="account_onboarding",
+        collection_options={
+            "fields": "currently_due",
+        },
     )
 
     return {"onboarding_url": link.url}
