@@ -18,9 +18,11 @@ type Business = {
 type Employee = {
   id: string;
   name: string;
+  email?: string; // Opcional por si lo usas para enviar correo
   active: boolean;
   stripe_account_id?: string | null;
   stripe_onboarding_completed: boolean;
+  stripe_status?: 'active' | 'identity_pending' | 'pending';
   onboarding_url?: string;
 };
 
@@ -161,12 +163,14 @@ export default function SettingsPage() {
     event.preventDefault();
     if (!business) return;
     const form = event.currentTarget;
-    const name = String(new FormData(form).get('name')).trim();
+    const formData = new FormData(form);
+    const name = String(formData.get('name')).trim();
+    const email = String(formData.get('email') || '').trim();
 
     try {
       const created = await api<Employee>(
         `/businesses/${business.id}/employees`,
-        { method: 'POST', body: JSON.stringify({ name }) },
+        { method: 'POST', body: JSON.stringify({ name, email }) },
         true
       );
 
@@ -255,19 +259,23 @@ export default function SettingsPage() {
       }
     } catch (caught) {
       const errorMsg = caught instanceof Error ? caught.message : '';
+      showMessage(errorMsg || 'No se pudo generar el enlace de vinculación.', true);
+    }
+  }
 
-      if (
-        errorMsg.includes('caducado') ||
-        errorMsg.includes('400') ||
-        errorMsg.includes('404')
-      ) {
-        showMessage(
-          `El enlace de vinculación para ${employee.name} ha caducado o no se completó. Por favor, elimina al empleado (pulsando la ✕) y vuelve a añadirlo para generar un enlace totalmente nuevo.`,
-          true
-        );
-      } else {
-        showMessage(errorMsg || 'No se pudo generar el enlace de vinculación.', true);
-      }
+  // Nueva función para reenviar el correo pidiendo el DNI al empleado
+  async function handleSendIdentityEmail(employee: Employee) {
+    if (!business) return;
+
+    try {
+      await api(
+        `/stripe/send-identity-email?business_id=${business.id}&employee_email=${encodeURIComponent(employee.email || '')}`,
+        { method: 'POST' },
+        true
+      );
+      showMessage(`Correo de verificación de DNI reenviado con éxito a ${employee.name}.`);
+    } catch (caught) {
+      showMessage(caught instanceof Error ? caught.message : 'No se pudo enviar el correo de identidad.', true);
     }
   }
 
@@ -394,40 +402,61 @@ export default function SettingsPage() {
               {business.stripe_connected ? t('Settings.manageStripe') : 'Conectar Stripe'}
             </button>
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-col gap-2.5">
               {employees.length ? (
                 employees.map((employee) => (
                   <div
                     key={employee.id}
-                    className="flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3.5 py-2 text-slate-200"
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-200"
                   >
-                    <span className="font-semibold text-white">{employee.name}</span>
-                    <span className="text-xs opacity-60">· {employee.active ? t('Settings.activeStatus') : 'Inactivo'}</span>
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="font-semibold text-white">{employee.name}</p>
+                        {employee.email && <p className="text-xs text-slate-400">{employee.email}</p>}
+                      </div>
+                    </div>
 
-                    {employee.stripe_onboarding_completed ? (
-                      <span className="ml-1 rounded-full border border-emerald-500/30 bg-emerald-500/20 px-2 py-0.5 text-xs font-semibold text-emerald-400">
-                        IBAN Listo
-                      </span>
-                    ) : (
+                    <div className="flex items-center gap-2">
+                      {/* Renderizado de estados granulares: active, identity_pending o pending */}
+                      {employee.stripe_status === 'active' || employee.stripe_onboarding_completed ? (
+                        <span className="rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-400">
+                          ✅ Activo y listo
+                        </span>
+                      ) : employee.stripe_status === 'identity_pending' ? (
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full border border-amber-500/30 bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-300">
+                            ⏳ Falta DNI (Correo enviado)
+                          </span>
+                          {employee.email && (
+                            <button
+                              type="button"
+                              onClick={() => void handleSendIdentityEmail(employee)}
+                              className="rounded-full border border-orange-500/30 bg-orange-500/20 px-3 py-1 text-xs font-semibold text-orange-300 hover:bg-orange-500/30 transition-colors"
+                            >
+                              Reenviar correo DNI
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => void handleReissueLink(employee)}
+                          className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-3.5 py-1 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-500/30 cursor-pointer"
+                        >
+                          <span>{t('Settings.pendingIban')}</span>
+                          <span>🔗</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
-                        onClick={() => void handleReissueLink(employee)}
-                        className="ml-1 flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-2.5 py-0.5 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-500/30 active:scale-95 cursor-pointer"
-                        title="Haz clic para ver o copiar el enlace de vinculación de IBAN"
+                        onClick={() => setDeleteModal({ type: 'employee', id: employee.id, name: employee.name })}
+                        className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                        title={`Eliminar a ${employee.name}`}
                       >
-                        <span>{t('Settings.pendingIban')}</span>
-                        <span>🔗</span>
+                        ✕
                       </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => setDeleteModal({ type: 'employee', id: employee.id, name: employee.name })}
-                      className="ml-1.5 flex h-5 w-5 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
-                      title={`Eliminar a ${employee.name}`}
-                    >
-                      ✕
-                    </button>
+                    </div>
                   </div>
                 ))
               ) : (
@@ -435,9 +464,12 @@ export default function SettingsPage() {
               )}
             </div>
 
-            <form className="mt-4 flex gap-2" onSubmit={addEmployee}>
+            <form className="mt-4 grid gap-2 sm:grid-cols-2" onSubmit={addEmployee}>
               <input className="field" name="name" required placeholder="Nombre del empleado" />
-              <button className="btn btn-primary">{t('Settings.addMember')}</button>
+              <div className="flex gap-2">
+                <input className="field w-full" name="email" type="email" placeholder="Correo electrónico (para DNI)" />
+                <button className="btn btn-primary whitespace-nowrap">{t('Settings.addMember')}</button>
+              </div>
             </form>
           </section>
 
