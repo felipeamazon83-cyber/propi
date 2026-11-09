@@ -154,32 +154,41 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     obj, kind = event["data"]["object"], event["type"]
 
     try:
-        # 1. Actualización de onboarding de Empleado (Connect)[cite: 10]
+        # 1. Actualización de onboarding de Empleado (Connect)[cite: 2]
         if kind == "account.updated":
             account_id = obj.get("id")
             charges_enabled = obj.get("charges_enabled", False)
             payouts_enabled = obj.get("payouts_enabled", False)
             
-            # Verificamos si hay requisitos pendientes (como el DNI o datos fiscales)
+            # Verificamos requisitos pendientes en Stripe
             requirements = obj.get("requirements", {})
             currently_due = requirements.get("currently_due", [])
+
+            # Evaluamos si falta específicamente el documento de identidad / DNI
+            needs_identity = any(
+                "verification.document" in req or "id_number" in req 
+                for req in currently_due
+            )
 
             employee = db.scalar(
                 select(Employee).where(Employee.stripe_account_id == account_id)
             )
             
             if employee:
-                # Solo se considera plenamente activo si permite cobros/pagos y no tiene nada pendiente
-                is_fully_active = charges_enabled and payouts_enabled and not currently_due
-
-                if is_fully_active and not employee.stripe_onboarding_completed:
+                # Determinamos el estado granular de la cuenta
+                if charges_enabled and payouts_enabled and not currently_due:
+                    employee.stripe_status = "active"
                     employee.stripe_onboarding_completed = True
-                    db.commit()
-                elif not is_fully_active and employee.stripe_onboarding_completed:
+                elif needs_identity:
+                    employee.stripe_status = "identity_pending"
                     employee.stripe_onboarding_completed = False
-                    db.commit()
+                else:
+                    employee.stripe_status = "pending"
+                    employee.stripe_onboarding_completed = False
+                
+                db.commit()
 
-        # 2. Checkout Session completado
+        # 2. Checkout Session completado[cite: 2]
         elif kind == "checkout.session.completed" and obj.get("payment_status") == "paid":
             payment_intent_id = obj.get("payment_intent")
             if payment_intent_id:
@@ -194,7 +203,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     db=db,
                 )
 
-        # 3. PaymentIntent exitoso
+        # 3. PaymentIntent exitoso[cite: 2]
         elif kind == "payment_intent.succeeded":
             intent = stripe.PaymentIntent.retrieve(
                 obj["id"],
@@ -208,14 +217,14 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 db=db,
             )
 
-        # 4. Errores de Pago
+        # 4. Errores de Pago[cite: 2]
         elif kind == "payment_intent.payment_failed":
             tip = db.scalar(select(Tip).where(Tip.stripe_payment_intent_id == obj["id"]))
             if tip:
                 tip.status = "failed"
                 db.commit()
 
-        # 5. Reembolsos
+        # 5. Reembolsos[cite: 2]
         elif kind == "charge.refunded":
             tip = db.scalar(
                 select(Tip).where(Tip.stripe_payment_intent_id == obj.get("payment_intent"))
