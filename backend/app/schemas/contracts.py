@@ -20,6 +20,7 @@ class BusinessUpdate(BaseModel):
 
 class EmployeeCreate(BaseModel):
     name: str = Field(min_length=1, max_length=120)
+    email: str | None = None  # <--- ¡Añadido aquí! Es obligatorio para el envío del DNI vía Resend
     photo_url: str | None = None
 
 
