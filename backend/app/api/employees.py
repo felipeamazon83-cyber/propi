@@ -31,16 +31,16 @@ def list_employees(
         select(Employee).where(Employee.business_id == business.id)
     ).all()
 
-    # Devolvemos estrictamente el estado guardado en la base de datos local.
-    # El estado solo cambiará cuando el onboarding se complete correctamente.
     return [
         {
             "id": str(e.id),
             "name": e.name,
+            "email": getattr(e, "email", None),  # <-- DEVUELVE EL CORREO AL FRONTEND
             "photo_url": e.photo_url,
             "active": e.active,
             "stripe_account_id": e.stripe_account_id,
             "stripe_onboarding_completed": e.stripe_onboarding_completed,
+            "stripe_status": getattr(e, "stripe_status", "pending"),
         }
         for e in employees
     ]
@@ -66,6 +66,7 @@ def create_employee(
             business_type="individual",
             capabilities={
                 "transfers": {"requested": True},
+                "identity_verification": {"requested": True},
             },
             metadata={
                 "business_id": str(business.id),
@@ -89,11 +90,12 @@ def create_employee(
             detail=f"Error creando cuenta de Stripe para el empleado: {str(exc)}",
         )
 
-    # 3. Guardar el empleado en la base de datos
+    # 3. Guardar el empleado en la base de datos (incluyendo email y stripe_status)
     employee = Employee(
         business_id=business.id,
         stripe_account_id=stripe_account_id,
         stripe_onboarding_completed=False,
+        stripe_status="pending",
         **payload.model_dump(),
     )
     db.add(employee)
@@ -103,10 +105,12 @@ def create_employee(
     return {
         "id": str(employee.id),
         "name": employee.name,
+        "email": getattr(employee, "email", None),  # <-- DEVUELVE EL CORREO CREADO
         "photo_url": employee.photo_url,
         "active": employee.active,
         "stripe_account_id": employee.stripe_account_id,
         "stripe_onboarding_completed": employee.stripe_onboarding_completed,
+        "stripe_status": getattr(employee, "stripe_status", "pending"),
         "onboarding_url": onboarding_url,
     }
 
@@ -118,10 +122,8 @@ def get_employee_onboarding_link(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    """Genera un nuevo enlace de onboarding. Si la cuenta no existía, la genera automáticamente."""
     business = owned_business(business_id, user, db)
 
-    # Búsqueda segura por String o UUID
     try:
         emp_uuid = UUID(employee_id) if isinstance(employee_id, str) else employee_id
     except (ValueError, TypeError):
@@ -214,10 +216,8 @@ def delete_employee(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    """Elimina el empleado de la base de datos y su cuenta asociada en Stripe Connect."""
     business = owned_business(business_id, user, db)
 
-    # 1. Búsqueda tolerante a tipos (compara UUID objeto y String)
     try:
         emp_uuid = UUID(employee_id) if isinstance(employee_id, str) else employee_id
     except (ValueError, TypeError):
@@ -236,14 +236,12 @@ def delete_employee(
             detail="Empleado no encontrado",
         )
 
-    # 2. Desvincular/Eliminar cuenta en Stripe sin bloquear el borrado en base de datos
     if employee.stripe_account_id:
         try:
             stripe.Account.delete(employee.stripe_account_id)
         except Exception:
             pass
 
-    # 3. Eliminar de la DB
     db.delete(employee)
     db.commit()
 
