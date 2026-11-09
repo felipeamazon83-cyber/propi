@@ -67,7 +67,7 @@ def create_connect_onboarding(
             capabilities={
                 "card_payments": {"requested": True},
                 "transfers": {"requested": True},
-                "identity_verification": {"requested": True},
+               
             },
         )
         business.stripe_account_id = account.id
