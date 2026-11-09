@@ -112,6 +112,13 @@ class Employee(Base):
         nullable=False,
     )
 
+    # --- CAMPO EMAIL AÑADIDO ---
+    email: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
+    # ---------------------------
+
     photo_url: Mapped[str | None] = mapped_column(
         String(500),
         nullable=True,
