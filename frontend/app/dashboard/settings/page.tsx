@@ -18,7 +18,7 @@ type Business = {
 type Employee = {
   id: string;
   name: string;
-  email?: string; // Opcional por si lo usas para enviar correo
+  email?: string;
   active: boolean;
   stripe_account_id?: string | null;
   stripe_onboarding_completed: boolean;
@@ -58,14 +58,9 @@ export default function SettingsPage() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  // Estado para la vista previa del logo del restaurante
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-
-  // Estados para modal de onboarding de Stripe por empleado
   const [activeModalLink, setActiveModalLink] = useState<{ name: string; url: string } | null>(null);
   const [copied, setCopied] = useState(false);
-
-  // Estado para modal de confirmación de eliminación
   const [deleteModal, setDeleteModal] = useState<DeleteTarget>(null);
   const [deleting, setDeleting] = useState(false);
 
@@ -76,7 +71,6 @@ export default function SettingsPage() {
     setMessage(isError ? '' : text);
   }
 
-  // Carga inicial optimizada con 1 sola petición al endpoint unificado
   const loadDashboard = useCallback(async () => {
     try {
       setLoading(true);
@@ -89,7 +83,6 @@ export default function SettingsPage() {
         return;
       }
 
-      // Consulta directa al endpoint unificado
       const summary = await api<SettingsSummary>(
         `/businesses/${businesses[0].id}/settings-summary`,
         {},
@@ -111,7 +104,6 @@ export default function SettingsPage() {
     void loadDashboard();
   }, [loadDashboard]);
 
-  // Manejador para cargar y convertir la imagen del logo a Base64
   function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -263,7 +255,6 @@ export default function SettingsPage() {
     }
   }
 
-  // Nueva función para reenviar el correo pidiendo el DNI al empleado
   async function handleSendIdentityEmail(employee: Employee) {
     if (!business) return;
 
@@ -320,7 +311,6 @@ export default function SettingsPage() {
             <input className="field mt-1" name="legal_name" defaultValue={business?.legal_name || ''} />
           </label>
 
-          {/* Subida de Logo Personalizado */}
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-slate-300">{t('Settings.logoLabel')}</label>
             <div className="mt-2 flex items-center gap-4">
@@ -407,51 +397,67 @@ export default function SettingsPage() {
                 employees.map((employee) => (
                   <div
                     key={employee.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-200"
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 p-4 text-slate-200"
                   >
-                    <div className="flex items-center gap-3">
-                      <div>
-                        <p className="font-semibold text-white">{employee.name}</p>
-                        {employee.email && <p className="text-xs text-slate-400">{employee.email}</p>}
-                      </div>
+                    <div className="flex flex-col">
+                      <p className="font-semibold text-white">{employee.name}</p>
+                      {employee.email ? (
+                        <p className="text-xs text-slate-400">{employee.email}</p>
+                      ) : (
+                        <span className="text-[11px] text-amber-400/80 italic">⚠️ Sin correo asignado</span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {/* Renderizado de estados granulares: active, identity_pending o pending */}
+                      {/* ESTADO 1: COMPLETO Y ACTIVO */}
                       {employee.stripe_status === 'active' || employee.stripe_onboarding_completed ? (
                         <span className="rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-400">
                           ✅ Activo y listo
                         </span>
                       ) : employee.stripe_status === 'identity_pending' ? (
+                        /* ESTADO 2: PENDIENTE DE DNI */
                         <div className="flex items-center gap-2">
                           <span className="rounded-full border border-amber-500/30 bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-300">
-                            ⏳ Falta DNI (Correo enviado)
+                            ⏳ Falta DNI
                           </span>
                           {employee.email && (
                             <button
                               type="button"
                               onClick={() => void handleSendIdentityEmail(employee)}
-                              className="rounded-full border border-orange-500/30 bg-orange-500/20 px-3 py-1 text-xs font-semibold text-orange-300 hover:bg-orange-500/30 transition-colors"
+                              className="rounded-lg border border-orange-500/30 bg-orange-500/20 px-3 py-1 text-xs font-semibold text-orange-300 hover:bg-orange-500/30 transition-colors cursor-pointer"
                             >
-                              Reenviar correo DNI
+                              ✉️ Reenviar DNI
                             </button>
                           )}
                         </div>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={() => void handleReissueLink(employee)}
-                          className="flex items-center gap-1 rounded-full border border-orange-500/30 bg-orange-500/20 px-3.5 py-1 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-500/30 cursor-pointer"
-                        >
-                          <span>{t('Settings.pendingIban')}</span>
-                          <span>🔗</span>
-                        </button>
+                        /* ESTADO 3: PENDIENTE DE IBAN (INICIAL) */
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => void handleReissueLink(employee)}
+                            className="flex items-center gap-1.5 rounded-lg border border-orange-500/30 bg-orange-500/20 px-3 py-1.5 text-xs font-semibold text-orange-300 transition-colors hover:bg-orange-500/30 cursor-pointer"
+                          >
+                            <span>{t('Settings.pendingIban')}</span>
+                          </button>
+
+                          {employee.email && (
+                            <button
+                              type="button"
+                              onClick={() => void handleSendIdentityEmail(employee)}
+                              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
+                              title="Enviar correo directo para subir DNI"
+                            >
+                              ✉️ Enviar DNI
+                            </button>
+                          )}
+                        </div>
                       )}
 
                       <button
                         type="button"
                         onClick={() => setDeleteModal({ type: 'employee', id: employee.id, name: employee.name })}
-                        className="flex h-7 w-7 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                        className="ml-1 flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
                         title={`Eliminar a ${employee.name}`}
                       >
                         ✕
