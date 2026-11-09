@@ -1,4 +1,5 @@
 import stripe
+import resend
 from fastapi import APIRouter, Depends, HTTPException, Request 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -8,6 +9,34 @@ from ..database import get_db
 from ..models import Employee, Tip
 
 router = APIRouter(tags=["webhooks"])
+
+
+def send_onboarding_email(to_email: str, employee_name: str, message_title: str):
+    """Envía un correo automático usando Resend tras actualizar el estado del onboarding."""
+    resend_api_key = getattr(settings, "resend_api_key", None)
+    if not resend_api_key or not to_email:
+        return
+
+    resend.api_key = resend_api_key
+    try:
+        resend.Emails.send({
+            "from": getattr(settings, "resend_from", "Propi <onboarding@resend.dev>"),
+            "to": [to_email],
+            "subject": "Actualización de tu cuenta en Propi y Stripe",
+            "html": f"""
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+                <h2 style="color: #111;">Estado de tu cuenta</h2>
+                <p>Hola <strong>{employee_name}</strong>,</p>
+                <p>{message_title}</p>
+                <p style="margin: 30px 0; text-align: center;">
+                    <a href="{settings.app_url}/dashboard" style="background-color: #635bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Ir a mi panel</a>
+                </p>
+                <p style="color: #666; font-size: 14px;">Este proceso es gestionado de manera segura por Stripe.</p>
+            </div>
+            """
+        })
+    except Exception as e:
+        print(f"Error enviando correo con Resend desde webhook: {e}")
 
 
 def cents(metadata: dict, key: str) -> float:
@@ -164,7 +193,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             requirements = obj.get("requirements", {})
             currently_due = requirements.get("currently_due", [])
             past_due = requirements.get("past_due", [])
-            eventually_due = requirements.get("eventually_due", [])
             disabled_reason = requirements.get("disabled_reason", None)
 
             employee = db.scalar(
@@ -172,15 +200,13 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             )
             
             if employee:
-                # Una cuenta es verdaderamente ACTIVE solo si cobra, paga,
-                # NO tiene ningún requisito pendiente (actual, pasado o motivo de desactivación)
+                previous_status = employee.stripe_status
                 has_pending_requirements = bool(currently_due or past_due or disabled_reason)
 
                 if charges_enabled and payouts_enabled and not has_pending_requirements:
                     employee.stripe_status = "active"
                     employee.stripe_onboarding_completed = True
                 elif has_pending_requirements:
-                    # Si falta el DNI o está restringida/pendiente de validación
                     employee.stripe_status = "identity_pending"
                     employee.stripe_onboarding_completed = False
                 else:
@@ -188,6 +214,15 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     employee.stripe_onboarding_completed = False
                 
                 db.commit()
+
+                # Disparar correo con Resend si acaba de completar o avanzar en el onboarding
+                if previous_status == "pending" and employee.stripe_status != "pending" and getattr(employee, "email", None):
+                    status_message = (
+                        "¡Tu cuenta ha sido verificada y activada con éxito! Ya puedes recibir propinas."
+                        if employee.stripe_status == "active"
+                        else "Has completado la primera parte del proceso. Stripe requiere verificar tu identidad (DNI/NIE) para habilitar los cobros."
+                    )
+                    send_onboarding_email(employee.email, employee.name, status_message)
 
         # 2. Checkout Session completado[cite: 2]
         elif kind == "checkout.session.completed" and obj.get("payment_status") == "paid":
