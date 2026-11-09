@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from ..auth import current_user
 from ..config import settings
 from ..database import get_db
+from ..services.email import send_email  # Servicio para envío de correos
 from .deps import owned_business
 
 router = APIRouter(prefix="/stripe", tags=["stripe-connect"])
@@ -16,7 +17,7 @@ def create_connect_onboarding(
     user: str = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    """Crea/reutiliza la cuenta conectada con control de aplicación para forzar la verificación de identidad."""
+    """Crea la cuenta Express estándar y genera la URL redirigiendo al empleado fuera de los dashboards."""
     business = owned_business(business_id, user, db)
 
     if not settings.stripe_secret_key:
@@ -26,29 +27,25 @@ def create_connect_onboarding(
 
     stripe.api_key = settings.stripe_secret_key
 
-    # 1. Crear cuenta con controlador de aplicación para exigir DNI y requisitos de inmediato
+    # 1. Crear cuenta Express estándar con la capacidad de verificación solicitada
     if not business.stripe_account_id:
         account = stripe.Account.create(
-            controller={
-                "losses": {"payments": "application"},
-                "fees": {"payer": "application"},
-                "requirement_collection": "application",
-                "stripe_dashboard": {"type": "none"},
-            },
-            capabilities={
-                "transfers": {"requested": True},
-            },
+            type="express",
             country=business.country or "ES",
-            business_type="individual",
+            capabilities={
+                "card_payments": {"requested": True},
+                "transfers": {"requested": True},
+                "identity_verification": {"requested": True},
+            },
         )
         business.stripe_account_id = account.id
         db.commit()
 
-    # 2. Generar enlace de onboarding recopilando todos los campos requeridos
+    # 2. Generar enlace redirigiendo a una pantalla pública de agradecimiento/éxito
     link = stripe.AccountLink.create(
         account=business.stripe_account_id,
-        refresh_url=f"{settings.app_url}/dashboard",
-        return_url=f"{settings.app_url}/dashboard",
+        refresh_url=f"{settings.app_url}/onboarding/exito?status=refresh",
+        return_url=f"{settings.app_url}/onboarding/exito?status=completed",
         type="account_onboarding",
         collection_options={
             "fields": "eventually_due",
@@ -56,3 +53,47 @@ def create_connect_onboarding(
     )
 
     return {"onboarding_url": link.url}
+
+
+@router.post("/send-identity-email")
+def send_identity_verification_email(
+    business_id: str,
+    employee_email: str,
+    user: str = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    """Envía un correo al empleado con el enlace exclusivo para subir su DNI."""
+    business = owned_business(business_id, user, db)
+
+    if not business.stripe_account_id:
+        raise HTTPException(400, "El negocio no tiene una cuenta de Stripe asociada")
+
+    stripe.api_key = settings.stripe_secret_key
+
+    # Genera enlace directo a la verificación de identidad redirigiendo a la pantalla final externa
+    link = stripe.AccountLink.create(
+        account=business.stripe_account_id,
+        refresh_url=f"{settings.app_url}/onboarding/exito",
+        return_url=f"{settings.app_url}/onboarding/exito",
+        type="account_onboarding",
+        collection_options={
+            "fields": "currently_due",
+        },
+    )
+
+    subject = "Acción requerida: Completa la verificación de tu cuenta en Propi"
+    html_content = f"""
+    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h2>Verificación de Identidad</h2>
+        <p>Hola,</p>
+        <p>Para poder habilitar la recepción de tus pagos y propinas, Stripe necesita verificar tu documento de identidad (DNI/NIE).</p>
+        <p style="margin: 30px 0;">
+            <a href="{link.url}" style="background-color: #635bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Subir documento de identidad</a>
+        </p>
+        <p style="color: #666; font-size: 14px;">Este proceso es seguro y gestionado directamente por Stripe.</p>
+    </div>
+    """
+
+    send_email(to=employee_email, subject=subject, html=html_content)
+
+    return {"message": "Correo de verificación enviado correctamente al empleado"}
