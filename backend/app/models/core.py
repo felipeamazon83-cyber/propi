@@ -117,7 +117,7 @@ class Employee(Base):
         nullable=True,
     )
 
-    # --- NUEVOS CAMPOS STRIPE CONNECT ---
+    # --- CAMPOS STRIPE CONNECT ---
     stripe_account_id: Mapped[str | None] = mapped_column(
         String(255),
         nullable=True,
@@ -129,7 +129,13 @@ class Employee(Base):
         default=False,
         nullable=False,
     )
-    # ------------------------------------
+
+    stripe_status: Mapped[str] = mapped_column(
+        String(32),
+        default="pending",
+        nullable=False,
+    )
+    # -----------------------------
 
     active: Mapped[bool] = mapped_column(
         Boolean,
@@ -301,7 +307,6 @@ class Tip(Base):
         nullable=False,
     )
 
-    # --- NUEVOS CAMPOS PARA CONTROL DE PAYOUT ---
     payout_status: Mapped[str] = mapped_column(
         String(16),
         default="pending",
@@ -312,7 +317,6 @@ class Tip(Base):
         DateTime(timezone=True),
         nullable=True,
     )
-    # --------------------------------------------
 
     stripe_payment_intent_id: Mapped[str | None] = mapped_column(
         String(255),
