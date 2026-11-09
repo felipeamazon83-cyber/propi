@@ -160,21 +160,27 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             charges_enabled = obj.get("charges_enabled", False)
             payouts_enabled = obj.get("payouts_enabled", False)
             
-            # Verificamos requisitos pendientes en Stripe
+            # Verificamos exhaustivamente requisitos y restricciones en Stripe
             requirements = obj.get("requirements", {})
             currently_due = requirements.get("currently_due", [])
+            past_due = requirements.get("past_due", [])
+            eventually_due = requirements.get("eventually_due", [])
+            disabled_reason = requirements.get("disabled_reason", None)
 
             employee = db.scalar(
                 select(Employee).where(Employee.stripe_account_id == account_id)
             )
             
             if employee:
-                # Solo se marca como active si está completamente habilitado Y NO tiene requisitos pendientes
-                if charges_enabled and payouts_enabled and not currently_due:
+                # Una cuenta es verdaderamente ACTIVE solo si cobra, paga,
+                # NO tiene ningún requisito pendiente (actual, pasado o motivo de desactivación)
+                has_pending_requirements = bool(currently_due or past_due or disabled_reason)
+
+                if charges_enabled and payouts_enabled and not has_pending_requirements:
                     employee.stripe_status = "active"
                     employee.stripe_onboarding_completed = True
-                elif currently_due:
-                    # Si faltan datos (como el DNI o está restringida), se va al estado intermedio
+                elif has_pending_requirements:
+                    # Si falta el DNI o está restringida/pendiente de validación
                     employee.stripe_status = "identity_pending"
                     employee.stripe_onboarding_completed = False
                 else:
