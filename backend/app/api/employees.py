@@ -66,7 +66,7 @@ def create_employee(
             business_type="individual",
             capabilities={
                 "transfers": {"requested": True},
-                "identity_verification": {"requested": True},
+                
             },
             metadata={
                 "business_id": str(business.id),
