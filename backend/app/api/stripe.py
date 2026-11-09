@@ -46,7 +46,7 @@ def create_connect_onboarding(
         return_url=f"{settings.app_url}/dashboard",
         type="account_onboarding",
         collection_options={
-            "fields": "currently_due",
+            "fields": "eventually_due",
         },
     )
 
