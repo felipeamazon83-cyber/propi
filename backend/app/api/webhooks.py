@@ -164,22 +164,17 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             requirements = obj.get("requirements", {})
             currently_due = requirements.get("currently_due", [])
 
-            # Evaluamos si falta específicamente el documento de identidad / DNI
-            needs_identity = any(
-                "verification.document" in req or "id_number" in req 
-                for req in currently_due
-            )
-
             employee = db.scalar(
                 select(Employee).where(Employee.stripe_account_id == account_id)
             )
             
             if employee:
-                # Determinamos el estado granular de la cuenta
+                # Solo se marca como active si está completamente habilitado Y NO tiene requisitos pendientes
                 if charges_enabled and payouts_enabled and not currently_due:
                     employee.stripe_status = "active"
                     employee.stripe_onboarding_completed = True
-                elif needs_identity:
+                elif currently_due:
+                    # Si faltan datos (como el DNI o está restringida), se va al estado intermedio
                     employee.stripe_status = "identity_pending"
                     employee.stripe_onboarding_completed = False
                 else:
