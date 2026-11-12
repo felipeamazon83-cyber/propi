@@ -9,18 +9,20 @@ class Settings(BaseSettings):
     stripe_webhook_secret: str = ""
     stripe_webhook_secret_main: str = ""
     stripe_webhook_secret_connect: str = ""
-    
+    resend_api_key: str = ""
+    resend_from: str = "Propi <onboarding@resend.dev>"
+
     # Configuración de tarifas Propi (MVP: 0.10 €)
-    propi_fixed_fee_cents: int = 10  # 0.10 € por transacción
+    propi_fixed_fee_cents: int = 10
     propi_fee_percent: float = 0.0
 
-    # Estimación pasarela Stripe Europa (Tarjetas UE Estándar: 1.5% + 0.25 €)
-    stripe_fee_percent: float = 0.015  # 1.5%
-    stripe_fixed_fee_cents: int = 25   # 0.25 €
+    # Estimación pasarela Stripe Europa
+    stripe_fee_percent: float = 0.015
+    stripe_fixed_fee_cents: int = 25
 
     cors_origins: str = "https://propi-kohl.vercel.app,http://localhost:3000,http://localhost:5173"
     app_url: str = "http://localhost:3000"
-    
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
