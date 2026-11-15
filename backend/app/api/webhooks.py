@@ -1,42 +1,15 @@
 import stripe
 import resend
-from fastapi import APIRouter, Depends, HTTPException, Request 
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..database import get_db
 from ..models import Employee, Tip
+from .employee_onboarding_webhook import process_employee_account_update
 
 router = APIRouter(tags=["webhooks"])
-
-
-def send_onboarding_email(to_email: str, employee_name: str, message_title: str):
-    """Envía un correo automático usando Resend tras actualizar el estado del onboarding."""
-    resend_api_key = getattr(settings, "resend_api_key", None)
-    if not resend_api_key or not to_email:
-        return
-
-    resend.api_key = resend_api_key
-    try:
-        resend.Emails.send({
-            "from": getattr(settings, "resend_from", "Propi <onboarding@resend.dev>"),
-            "to": [to_email],
-            "subject": "Actualización de tu cuenta en Propi y Stripe",
-            "html": f"""
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
-                <h2 style="color: #111;">Estado de tu cuenta</h2>
-                <p>Hola <strong>{employee_name}</strong>,</p>
-                <p>{message_title}</p>
-                <p style="margin: 30px 0; text-align: center;">
-                    <a href="{settings.app_url}/dashboard" style="background-color: #635bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Ir a mi panel</a>
-                </p>
-                <p style="color: #666; font-size: 14px;">Este proceso es gestionado de manera segura por Stripe.</p>
-            </div>
-            """
-        })
-    except Exception as e:
-        print(f"Error enviando correo con Resend desde webhook: {e}")
 
 
 def cents(metadata: dict, key: str) -> float:
@@ -70,11 +43,11 @@ def record_paid_tip(
     transfer_id: str | None,
     db: Session,
 ) -> None:
-    """Persiste e idénticamente procesa la propina aplicando las reglas dinámicas de comisiones."""
+    """Persiste y procesa la propina aplicando las reglas dinámicas de comisiones."""
     payment_intent_id = intent.id
     metadata = intent.metadata or {}
 
-    # 1. Comprobación de Idempotencia
+    # Comprobación de idempotencia
     existing = None
     if checkout_session_id:
         existing = db.scalar(
@@ -87,45 +60,29 @@ def record_paid_tip(
 
     if existing:
         existing.status = "paid"
-        existing.stripe_payment_intent_id = (
-            payment_intent_id or existing.stripe_payment_intent_id
-        )
-        existing.stripe_checkout_session_id = (
-            checkout_session_id or existing.stripe_checkout_session_id
-        )
+        existing.stripe_payment_intent_id = payment_intent_id or existing.stripe_payment_intent_id
+        existing.stripe_checkout_session_id = checkout_session_id or existing.stripe_checkout_session_id
         existing.stripe_transfer_id = transfer_id or existing.stripe_transfer_id
         db.commit()
         return
 
-    # 2. Validación de metadatos requeridos
     required = ("business_id", "location_id", "tip_cents", "fee_payer")
     if not all(metadata.get(key) for key in required):
         raise ValueError("Missing Propi payment metadata")
 
-    # 3. Datos base de la transacción
     fee_payer = metadata.get("fee_payer", "business")
     tip_cents = int(metadata.get("tip_cents", 0))
-    customer_total_cents = intent.amount  # Cobro real en la pasarela
-
-    # 4. Obtención de comisión real de Stripe
+    customer_total_cents = intent.amount
     stripe_fee_cents = get_stripe_fee_cents(intent)
-    propi_base_fee_cents = settings.propi_fixed_fee_cents  # 10 céntimos
+    propi_base_fee_cents = settings.propi_fixed_fee_cents
 
-    # 5. Aplicación del modelo de negocio acordado
     if fee_payer == "customer":
-        # EL EMPLEADO RECIBE EL 100% DE SU PROPINA
         connected_payout_cents = tip_cents
-        # PROPI ABSORBE CUALQUIER VARIACIÓN DE LA TARJETA
         propi_net_margin_cents = customer_total_cents - tip_cents - stripe_fee_cents
     else:
-        # PROPI GARANTIZA SU 10 CÉNTIMOS
         propi_net_margin_cents = propi_base_fee_cents
-        # EL EMPLEADO/NEGOCIO ABSORBE STRIPE Y PROPI
-        connected_payout_cents = max(
-            0, tip_cents - propi_base_fee_cents - stripe_fee_cents
-        )
+        connected_payout_cents = max(0, tip_cents - propi_base_fee_cents - stripe_fee_cents)
 
-    # 6. Guardado en BD
     db.add(
         Tip(
             business_id=metadata["business_id"],
@@ -150,7 +107,6 @@ def record_paid_tip(
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     stripe.api_key = settings.stripe_secret_key
 
-    # Recopilar secretos de webhook
     webhook_secrets = []
     secret_main = getattr(settings, "stripe_webhook_secret_main", None)
     secret_connect = getattr(settings, "stripe_webhook_secret_connect", None)
@@ -168,7 +124,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
-
     event = None
     for secret in webhook_secrets:
         try:
@@ -183,48 +138,10 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     obj, kind = event["data"]["object"], event["type"]
 
     try:
-        # 1. Actualización de onboarding de Empleado (Connect)[cite: 2]
         if kind == "account.updated":
-            account_id = obj.get("id")
-            charges_enabled = obj.get("charges_enabled", False)
-            payouts_enabled = obj.get("payouts_enabled", False)
-            
-            # Verificamos exhaustivamente requisitos y restricciones en Stripe
-            requirements = obj.get("requirements", {})
-            currently_due = requirements.get("currently_due", [])
-            past_due = requirements.get("past_due", [])
-            disabled_reason = requirements.get("disabled_reason", None)
-
-            employee = db.scalar(
-                select(Employee).where(Employee.stripe_account_id == account_id)
-            )
-            
-            if employee:
-                previous_status = employee.stripe_status
-                has_pending_requirements = bool(currently_due or past_due or disabled_reason)
-
-                if charges_enabled and payouts_enabled and not has_pending_requirements:
-                    employee.stripe_status = "active"
-                    employee.stripe_onboarding_completed = True
-                elif has_pending_requirements:
-                    employee.stripe_status = "identity_pending"
-                    employee.stripe_onboarding_completed = False
-                else:
-                    employee.stripe_status = "pending"
-                    employee.stripe_onboarding_completed = False
-                
-                db.commit()
-
-                # Disparar correo con Resend si acaba de completar o avanzar en el onboarding
-                if previous_status == "pending" and employee.stripe_status != "pending" and getattr(employee, "email", None):
-                    status_message = (
-                        "¡Tu cuenta ha sido verificada y activada con éxito! Ya puedes recibir propinas."
-                        if employee.stripe_status == "active"
-                        else "Has completado la primera parte del proceso. Stripe requiere verificar tu identidad (DNI/NIE) para habilitar los cobros."
-                    )
-                    send_onboarding_email(employee.email, employee.name, status_message)
-
-        # 2. Checkout Session completado[cite: 2]
+            # Keep the legacy webhook compatible, but use the same strict status
+            # transition and employee-specific identity email as the Connect hook.
+            process_employee_account_update(obj, db)
         elif kind == "checkout.session.completed" and obj.get("payment_status") == "paid":
             payment_intent_id = obj.get("payment_intent")
             if payment_intent_id:
@@ -238,8 +155,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                     transfer_id=None,
                     db=db,
                 )
-
-        # 3. PaymentIntent exitoso[cite: 2]
         elif kind == "payment_intent.succeeded":
             intent = stripe.PaymentIntent.retrieve(
                 obj["id"],
@@ -252,15 +167,11 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 transfer_id=transfer.get("id"),
                 db=db,
             )
-
-        # 4. Errores de Pago[cite: 2]
         elif kind == "payment_intent.payment_failed":
             tip = db.scalar(select(Tip).where(Tip.stripe_payment_intent_id == obj["id"]))
             if tip:
                 tip.status = "failed"
                 db.commit()
-
-        # 5. Reembolsos[cite: 2]
         elif kind == "charge.refunded":
             tip = db.scalar(
                 select(Tip).where(Tip.stripe_payment_intent_id == obj.get("payment_intent"))
@@ -268,7 +179,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             if tip:
                 tip.status = "refunded"
                 db.commit()
-
     except ValueError as error:
         raise HTTPException(400, str(error))
 
