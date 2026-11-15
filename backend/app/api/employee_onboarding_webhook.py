@@ -18,11 +18,11 @@ router = APIRouter(tags=["stripe-connect-webhooks"])
 def send_employee_identity_email(employee: Employee) -> None:
     """Send the employee a Stripe-hosted link for outstanding identity requirements."""
     if not settings.resend_api_key:
-        logger.error("RESEND_API_KEY is missing; cannot email employee %s", employee.id)
-        return
-    if not employee.email or not employee.stripe_account_id:
-        logger.error("Employee %s is missing email or Stripe account ID", employee.id)
-        return
+        raise RuntimeError("RESEND_API_KEY no está configurada")
+    if not employee.email:
+        raise ValueError("El empleado no tiene un correo asignado")
+    if not employee.stripe_account_id:
+        raise ValueError("El empleado no tiene una cuenta Stripe asociada")
 
     stripe.api_key = settings.stripe_secret_key
     account_link = stripe.AccountLink.create(
@@ -55,9 +55,7 @@ def process_employee_account_update(account: dict, db: Session) -> None:
     if not account_id:
         return
 
-    employee = db.scalar(
-        select(Employee).where(Employee.stripe_account_id == account_id)
-    )
+    employee = db.scalar(select(Employee).where(Employee.stripe_account_id == account_id))
     if not employee:
         logger.warning("Stripe account.updated did not match an employee: %s", account_id)
         return
@@ -67,54 +65,55 @@ def process_employee_account_update(account: dict, db: Session) -> None:
     past_due = requirements.get("past_due") or []
     pending_verification = requirements.get("pending_verification") or []
     disabled_reason = requirements.get("disabled_reason")
-
     previous_status = employee.stripe_status
-    has_identity_work = bool(
-        currently_due or past_due or pending_verification or disabled_reason
-    )
+
+    needs_identity_action = bool(currently_due or past_due or disabled_reason)
+    is_verification_pending = bool(pending_verification)
     fully_verified = bool(
         account.get("details_submitted")
         and account.get("payouts_enabled")
-        and not has_identity_work
+        and not needs_identity_action
+        and not is_verification_pending
     )
 
     if fully_verified:
         employee.stripe_status = "active"
         employee.stripe_onboarding_completed = True
-    elif has_identity_work:
+        employee.active = True
+    elif needs_identity_action or is_verification_pending:
         employee.stripe_status = "identity_pending"
         employee.stripe_onboarding_completed = False
+        employee.active = False
     else:
-        # Do not mark the employee active merely because payouts_enabled is true;
-        # Stripe must also confirm details_submitted and no outstanding verification.
         employee.stripe_status = "pending"
         employee.stripe_onboarding_completed = False
+        employee.active = False
 
     db.commit()
     db.refresh(employee)
 
-    # Send the identity link only on the transition into identity_pending.
-    if employee.stripe_status == previous_status:
-        return
-
-    try:
-        if employee.stripe_status == "identity_pending":
+    # Retry email while requirements remain due; a previous delivery error should
+    # not permanently suppress the identity link on later account.updated events.
+    if employee.stripe_status == "identity_pending" and employee.email:
+        try:
             send_employee_identity_email(employee)
-        elif employee.stripe_status == "active" and employee.email and settings.resend_api_key:
-            resend.api_key = settings.resend_api_key
-            resend.Emails.send({
-                "from": settings.resend_from,
-                "to": [employee.email],
-                "subject": "Tu cuenta de Stripe está activa",
-                "html": (
-                    f"<p>Hola <strong>{html.escape(employee.name or '')}</strong>,</p>"
-                    "<p>La verificación de Stripe está completa. Ya puedes recibir propinas.</p>"
-                ),
-            })
-    except Exception:
-        # Email failures must be visible in logs but must not cause Stripe retries
-        # after the database state has already been committed.
-        logger.exception("Could not send onboarding email for employee %s", employee.id)
+        except Exception:
+            logger.exception("Could not send identity email for employee %s", employee.id)
+    elif employee.stripe_status == "active" and previous_status != "active" and employee.email:
+        try:
+            if settings.resend_api_key:
+                resend.api_key = settings.resend_api_key
+                resend.Emails.send({
+                    "from": settings.resend_from,
+                    "to": [employee.email],
+                    "subject": "Tu cuenta de Stripe está activa",
+                    "html": (
+                        f"<p>Hola <strong>{html.escape(employee.name or '')}</strong>,</p>"
+                        "<p>La verificación de Stripe está completa. Ya puedes recibir propinas.</p>"
+                    ),
+                })
+        except Exception:
+            logger.exception("Could not send activation email for employee %s", employee.id)
 
 
 @router.post("/webhooks/stripe-connect")
@@ -135,5 +134,4 @@ async def stripe_connect_webhook(request: Request, db: Session = Depends(get_db)
 
     if event["type"] == "account.updated":
         process_employee_account_update(event["data"]["object"], db)
-
     return {"received": True}
