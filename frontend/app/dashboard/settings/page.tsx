@@ -255,21 +255,6 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleSendIdentityEmail(employee: Employee) {
-    if (!business) return;
-
-    try {
-      await api(
-        `/stripe/send-identity-email?business_id=${business.id}&employee_email=${encodeURIComponent(employee.email || '')}`,
-        { method: 'POST' },
-        true
-      );
-      showMessage(`Correo de verificación de DNI reenviado con éxito a ${employee.name}.`);
-    } catch (caught) {
-      showMessage(caught instanceof Error ? caught.message : 'No se pudo enviar el correo de identidad.', true);
-    }
-  }
-
   function handleCopyLink() {
     if (!activeModalLink) return;
     void navigator.clipboard.writeText(activeModalLink.url);
@@ -409,29 +394,12 @@ export default function SettingsPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {/* ESTADO 1: COMPLETO Y ACTIVO */}
+                      {/* ESTADO DE ACTIVACIÓN SIMPLIFICADO (ONBOARDING INTERACTIVO COMPLETO) */}
                       {employee.stripe_status === 'active' || employee.stripe_onboarding_completed ? (
                         <span className="rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-400">
                           ✅ Activo y listo
                         </span>
-                      ) : employee.stripe_status === 'identity_pending' ? (
-                        /* ESTADO 2: PENDIENTE DE DNI */
-                        <div className="flex items-center gap-2">
-                          <span className="rounded-full border border-amber-500/30 bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-300">
-                            ⏳ Falta DNI
-                          </span>
-                          {employee.email && (
-                            <button
-                              type="button"
-                              onClick={() => void handleSendIdentityEmail(employee)}
-                              className="rounded-lg border border-orange-500/30 bg-orange-500/20 px-3 py-1 text-xs font-semibold text-orange-300 hover:bg-orange-500/30 transition-colors cursor-pointer"
-                            >
-                              ✉️ Reenviar DNI
-                            </button>
-                          )}
-                        </div>
                       ) : (
-                        /* ESTADO 3: PENDIENTE DE IBAN (INICIAL) */
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
@@ -440,17 +408,6 @@ export default function SettingsPage() {
                           >
                             <span>{t('Settings.pendingIban')}</span>
                           </button>
-
-                          {employee.email && (
-                            <button
-                              type="button"
-                              onClick={() => void handleSendIdentityEmail(employee)}
-                              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:bg-white/10 transition-colors cursor-pointer"
-                              title="Enviar correo directo para subir DNI"
-                            >
-                              ✉️ Enviar DNI
-                            </button>
-                          )}
                         </div>
                       )}
 
@@ -473,7 +430,7 @@ export default function SettingsPage() {
             <form className="mt-4 grid gap-2 sm:grid-cols-2" onSubmit={addEmployee}>
               <input className="field" name="name" required placeholder="Nombre del empleado" />
               <div className="flex gap-2">
-                <input className="field w-full" name="email" type="email" placeholder="Correo electrónico (para DNI)" />
+                <input className="field w-full" name="email" type="email" placeholder="Correo electrónico" />
                 <button className="btn btn-primary whitespace-nowrap">{t('Settings.addMember')}</button>
               </div>
             </form>
@@ -485,13 +442,13 @@ export default function SettingsPage() {
               <input className="field" name="name" required placeholder="Mesa 1 / Barra / Terraza" />
               <select className="field" name="type">
                 <option value="table">{t('Settings.tableLabel')}</option>
-                <option value="bar">{t('Settings.barLabel')}</option>
-                <option value="area">{t('Settings.zoneLabel')}</option>
+                <option value="bar">Barra</option>
+                <option value="area">Zona / Terraza</option>
               </select>
               <select className="field" name="mode">
                 <option value="employee">{t('Settings.modeClientChoice')}</option>
-                <option value="team">{t('Settings.modePool')}</option>
-                <option value="custom">{t('Settings.modeCustom')}</option>
+                <option value="team">Bote común (Pool)</option>
+                <option value="custom">Personalizado</option>
               </select>
               <select className="field" name="employee">
                 <option value="">{t('Settings.modeNoEmployee')}</option>
