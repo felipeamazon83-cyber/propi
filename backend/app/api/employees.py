@@ -11,7 +11,10 @@ from ..database import get_db
 from ..models import Employee
 from ..schemas.contracts import EmployeeCreate
 from .deps import owned_business
-from .employee_onboarding_webhook import process_employee_account_update
+from .employee_onboarding_webhook import (
+    process_employee_account_update,
+    send_employee_identity_email,
+)
 
 stripe.api_key = settings.stripe_secret_key
 
@@ -142,6 +145,13 @@ def get_employee_onboarding_link(
             type="account_onboarding",
             collection_options={"fields": "currently_due"},
         )
+        # Reenvía también el correo vía Gmail SMTP al solicitar un nuevo enlace
+        if employee.email:
+            try:
+                send_employee_identity_email(employee)
+            except Exception:
+                pass
+
         return {"onboarding_url": account_link.url}
     except stripe.error.StripeError as exc:
         raise HTTPException(
