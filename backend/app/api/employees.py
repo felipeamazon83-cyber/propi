@@ -89,7 +89,10 @@ def create_employee(
             refresh_url=f"{settings.app_url}/dashboard/settings?onboarding=refresh",
             return_url=f"{settings.app_url}/dashboard/settings?onboarding=success",
             type="account_onboarding",
-            collection_options={"fields": "currently_due"},
+            collection_options={
+                "fields": "eventually_due",
+                "future_requirements": "include",
+            },
         )
     except stripe.error.StripeError as exc:
         raise HTTPException(
@@ -143,20 +146,41 @@ def get_employee_onboarding_link(
             refresh_url=f"{settings.app_url}/dashboard/settings?onboarding=refresh",
             return_url=f"{settings.app_url}/dashboard/settings?onboarding=success",
             type="account_onboarding",
-            collection_options={"fields": "currently_due"},
+            collection_options={
+                "fields": "eventually_due",
+                "future_requirements": "include",
+            },
         )
-        # Reenvía también el correo vía Gmail SMTP al solicitar un nuevo enlace
-        if employee.email:
-            try:
-                send_employee_identity_email(employee)
-            except Exception:
-                pass
-
         return {"onboarding_url": account_link.url}
     except stripe.error.StripeError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Error generando enlace de Stripe: {exc}",
+        )
+
+
+@router.post("/{employee_id}/resend-onboarding-email")
+def resend_employee_onboarding_email(
+    business_id: str,
+    employee_id: str,
+    user: UUID = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    """Reenvía el correo con un enlace nuevo para completar la identidad en Stripe."""
+    business = owned_business(business_id, user, db)
+    employee = find_employee(business.id, employee_id, db)
+    if not employee:
+        raise HTTPException(status_code=404, detail="Empleado no encontrado")
+    if not employee.email:
+        raise HTTPException(status_code=400, detail="El empleado no tiene un email registrado")
+
+    try:
+        url = send_employee_identity_email(employee)
+        return {"sent": True, "email": employee.email, "onboarding_url": url}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"No se pudo enviar el correo: {exc}",
         )
 
 
@@ -167,7 +191,7 @@ def sync_employee_stripe_status(
     user: UUID = Depends(current_user),
     db: Session = Depends(get_db),
 ):
-    """Refresh Stripe's account state for existing employees and apply its requirements."""
+    """Sincroniza el estado real de Stripe y dispara el correo si falta documentación."""
     business = owned_business(business_id, user, db)
     employee = find_employee(business.id, employee_id, db)
     if not employee:
