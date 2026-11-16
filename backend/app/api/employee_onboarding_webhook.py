@@ -35,7 +35,7 @@ def send_employee_identity_email(employee: Employee) -> None:
 
     resend.api_key = settings.resend_api_key
     name = html.escape(employee.name or "")
-    resend.Emails.send({
+    result = resend.Emails.send({
         "from": settings.resend_from,
         "to": [employee.email],
         "subject": "Completa la verificación de tu cuenta de Stripe",
@@ -47,6 +47,7 @@ def send_employee_identity_email(employee: Employee) -> None:
             "Completar verificación de Stripe</a></p>"
         ),
     })
+    logger.info("Identity email requested for employee %s; Resend response: %s", employee.id, result)
 
 
 def process_employee_account_update(account: dict, db: Session) -> None:
@@ -91,10 +92,22 @@ def process_employee_account_update(account: dict, db: Session) -> None:
 
     db.commit()
     db.refresh(employee)
+    logger.info(
+        "Synced employee Stripe status: employee_id=%s account_id=%s previous=%s current=%s "
+        "currently_due=%s past_due=%s pending_verification=%s disabled_reason=%s",
+        employee.id,
+        account_id,
+        previous_status,
+        employee.stripe_status,
+        currently_due,
+        past_due,
+        pending_verification,
+        disabled_reason,
+    )
 
-    # Retry email while requirements remain due; a previous delivery error should
-    # not permanently suppress the identity link on later account.updated events.
-    if employee.stripe_status == "identity_pending" and employee.email:
+    # Avoid sending duplicate email on every settings refresh. If a webhook delivery
+    # fails to send, the authenticated resend endpoint can send a fresh link.
+    if employee.stripe_status == "identity_pending" and previous_status != "identity_pending" and employee.email:
         try:
             send_employee_identity_email(employee)
         except Exception:
@@ -133,5 +146,6 @@ async def stripe_connect_webhook(request: Request, db: Session = Depends(get_db)
         raise HTTPException(400, "Firma de webhook inválida")
 
     if event["type"] == "account.updated":
+        logger.info("Received Stripe Connect account.updated event %s", event.get("id"))
         process_employee_account_update(event["data"]["object"], db)
     return {"received": True}

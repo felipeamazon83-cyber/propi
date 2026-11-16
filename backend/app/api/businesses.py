@@ -1,16 +1,21 @@
+import logging
 from uuid import UUID
 
+import stripe
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import cast, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert, UUID as PG_UUID
 from sqlalchemy.orm import Session
 
 from ..auth import current_user
+from ..config import settings
 from ..database import get_db
 from ..models import Business, Employee, Location, TipSetting
 from ..schemas.contracts import BusinessCreate, BusinessUpdate
 from .deps import owned_business
+from .employee_onboarding_webhook import process_employee_account_update
 
+logger = logging.getLogger(__name__)
 router = APIRouter(
     prefix="/businesses",
     tags=["businesses"],
@@ -87,6 +92,22 @@ def get_business(
     }
 
 
+def refresh_employee_stripe_status(employee: Employee, db: Session) -> None:
+    """Reconcile DB state with Stripe when the settings page is opened."""
+    if not settings.stripe_secret_key or not employee.stripe_account_id:
+        return
+    try:
+        stripe.api_key = settings.stripe_secret_key
+        account = stripe.Account.retrieve(employee.stripe_account_id)
+        process_employee_account_update(account, db)
+    except stripe.error.StripeError:
+        logger.exception(
+            "Could not refresh Stripe status for employee %s (account %s)",
+            employee.id,
+            employee.stripe_account_id,
+        )
+
+
 @router.get("/{business_id}/settings-summary")
 def get_settings_summary(
     business_id: str,
@@ -115,6 +136,12 @@ def get_settings_summary(
         .where(cast(Employee.business_id, PG_UUID) == b_uuid)
         .order_by(Employee.created_at if hasattr(Employee, "created_at") else Employee.name)
     ).all()
+
+    # Stripe webhooks are the primary update mechanism. This read-time reconciliation
+    # also repairs employees left with stale statuses when a webhook was missed.
+    for employee in employees:
+        refresh_employee_stripe_status(employee, db)
+
     employees_data = [
         {
             "id": str(employee.id),
@@ -122,8 +149,6 @@ def get_settings_summary(
             "email": employee.email,
             "active": employee.active,
             "stripe_account_id": employee.stripe_account_id,
-            # Keep the legacy boolean aligned with the canonical status so an
-            # outdated DB flag cannot make the UI show "Activo y listo".
             "stripe_onboarding_completed": employee.stripe_status == "active",
             "stripe_status": employee.stripe_status,
             "onboarding_url": getattr(employee, "onboarding_url", None),
