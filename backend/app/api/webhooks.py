@@ -1,19 +1,16 @@
+import logging
+
 import stripe
-import resend
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..config import settings
 from ..database import get_db
-from ..models import Employee, Tip
-from .employee_onboarding_webhook import process_employee_account_update
+from ..models import Tip
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["webhooks"])
-
-
-def cents(metadata: dict, key: str) -> float:
-    return int(metadata.get(key, "0")) / 100
 
 
 def get_stripe_fee_cents(intent: stripe.PaymentIntent) -> int:
@@ -105,22 +102,22 @@ def record_paid_tip(
 
 @router.post("/webhooks/stripe")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
+    """Handle platform payment events only; Connect account updates use /stripe-connect."""
     stripe.api_key = settings.stripe_secret_key
 
+    # Keep payment webhook secrets separate from the Connect webhook secret. Stripe
+    # signs each destination independently, and Connect status is handled only by
+    # the dedicated /webhooks/stripe-connect route.
     webhook_secrets = []
     secret_main = getattr(settings, "stripe_webhook_secret_main", None)
-    secret_connect = getattr(settings, "stripe_webhook_secret_connect", None)
     secret_default = getattr(settings, "stripe_webhook_secret", None)
-
     if secret_main:
         webhook_secrets.append(secret_main)
-    if secret_connect:
-        webhook_secrets.append(secret_connect)
     if secret_default and secret_default not in webhook_secrets:
         webhook_secrets.append(secret_default)
 
     if not webhook_secrets:
-        raise HTTPException(503, "Webhook no configurado")
+        raise HTTPException(503, "Webhook de pagos no configurado")
 
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
@@ -136,12 +133,16 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(400, "Firma de webhook inválida")
 
     obj, kind = event["data"]["object"], event["type"]
+    logger.info("Received Stripe platform event %s (type=%s)", event.get("id"), kind)
 
     try:
+        # Do not process account.updated here. Connect accounts must be delivered to
+        # POST /api/webhooks/stripe-connect, signed with STRIPE_WEBHOOK_SECRET_CONNECT.
         if kind == "account.updated":
-            # Keep the legacy webhook compatible, but use the same strict status
-            # transition and employee-specific identity email as the Connect hook.
-            process_employee_account_update(obj, db)
+            logger.warning(
+                "Ignoring account.updated at platform webhook; configure Stripe Connect "
+                "destination to /api/webhooks/stripe-connect"
+            )
         elif kind == "checkout.session.completed" and obj.get("payment_status") == "paid":
             payment_intent_id = obj.get("payment_intent")
             if payment_intent_id:
