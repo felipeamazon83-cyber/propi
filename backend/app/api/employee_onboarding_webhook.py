@@ -1,7 +1,10 @@
 import html
 import logging
+import os
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
-import resend
 import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
@@ -15,10 +18,29 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["stripe-connect-webhooks"])
 
 
+def send_gmail_smtp(to_email: str, subject: str, html_body: str) -> None:
+    """Envía correos reales desde soportepropi@gmail.com usando SMTP de Google."""
+    smtp_email = os.getenv("SMTP_EMAIL")
+    smtp_password = os.getenv("SMTP_PASSWORD")
+
+    if not smtp_email or not smtp_password:
+        raise RuntimeError("SMTP_EMAIL o SMTP_PASSWORD no están configurados")
+    if not to_email:
+        raise ValueError("El empleado no tiene un correo asignado")
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"Propi <{smtp_email}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(html_body, "html"))
+
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(smtp_email, smtp_password)
+        server.sendmail(smtp_email, to_email, msg.as_string())
+
+
 def send_employee_identity_email(employee: Employee) -> None:
     """Send the employee a Stripe-hosted link for outstanding identity requirements."""
-    if not settings.resend_api_key:
-        raise RuntimeError("RESEND_API_KEY no está configurada")
     if not employee.email:
         raise ValueError("El empleado no tiene un correo asignado")
     if not employee.stripe_account_id:
@@ -33,21 +55,20 @@ def send_employee_identity_email(employee: Employee) -> None:
         collection_options={"fields": "currently_due"},
     )
 
-    resend.api_key = settings.resend_api_key
     name = html.escape(employee.name or "")
-    result = resend.Emails.send({
-        "from": settings.resend_from,
-        "to": [employee.email],
-        "subject": "Completa la verificación de tu cuenta de Stripe",
-        "html": (
-            f"<p>Hola <strong>{name}</strong>,</p>"
-            "<p>Stripe necesita verificar tu identidad para habilitar los pagos. "
-            "Completa el proceso de forma segura desde este enlace:</p>"
-            f'<p><a href="{html.escape(account_link.url, quote=True)}">'
-            "Completar verificación de Stripe</a></p>"
-        ),
-    })
-    logger.info("Identity email requested for employee %s; Resend response: %s", employee.id, result)
+    html_content = (
+        f"<p>Hola <strong>{name}</strong>,</p>"
+        "<p>Stripe necesita verificar tu identidad para habilitar los pagos. "
+        "Completa el proceso de forma segura desde este enlace:</p>"
+        f'<p><a href="{html.escape(account_link.url, quote=True)}">'
+        "Completar verificación de Stripe</a></p>"
+    )
+    send_gmail_smtp(
+        to_email=employee.email,
+        subject="Completa la verificación de tu cuenta de Stripe",
+        html_body=html_content,
+    )
+    logger.info("Identity email sent via Gmail SMTP for employee %s", employee.id)
 
 
 def process_employee_account_update(account: dict, db: Session) -> None:
@@ -105,8 +126,7 @@ def process_employee_account_update(account: dict, db: Session) -> None:
         disabled_reason,
     )
 
-    # Avoid sending duplicate email on every settings refresh. If a webhook delivery
-    # fails to send, the authenticated resend endpoint can send a fresh link.
+    # Enviar correo automático al pasar a identity_pending o active
     if employee.stripe_status == "identity_pending" and previous_status != "identity_pending" and employee.email:
         try:
             send_employee_identity_email(employee)
@@ -114,17 +134,16 @@ def process_employee_account_update(account: dict, db: Session) -> None:
             logger.exception("Could not send identity email for employee %s", employee.id)
     elif employee.stripe_status == "active" and previous_status != "active" and employee.email:
         try:
-            if settings.resend_api_key:
-                resend.api_key = settings.resend_api_key
-                resend.Emails.send({
-                    "from": settings.resend_from,
-                    "to": [employee.email],
-                    "subject": "Tu cuenta de Stripe está activa",
-                    "html": (
-                        f"<p>Hola <strong>{html.escape(employee.name or '')}</strong>,</p>"
-                        "<p>La verificación de Stripe está completa. Ya puedes recibir propinas.</p>"
-                    ),
-                })
+            html_content = (
+                f"<p>Hola <strong>{html.escape(employee.name or '')}</strong>,</p>"
+                "<p>La verificación de Stripe está completa. Ya puedes recibir propinas.</p>"
+            )
+            send_gmail_smtp(
+                to_email=employee.email,
+                subject="Tu cuenta de Stripe está activa",
+                html_body=html_content,
+            )
+            logger.info("Activation email sent via Gmail SMTP for employee %s", employee.id)
         except Exception:
             logger.exception("Could not send activation email for employee %s", employee.id)
 
