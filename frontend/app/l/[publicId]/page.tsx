@@ -77,7 +77,7 @@ export default function TipPage({ params }: { params: { publicId: string } }) {
           <button className="text-sm underline" onClick={() => setEmployee(undefined)}>
             ← Cambiar persona
           </button>
-          <h2 className="mt-4 text-2xl font-bold">Gracias por tu visita ❤️</h2>
+         <h2 className="mt-4 text-2xl font-bold">Gracias por tu visita <span className="text-orange-500">❤️</span></h2>
           <p className="mt-1 text-gray-600">¿Quieres dejar una propina?</p>
 
           <div className="mt-6 grid grid-cols-2 gap-3">
