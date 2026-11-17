@@ -397,7 +397,7 @@ export default function SettingsPage() {
                       {/* ESTADO DE ACTIVACIÓN SIMPLIFICADO (ONBOARDING INTERACTIVO COMPLETO) */}
                       {employee.stripe_status === 'active' || employee.stripe_onboarding_completed ? (
                         <span className="rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-400">
-                          ✅ Activo y listo
+                          ✅ Activo
                         </span>
                       ) : (
                         <div className="flex items-center gap-2">
