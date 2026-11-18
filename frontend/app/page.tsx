@@ -205,11 +205,6 @@ export default function Home() {
           </div>
         </section>
 
-        {/* FOOTER TEXTO DE MARCA */}
-        <footer className="border-t border-white/10 py-8 text-sm text-slate-500">
-          {t('Landing.footerBrand') || 'Propi · Propinas digitales para equipos que dejan huella.'}
-        </footer>
-
         {/* PRECIOS */}
         <section id="precios" className="my-20 scroll-mt-8">
           <div className="mb-8 max-w-2xl">
@@ -343,3 +338,8 @@ export default function Home() {
     </main>
   );
 }
+
+        {/* FOOTER TEXTO DE MARCA */}
+        <footer className="border-t border-white/10 py-8 text-sm text-slate-500">
+          {t('Landing.footerBrand') || 'Propi · Propinas digitales para equipos que dejan huella.'}
+        </footer>
