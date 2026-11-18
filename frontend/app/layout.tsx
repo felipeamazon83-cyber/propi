@@ -8,7 +8,16 @@ const plusJakarta = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-ja
 
 export const metadata: Metadata = {
   title: 'Propi — Propinas digitales con QR y NFC',
-  description: 'Propi ayuda a restaurantes, hoteles y equipos de servicio a recibir propinas digitales de forma sencilla y segura.'
+  description: 'Propi ayuda a restaurantes, hoteles y equipos de servicio a recibir propinas digitales de forma sencilla y segura.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon-32.png', type: 'image/png', sizes: '32x32' },
+    ],
+    apple: [
+      { url: '/propi-favicon-512.png', sizes: '512x512', type: 'image/png' },
+    ],
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
