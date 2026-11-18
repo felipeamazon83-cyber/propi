@@ -220,7 +220,7 @@ export default function Home() {
               {t('Landing.pricingTitle') || 'Todo lo que necesitas para recibir más gracias.'}
             </h2>
             <p className="mt-3 leading-7 text-slate-400">
-              {t('Landing.pricingSubtitle') || 'Sin cuotas ocultas. Empieza con una comisión sencilla y configurable para que elijas quién la asume.'}
+              {t('Landing.pricingSubtitle') || 'Sin cuotas ocultas. 0 € de comisión por parte de Propi: paga únicamente el coste de procesamiento de Stripe, configurable para que elijas quién lo asume.'}
             </p>
           </div>
 
@@ -229,18 +229,18 @@ export default function Home() {
             <div className="relative grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-center">
               <div>
                 <p className="text-sm font-bold uppercase tracking-widest text-orange-300">
-                  {t('Landing.feeTitle') || 'Comisión por propina recibida'}
+                  {t('Landing.feeTitle') || 'Comisión de Propi por propina'}
                 </p>
                 <div className="pricing-amount-row mt-3 flex items-end gap-2">
                   <span className="pricing-amount text-5xl font-black text-white">
-                    {t('Landing.feeAmount') || '0,10 €'}
+                    {t('Landing.feeAmount') || '0,00 €'}
                   </span>
                   <span className="pricing-processing mb-1 text-sm text-slate-400">
-                    {t('Landing.feeExtra') || '+ comisión de procesamiento'}
+                    {t('Landing.feeExtra') || '+ comisión de procesamiento Stripe'}
                   </span>
                 </div>
                 <p className="mt-3 max-w-sm text-sm leading-6 text-slate-400">
-                  {t('Landing.feeConfigurable') || 'Configurable: la asume el cliente o el negocio.'}
+                  {t('Landing.feeConfigurable') || 'Configurable: la pasarela la asume el cliente o el negocio.'}
                 </p>
                 <Link className="btn btn-primary mt-6 w-full sm:w-auto" href="/register">
                   {t('Landing.createAccount') || 'Crear mi cuenta'} <span>→</span>
