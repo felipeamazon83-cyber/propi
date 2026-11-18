@@ -35,7 +35,7 @@
     "pricingTitle": "Precios claros",
     "pricingSubtitle": "Sin cuotas ocultas. 0 € de comisión por parte de Propi: paga únicamente el coste de procesamiento de Stripe, configurable para que elijas quién lo asume.",
     "feeTitle": "Comisión por propina recibida",
-    "feeAmount": "0,00 €",
+    "feeAmount": "0 €",
     "feeExtra": "+ comisión de procesamiento",
     "feeConfigurable": "Configurable: la asume el cliente o el negocio.",
     "feature1": "Panel de control en vivo",
