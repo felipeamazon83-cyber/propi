@@ -334,12 +334,13 @@ export default function Home() {
             </p>
           </form>
         </section>
-      </div>
-    </main>
-  );
-}
 
         {/* FOOTER TEXTO DE MARCA */}
         <footer className="border-t border-white/10 py-8 text-sm text-slate-500">
           {t('Landing.footerBrand') || 'Propi · Propinas digitales para equipos que dejan huella.'}
         </footer>
+      </div>
+    </main>
+  );
+}
+
