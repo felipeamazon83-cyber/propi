@@ -206,13 +206,7 @@ def execute_employee_payout(
     currency = payload.currency.lower() if payload.currency else "eur"
 
     try:
-        transfer = stripe.Transfer.create(
-            amount=amount_in_cents,
-            currency=currency,
-            destination=stripe_account,
-            description=f"Pago de propinas acumuladas - {employee.name}",
-        )
-
+        # 1. Buscamos las propinas pendientes para este empleado
         unpaid_tips = db.scalars(
             select(Tip).where(
                 cast(Tip.business_id, PG_UUID) == b_uuid,
@@ -221,6 +215,37 @@ def execute_employee_payout(
                 Tip.payout_status == "pending",
             )
         ).all()
+
+        if not unpaid_tips:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No hay propinas pendientes para transferir.",
+            )
+
+        # 2. Obtenemos el charge ID del payment intent para usar source_transaction
+        source_transaction = None
+        for tip in unpaid_tips:
+            if tip.stripe_payment_intent_id:
+                try:
+                    pi = stripe.PaymentIntent.retrieve(tip.stripe_payment_intent_id)
+                    if pi.latest_charge:
+                        source_transaction = pi.latest_charge
+                        break
+                except Exception:
+                    continue
+
+        transfer_data = {
+            "amount": amount_in_cents,
+            "currency": currency,
+            "destination": stripe_account,
+            "description": f"Pago de propinas acumuladas - {employee.name}",
+        }
+
+        # 3. Si tenemos el cargo de respaldo, lo incluimos para transferencia inmediata
+        if source_transaction:
+            transfer_data["source_transaction"] = source_transaction
+
+        transfer = stripe.Transfer.create(**transfer_data)
 
         now_utc = datetime.utcnow()
         for tip in unpaid_tips:
