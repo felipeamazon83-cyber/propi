@@ -106,16 +106,15 @@ def checkout(payload: CheckoutCreate, db: Session = Depends(get_db)):
         "customer_total_cents": str(customer_total_cents),
     }
 
-    # 12. Creación de la sesión de Checkout
+    # 12. Creación de la sesión de Checkout (Procesado directo en la Plataforma Principal)
     session = stripe.checkout.Session.create(
         mode="payment",
         line_items=items,
         metadata=metadata,
         payment_intent_data={
             "metadata": metadata,
-            "transfer_data": {
-                "destination": b.stripe_account_id,
-            },
+            # Se ha eliminado 'transfer_data' para que el fondo ingrese
+            # en la plataforma y pueda respaldar la transferencia inmediata.
         },
         success_url=f"{settings.app_url}/thank-you?session_id={{CHECKOUT_SESSION_ID}}",
         cancel_url=f"{settings.app_url}/l/{payload.public_token}",
