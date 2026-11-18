@@ -59,7 +59,8 @@ def record_paid_tip(
         existing.status = "paid"
         existing.stripe_payment_intent_id = payment_intent_id or existing.stripe_payment_intent_id
         existing.stripe_checkout_session_id = checkout_session_id or existing.stripe_checkout_session_id
-        existing.stripe_transfer_id = transfer_id or existing.stripe_transfer_id
+        if transfer_id:
+            existing.stripe_transfer_id = transfer_id
         db.commit()
         return
 
@@ -105,9 +106,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     """Handle platform payment events only; Connect account updates use /stripe-connect."""
     stripe.api_key = settings.stripe_secret_key
 
-    # Keep payment webhook secrets separate from the Connect webhook secret. Stripe
-    # signs each destination independently, and Connect status is handled only by
-    # the dedicated /webhooks/stripe-connect route.
     webhook_secrets = []
     secret_main = getattr(settings, "stripe_webhook_secret_main", None)
     secret_default = getattr(settings, "stripe_webhook_secret", None)
@@ -136,8 +134,6 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
     logger.info("Received Stripe platform event %s (type=%s)", event.get("id"), kind)
 
     try:
-        # Do not process account.updated here. Connect accounts must be delivered to
-        # POST /api/webhooks/stripe-connect, signed with STRIPE_WEBHOOK_SECRET_CONNECT.
         if kind == "account.updated":
             logger.warning(
                 "Ignoring account.updated at platform webhook; configure Stripe Connect "
@@ -153,7 +149,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 record_paid_tip(
                     intent=intent,
                     checkout_session_id=obj["id"],
-                    transfer_id=None,
+                    transfer_id=None,  # La transferencia se realiza posteriormente desde el dashboard del negocio
                     db=db,
                 )
         elif kind == "payment_intent.succeeded":
@@ -161,11 +157,10 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 obj["id"],
                 expand=["latest_charge.balance_transaction"],
             )
-            transfer = obj.get("transfer_data") or {}
             record_paid_tip(
                 intent=intent,
                 checkout_session_id=None,
-                transfer_id=transfer.get("id"),
+                transfer_id=None,  # Gestionado bajo demanda mediante source_transaction
                 db=db,
             )
         elif kind == "payment_intent.payment_failed":
