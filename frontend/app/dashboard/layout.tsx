@@ -97,14 +97,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-      {/* ÁREA PRINCIPAL */}
+        {/* ÁREA PRINCIPAL */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Header superior limpio sin el selector de idioma */}
-        <header className="flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#0b2344]/50 px-6 backdrop-blur">
-          <div className="text-xs font-medium text-slate-400">
-            Propi Business Panel
-          </div>
-        </header>
+        <header className="flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#0b2344]/50 px-6 backdrop-blur" />
 
         {/* Contenido de cada vista */}
         <main className="min-w-0 flex-1 p-6">{children}</main>
