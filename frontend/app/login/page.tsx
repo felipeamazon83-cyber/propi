@@ -19,12 +19,15 @@ export default function Login() {
     location.href = '/dashboard';
   }
 
-  async function handleGoogleLogin() {
+async function handleGoogleLogin() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: 'https://propi-kohl.vercel.app/dashboard',
+          queryParams: {
+            prompt: 'select_account',
+          },
         },
       });
       if (error) throw error;
