@@ -262,16 +262,13 @@ export default function Home() {
           id="contacto"
           className="my-20 grid gap-8 rounded-3xl border border-white/10 bg-white/[.04] p-6 sm:p-10 md:grid-cols-[.8fr_1.2fr] md:items-center"
         >
-          <div>
+         <div>
             <p className="text-sm font-bold uppercase tracking-widest text-orange-300">
               {t('Landing.contactTitle') || 'Hablemos'}
             </p>
-            <h2 className="mt-3 text-3xl font-black sm:text-4xl">
-              {t('Landing.contactSubtitle') || '¿Tienes alguna pregunta?'}
+            <h2 className="mt-3 text-2xl font-black leading-snug sm:text-3xl">
+              {t('Landing.contactSubtitle') || '¿Tienes alguna pregunta? Escríbenos y te responderemos directamente. También puedes contactarnos por WhatsApp.'}
             </h2>
-            <p className="mt-4 leading-7 text-slate-300">
-              {t('Landing.contactText') || 'Escríbenos y te responderemos directamente. También puedes contactarnos por WhatsApp.'}
-            </p>
             <a
               className="btn btn-primary mt-6 w-full sm:w-auto"
               href="https://wa.me/34613312550?text=Hola%20Propi%2C%20quiero%20más%20información"
