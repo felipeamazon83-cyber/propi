@@ -48,9 +48,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link href="/" className="brand-logo" aria-label="Propi">
                 <img src="/propi-logo.png" alt="Propi" className="h-8 w-auto object-contain" />
               </Link>
-              <span className="rounded-full bg-orange-400/15 px-2 py-1 text-xs font-bold text-orange-300">
-                Business
-              </span>
             </div>
           </div>
 
