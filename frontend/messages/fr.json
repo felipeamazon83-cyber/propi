@@ -195,7 +195,7 @@
     "feeTitle": "Qui prend en charge les coûts du service ?",
     "feeSubtitle": "Définissez si les frais de gestion et de traitement sont couverts par l'entreprise ou ajoutés au total payé par le client.",
     "feeMerchant": "Le Restaurant (Déduit du total collecté)",
-    "feeCustomer": "Le Client (Un supplément de 0,10 € + frais de traitement est ajouté lors du paiement)",
+    "feeCustomer": "Le client (les frais de traitement Stripe sont ajoutés au paiement)"
     "saveData": "Enregistrer les données",
     "section2Title": "2. Équipe et compte d'encaissement",
     "stripeNotice": "Stripe collecte les coordonnées bancaires en toute sécurité ; Propi ne les stocke jamais.",
