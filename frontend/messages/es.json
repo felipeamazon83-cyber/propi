@@ -146,7 +146,7 @@
     "currency": "Moneda",
     "feeTitle": "Costes del servicio",
     "feeSubtitle": "Define quién asume las comisiones de procesamiento de las propinas.",
-    "feeCustomer": "El cliente asume el coste (se añade un pequeño recargo al pagar)",
+    "feeCustomer": "El cliente (se añade la comisión de procesamiento de Stripe al pagar)",
     "feeMerchant": "El restaurante asume el coste (se descuenta de la propina)",
     "section2Title": "2. Equipo y cuenta de cobro",
     "stripeNotice": "Conecta tu cuenta de Stripe para procesar los cobros y transferencias automáticamente.",
