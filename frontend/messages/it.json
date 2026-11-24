@@ -227,5 +227,22 @@
     "copyNfcUrl": "Copia URL NFC",
     "tableCard": "Scheda Tavolo 🎨",
     "delete": "Elimina"
+  },
+  "CustomerPay": {
+    "leaveTipHere": "LASCIA QUI LA TUA MANCIA 🧡",
+    "whoAttendedYou": "Chi ti ha servito?",
+    "changePerson": "← Cambia persona",
+    "thanksForVisit": "Grazie per la visita 🧡",
+    "wouldYouLikeTip": "Vuoi lasciare una mancia?",
+    "customAmountPlaceholder": "Altro importo (€)",
+    "payButton": "Paga",
+    "payWithApplePayOrCard": "Lascia una mancia con Apple Pay / Carta",
+    "processing": "Elaborazione del pagamento...",
+    "thankYouTitle": "Grazie mille!",
+    "thankYouSub": "La tua mancia è stata inviata con successo.",
+    "backToHome": "Torna alla home",
+    "serviceFeeNotice": "Include i costi di gestione del servizio.",
+    "tableLabel": "Tavolo",
+    "stripeItemTitle": "Mancia per {name}"
   }
 }
