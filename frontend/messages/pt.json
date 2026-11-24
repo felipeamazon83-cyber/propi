@@ -209,5 +209,22 @@
     "copyNfcUrl": "Copiar URL NFC",
     "tableCard": "Cartão de Mesa 🎨",
     "delete": "Eliminar"
+  },
+  "CustomerPay": {
+    "leaveTipHere": "DEIXE AQUI A SUA GORJETA 🧡",
+    "whoAttendedYou": "Quem o atendeu?",
+    "changePerson": "← Alterar pessoa",
+    "thanksForVisit": "Obrigado pela sua visita 🧡",
+    "wouldYouLikeTip": "Gostaria de deixar uma gorjeta?",
+    "customAmountPlaceholder": "Outro valor (€)",
+    "payButton": "Pagar",
+    "payWithApplePayOrCard": "Deixar gorjeta com Apple Pay / Cartão",
+    "processing": "A processar pagamento...",
+    "thankYouTitle": "Muito obrigado!",
+    "thankYouSub": "A sua gorjeta foi enviada com sucesso.",
+    "backToHome": "Voltar ao início",
+    "serviceFeeNotice": "Inclui taxas de gestão do serviço.",
+    "tableLabel": "Mesa",
+    "stripeItemTitle": "Gorjeta para {name}"
   }
 }
