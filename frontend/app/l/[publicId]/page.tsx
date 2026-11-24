@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../../../lib/api';
 import de from '../../../messages/de.json';
 import en from '../../../messages/en.json';
@@ -28,8 +28,16 @@ const messages: Record<string, any> = {
   pt,
 };
 
-const LANGS = ['es', 'en', 'fr', 'de', 'it', 'pt'] as const;
-type Lang = (typeof LANGS)[number];
+const LANG_OPTIONS = [
+  { code: 'es', badge: 'ES', label: 'Español' },
+  { code: 'en', badge: 'GB', label: 'English' },
+  { code: 'fr', badge: 'FR', label: 'Français' },
+  { code: 'de', badge: 'DE', label: 'Deutsch' },
+  { code: 'it', badge: 'IT', label: 'Italiano' },
+  { code: 'pt', badge: 'PT', label: 'Português' },
+] as const;
+
+type Lang = (typeof LANG_OPTIONS)[number]['code'];
 
 const FALLBACK_PAY_LABEL: Record<Lang, string> = {
   es: 'Pagar',
@@ -65,16 +73,30 @@ export default function TipPage({ params }: { params: { publicId: string } }) {
   const [custom, setCustom] = useState('');
   const [error, setError] = useState('');
   const [lang, setLang] = useState<Lang>('es');
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const currentPack = messages[lang] ?? messages.es;
   const t = currentPack?.CustomerPay ?? {};
   const selectedEmployee = data?.employees.find((e) => e.id === employee);
+  const activeOption = LANG_OPTIONS.find((item) => item.code === lang) ?? LANG_OPTIONS[0];
 
   useEffect(() => {
     api<Public>(`/public/locations/${params.publicId}`)
       .then(setData)
       .catch((e) => setError(e.message));
   }, [params.publicId]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   async function checkout() {
     if (!employee || !amount) return;
@@ -107,25 +129,64 @@ export default function TipPage({ params }: { params: { publicId: string } }) {
 
   return (
     <main className="mx-auto min-h-screen max-w-md px-5 py-8">
-      {/* Selector de idioma: ES, EN, FR, DE, IT, PT */}
-      <div className="flex flex-wrap justify-center gap-1.5" role="group" aria-label="Language">
-        {LANGS.map((code) => {
-          const isSelected = lang === code;
-          return (
-            <button
-              key={code}
-              type="button"
-              onClick={() => setLang(code)}
-              className={`rounded-full px-3 py-1 text-xs font-bold uppercase transition ${
-                isSelected
-                  ? 'bg-orange-500 text-white'
-                  : 'bg-black/10 text-current opacity-75 hover:opacity-100'
-              }`}
-            >
-              {code}
-            </button>
-          );
-        })}
+      {/* Selector desplegable estilo cápsula */}
+      <div className="relative flex justify-center" ref={dropdownRef}>
+        <button
+          type="button"
+          onClick={() => setMenuOpen((prev) => !prev)}
+          aria-expanded={menuOpen}
+          aria-haspopup="listbox"
+          className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-[#0d1b30] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:border-white/25"
+        >
+          <span className="text-[11px] font-extrabold tracking-wide text-slate-300">
+            {activeOption.badge}
+          </span>
+          <span>{activeOption.label}</span>
+          <span
+            className={`ml-1 text-[10px] text-slate-400 transition-transform ${
+              menuOpen ? 'rotate-180' : ''
+            }`}
+          >
+            ▼
+          </span>
+        </button>
+
+        {menuOpen && (
+          <ul
+            role="listbox"
+            className="absolute top-12 z-20 w-48 overflow-hidden rounded-2xl border border-white/10 bg-[#0d1b30] py-1 text-sm text-white shadow-xl"
+          >
+            {LANG_OPTIONS.map((item) => {
+              const selected = item.code === lang;
+              return (
+                <li key={item.code}>
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    onClick={() => {
+                      setLang(item.code);
+                      setMenuOpen(false);
+                    }}
+                    className={`flex w-full items-center justify-between px-4 py-2.5 text-left transition ${
+                      selected
+                        ? 'bg-orange-500/20 font-semibold text-orange-300'
+                        : 'text-slate-200 hover:bg-white/5'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <span className="text-[11px] font-extrabold text-slate-400">
+                        {item.badge}
+                      </span>
+                      <span>{item.label}</span>
+                    </span>
+                    {selected && <span className="text-xs text-orange-400">✓</span>}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
       <p className="mt-5 text-center text-sm text-gray-500">{data.location_name}</p>
