@@ -195,7 +195,7 @@
     "feeTitle": "Who covers service costs?",
     "feeSubtitle": "Define whether management and processing fees are covered by the business or added to the total paid by the customer.",
     "feeMerchant": "The Restaurant (Deducted from the total collected)",
-    "feeCustomer": "The Customer (An extra €0.10 charge + processing fees are added at checkout)",
+    "feeCustomer": "The Customer (Stripe processing fee is added at checkout)",
     "saveData": "Save data",
     "section2Title": "2. Team & Payout Account",
     "stripeNotice": "Stripe securely collects bank accounts; Propi never stores them.",
