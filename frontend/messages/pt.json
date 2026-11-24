@@ -177,7 +177,7 @@
     "feeTitle": "Quem assume os custos do serviço?",
     "feeSubtitle": "Defina se a taxa de gestão e processamento é coberta pelo negócio ou adicionada ao total pago pelo cliente.",
     "feeMerchant": "O Restaurante (Descontado do total angariado)",
-    "feeCustomer": "O Cliente (Adiciona-se uma taxa de 0,10 € + despesas de processamento ao pagar)",
+    "feeCustomer": "O cliente (a taxa de processamento da Stripe é adicionada no checkout)",
     "saveData": "Guardar dados",
     "section2Title": "2. Equipa e conta de recebimento",
     "stripeNotice": "O Stripe recolhe as contas bancárias em segurança; o Propi nunca as armazena.",
