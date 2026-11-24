@@ -227,5 +227,22 @@
     "copyNfcUrl": "Copy NFC URL",
     "tableCard": "Table Card 🎨",
     "delete": "Delete"
+  },
+  "CustomerPay": {
+    "leaveTipHere": "LEAVE YOUR TIP HERE 🧡",
+    "whoAttendedYou": "Who served you?",
+    "changePerson": "← Change person",
+    "thanksForVisit": "Thank you for your visit 🧡",
+    "wouldYouLikeTip": "Would you like to leave a tip?",
+    "customAmountPlaceholder": "Other amount (€)",
+    "payButton": "Pay",
+    "payWithApplePayOrCard": "Leave tip with Apple Pay / Card",
+    "processing": "Processing payment...",
+    "thankYouTitle": "Thank you so much!",
+    "thankYouSub": "Your tip has been sent successfully.",
+    "backToHome": "Back to home",
+    "serviceFeeNotice": "Includes service management fees.",
+    "tableLabel": "Table",
+    "stripeItemTitle": "Tip for {name}"
   }
 }
