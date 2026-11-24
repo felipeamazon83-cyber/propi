@@ -227,5 +227,22 @@
     "copyNfcUrl": "NFC-URL kopieren",
     "tableCard": "Tischkarte 🎨",
     "delete": "Löschen"
+  },
+  "CustomerPay": {
+    "leaveTipHere": "HIER TRINKGELD GEBEN 🧡",
+    "whoAttendedYou": "Wer hat Sie bedient?",
+    "changePerson": "← Person ändern",
+    "thanksForVisit": "Vielen Dank für Ihren Besuch 🧡",
+    "wouldYouLikeTip": "Möchten Sie ein Trinkgeld geben?",
+    "customAmountPlaceholder": "Anderer Betrag (€)",
+    "payButton": "Bezahlen",
+    "payWithApplePayOrCard": "Trinkgeld mit Apple Pay / Karte zahlen",
+    "processing": "Zahlung wird verarbeitet...",
+    "thankYouTitle": "Vielen Dank!",
+    "thankYouSub": "Ihr Trinkgeld wurde erfolgreich gesendet.",
+    "backToHome": "Zurück zur Startseite",
+    "serviceFeeNotice": "Inklusive Servicegebühren.",
+    "tableLabel": "Tisch",
+    "stripeItemTitle": "Trinkgeld für {name}"
   }
 }
