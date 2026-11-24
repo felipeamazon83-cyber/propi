@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '../../../lib/api';
-// Ajusta la ruta según dónde guardes tu objeto `messages` (por ejemplo: ../../../lib/messages)
-import { messages } from '../../../lib/messages';
+import de from '../../../messages/de.json';
+import en from '../../../messages/en.json';
+import es from '../../../messages/es.json';
+import fr from '../../../messages/fr.json';
+import it from '../../../messages/it.json';
+import pt from '../../../messages/pt.json';
 
 type Public = {
   business_name: string;
@@ -15,8 +19,44 @@ type Public = {
   maximum_amount: number;
 };
 
+const messages: Record<string, any> = {
+  es,
+  en,
+  fr,
+  de,
+  it,
+  pt,
+};
+
 const LANGS = ['es', 'en', 'fr', 'de', 'it', 'pt'] as const;
 type Lang = (typeof LANGS)[number];
+
+const FALLBACK_PAY_LABEL: Record<Lang, string> = {
+  es: 'Pagar',
+  en: 'Pay',
+  fr: 'Payer',
+  de: 'Bezahlen',
+  it: 'Paga',
+  pt: 'Pagar',
+};
+
+const FALLBACK_LOADING_LABEL: Record<Lang, string> = {
+  es: 'Cargando…',
+  en: 'Loading…',
+  fr: 'Chargement…',
+  de: 'Wird geladen…',
+  it: 'Caricamento…',
+  pt: 'A carregar…',
+};
+
+const FALLBACK_ITEM_TEMPLATE: Record<Lang, string> = {
+  es: 'Propina para {name}',
+  en: 'Tip for {name}',
+  fr: 'Pourboire pour {name}',
+  de: 'Trinkgeld für {name}',
+  it: 'Mancia per {name}',
+  pt: 'Gorjeta para {name}',
+};
 
 export default function TipPage({ params }: { params: { publicId: string } }) {
   const [data, setData] = useState<Public>();
@@ -26,10 +66,8 @@ export default function TipPage({ params }: { params: { publicId: string } }) {
   const [error, setError] = useState('');
   const [lang, setLang] = useState<Lang>('es');
 
-  const dict = messages as Record<string, any>;
-  const currentPack = dict[lang] ?? dict.es;
-  const t = currentPack.CustomerPay ?? {};
-
+  const currentPack = messages[lang] ?? messages.es;
+  const t = currentPack?.CustomerPay ?? {};
   const selectedEmployee = data?.employees.find((e) => e.id === employee);
 
   useEffect(() => {
@@ -41,10 +79,10 @@ export default function TipPage({ params }: { params: { publicId: string } }) {
   async function checkout() {
     if (!employee || !amount) return;
     try {
-      const itemTemplate: string = t.stripeItemTitle ?? 'Propina para {name}';
+      const itemTemplate: string = t.stripeItemTitle ?? FALLBACK_ITEM_TEMPLATE[lang];
       const productName = selectedEmployee
         ? itemTemplate.replace('{name}', selectedEmployee.name)
-        : (t.leaveTipHere ?? 'Propina');
+        : (t.leaveTipHere ?? FALLBACK_ITEM_TEMPLATE[lang].replace(' {name}', ''));
 
       const r = await api<{ checkout_url: string }>('/payments/checkout', {
         method: 'POST',
@@ -63,11 +101,13 @@ export default function TipPage({ params }: { params: { publicId: string } }) {
   }
 
   if (error) return <main className="p-8 text-center">{error}</main>;
-  if (!data) return <main className="p-8 text-center">Cargando…</main>;
+  if (!data) {
+    return <main className="p-8 text-center">{FALLBACK_LOADING_LABEL[lang]}</main>;
+  }
 
   return (
     <main className="mx-auto min-h-screen max-w-md px-5 py-8">
-      {/* Selector de idioma para clientes locales y extranjeros */}
+      {/* Selector de idioma: ES, EN, FR, DE, IT, PT */}
       <div className="flex flex-wrap justify-center gap-1.5" role="group" aria-label="Language">
         {LANGS.map((code) => {
           const isSelected = lang === code;
@@ -161,7 +201,7 @@ export default function TipPage({ params }: { params: { publicId: string } }) {
 
           {amount ? (
             <button type="button" onClick={checkout} className="btn btn-primary mt-6 w-full">
-              {`${t.payButton ?? 'Pagar'} ${amount.toFixed(2)} €`}
+              {`${t.payButton ?? FALLBACK_PAY_LABEL[lang]} ${amount.toFixed(2)} €`}
             </button>
           ) : null}
         </section>
