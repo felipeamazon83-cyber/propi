@@ -195,7 +195,7 @@
     "feeTitle": "Chi sostiene i costi del servizio?",
     "feeSubtitle": "Definisci se la commissione di gestione e di elaborazione è a carico dell'attività o viene aggiunta al totale pagato dal cliente.",
     "feeMerchant": "Il Ristorante (Detratto dal totale raccolto)",
-    "feeCustomer": "Il Cliente (Viene aggiunto un costo di 0,10 € + spese di elaborazione al pagamento)",
+    "feeCustomer": "Il cliente (la commissione di elaborazione Stripe viene aggiunta al checkout)",
     "saveData": "Salva dati",
     "section2Title": "2. Team e conto d'incasso",
     "stripeNotice": "Stripe raccoglie le coordinate bancarie in modo sicuro; Propi non le memorizza mai.",
