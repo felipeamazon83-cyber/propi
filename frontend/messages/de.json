@@ -195,7 +195,7 @@
     "feeTitle": "Wer übernimmt die Servicekosten?",
     "feeSubtitle": "Lege fest, ob die Verwaltungs- und Bearbeitungsgebühr vom Unternehmen übernommen oder zum Kundenbetrag hinzugefügt wird.",
     "feeMerchant": "Das Restaurant (Wird vom Gesamtertrag abgezogen)",
-    "feeCustomer": "Der Kunde (Aufpreis von 0,10 € + Bearbeitungsgebühren beim Bezahlen)",
+    "feeCustomer": "Der Kunde (Stripe-Bearbeitungsgebühr wird an der Kasse hinzugefügt)",
     "saveData": "Daten speichern",
     "section2Title": "2. Team & Auszahlungskonto",
     "stripeNotice": "Stripe erfasst Bankkonten sicher; Propi speichert sie niemals.",
