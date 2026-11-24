@@ -227,5 +227,22 @@
     "copyNfcUrl": "Copier l'URL NFC",
     "tableCard": "Carte de Table 🎨",
     "delete": "Supprimer"
+  },
+  "CustomerPay": {
+    "leaveTipHere": "LAISSEZ VOTRE POURBOIRE ICI 🧡",
+    "whoAttendedYou": "Qui vous a servi ?",
+    "changePerson": "← Changer de personne",
+    "thanksForVisit": "Merci pour votre visite 🧡",
+    "wouldYouLikeTip": "Souhaitez-vous laisser un pourboire ?",
+    "customAmountPlaceholder": "Autre montant (€)",
+    "payButton": "Payer",
+    "payWithApplePayOrCard": "Laisser un pourboire avec Apple Pay / Carte",
+    "processing": "Traitement du paiement...",
+    "thankYouTitle": "Merci beaucoup !",
+    "thankYouSub": "Votre pourboire a bien été envoyé.",
+    "backToHome": "Retour à l'accueil",
+    "serviceFeeNotice": "Frais de gestion du service inclus.",
+    "tableLabel": "Table",
+    "stripeItemTitle": "Pourboire pour {name}"
   }
 }
