@@ -2,34 +2,32 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-
-// 1. Importaciones con rutas relativas limpias (sin LanguageSelector)
 import { useTranslation } from '../../context/LanguageContext';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { t } = useTranslation(); // 2. Hook de traducción
+  const { t } = useTranslation();
 
   const navItems = [
-    { 
-      label: t('Header.dashboard') || 'Propinas & Equipo', 
-      detail: t('Header.summaryDetail') || 'Resumen', 
-      href: '/dashboard' 
+    {
+      label: t('Header.dashboard') || 'Propinas & Equipo',
+      detail: t('Header.summaryDetail') || 'Resumen',
+      href: '/dashboard',
     },
-    { 
-      label: t('Header.settings') || 'Configuración', 
-      detail: t('Header.settingsDetail') || 'Tu negocio', 
-      href: '/dashboard/settings' 
+    {
+      label: t('Header.settings') || 'Configuración',
+      detail: t('Header.settingsDetail') || 'Tu negocio',
+      href: '/dashboard/settings',
     },
-    { 
-      label: t('Header.help') || 'Centro de ayuda', 
-      detail: t('Header.helpDetail') || 'Guías y soporte', 
-      href: '/dashboard/help' 
+    {
+      label: t('Header.help') || 'Centro de ayuda',
+      detail: t('Header.helpDetail') || 'Guías y soporte',
+      href: '/dashboard/help',
     },
-    { 
-      label: t('Header.guide') || 'Guía de inicio', 
-      detail: t('Header.guideDetail') || 'Paso a paso', 
-      href: '/onboarding' 
+    {
+      label: t('Header.guide') || 'Guía de inicio',
+      detail: t('Header.guideDetail') || 'Paso a paso',
+      href: '/onboarding',
     },
   ];
 
@@ -41,39 +39,57 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen flex-col bg-[#07182f] text-slate-100 md:flex-row">
       {/* ASIDE / SIDEBAR */}
-      <aside className="flex w-full flex-col justify-between border-b border-white/10 bg-[#0b2344]/95 px-4 py-4 backdrop-blur md:min-h-screen md:w-64 md:border-b-0 md:border-r md:px-5 md:py-7">
-        <div>
-          <div className="flex items-center justify-between md:block">
-            <div className="flex items-center gap-2">
-              <Link href="/" className="brand-logo" aria-label="Propi">
-                <img src="/propi-logo.png" alt="Propi" className="h-8 w-auto object-contain" />
-              </Link>
-            </div>
-          </div>
+      <aside className="flex w-full flex-col border-b border-white/10 bg-[#0b2344]/95 px-4 py-4 backdrop-blur md:min-h-screen md:w-64 md:border-b-0 md:border-r md:px-5 md:py-7">
+        <div className="flex items-center justify-between md:block">
+          <Link href="/" className="brand-logo" aria-label="Propi">
+            <img src="/propi-logo.png" alt="Propi" className="h-8 w-auto object-contain" />
+          </Link>
 
-          <nav className="mt-5 flex gap-2 overflow-x-auto md:mt-10 md:flex-col">
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`min-w-[155px] rounded-xl border px-3 py-3 transition-colors md:min-w-0 ${
-                    isActive
-                      ? 'border-orange-400/30 bg-orange-400/10 text-orange-200'
-                      : 'border-transparent text-slate-400 hover:bg-white/5 hover:text-slate-100'
-                  }`}
-                >
-                  <span className="block text-sm font-bold">{item.label}</span>
-                  <span className="mt-1 block text-xs text-slate-500">{item.detail}</span>
-                </Link>
-              );
-            })}
-          </nav>
+          {/* Botón Cerrar sesión visible arriba en móvil */}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/20 md:hidden"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+            <span>{t('Header.logout') || 'Cerrar sesión'}</span>
+          </button>
         </div>
 
-        {/* Botón Cerrar sesión traducido */}
-        <div className="mt-6 border-t border-white/10 pt-4 md:mt-auto">
+        <nav className="mt-5 flex gap-2 overflow-x-auto md:mt-10 md:flex-col">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`min-w-[155px] rounded-xl border px-3 py-3 transition-colors md:min-w-0 ${
+                  isActive
+                    ? 'border-orange-400/30 bg-orange-400/10 text-orange-200'
+                    : 'border-transparent text-slate-400 hover:bg-white/5 hover:text-slate-100'
+                }`}
+              >
+                <span className="block text-sm font-bold">{item.label}</span>
+                <span className="mt-1 block text-xs text-slate-500">{item.detail}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Botón Cerrar sesión justo debajo de los menús en web */}
+        <div className="mt-6 hidden border-t border-white/10 pt-5 md:block">
           <button
             type="button"
             onClick={handleLogout}
@@ -97,9 +113,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
 
-        {/* ÁREA PRINCIPAL */}
+      {/* ÁREA PRINCIPAL */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#0b2344]/50 px-6 backdrop-blur" />
+        <header className="flex h-16 w-full items-center justify-end border-b border-white/10 bg-[#0b2344]/50 px-6 backdrop-blur" />
 
         {/* Contenido de cada vista */}
         <main className="min-w-0 flex-1 p-6">{children}</main>
