@@ -40,9 +40,6 @@ def get_user_business(business_id: UUID, user_id: UUID, db: Session) -> Business
     return business
 
 
-# --------------------------------------------------------------------------
-# 1. Endpoint Unificado Dashboard Summary (Optimizado sin bucle N+1)
-# --------------------------------------------------------------------------
 @router.get("/businesses/{business_id}/dashboard-summary")
 def get_dashboard_summary(
     business_id: UUID,
@@ -55,46 +52,91 @@ def get_dashboard_summary(
     # 1. Validar propiedad del negocio
     business = get_user_business(b_uuid, user_uuid, db)
 
-    # 2. Métricas globales del negocio en una sola consulta
-    global_stats = db.execute(
-        select(
-            func.coalesce(func.sum(Tip.amount), 0.0).label("total_amount"),
-            func.count(Tip.id).label("total_count"),
-        ).where(
-            cast(Tip.business_id, PG_UUID) == b_uuid,
-            Tip.status == "paid",
-        )
-    ).first()
-
-    total_amount = float(global_stats.total_amount) if global_stats else 0.0
-    total_count = global_stats.total_count if global_stats else 0
-    average = (total_amount / total_count) if total_count > 0 else 0.0
-
-    # 3. Obtener todos los empleados activos
+    # 2. Empleados activos del negocio
     employees = db.scalars(
         select(Employee).where(
-            cast(Employee.business_id, PG_UUID) == b_uuid,
+            Employee.business_id == b_uuid,
             Employee.active.is_(True),
         )
     ).all()
 
-    if not employees:
-        return {
-            "business": {
-                "id": str(business.id),
-                "name": business.name,
-                "currency": getattr(business, "currency", "EUR"),
-                "logo_url": getattr(business, "logo_url", None),
-            },
-            "summary": {
-                "total_amount": total_amount,
-                "total_count": total_count,
-                "average": round(average, 2),
-            },
-            "by_employee": [],
-        }
+    # 3. Estadísticas agrupadas por empleado (una sola consulta sobre propinas pagadas)
+    tips_stats = db.execute(
+        select(
+            Tip.employee_id,
+            func.count(Tip.id).label("emp_count"),
+            func.coalesce(func.sum(Tip.amount), 0.0).label("gross_total"),
+            func.coalesce(
+                func.sum(case((Tip.payout_status == "paid", Tip.amount), else_=0.0)),
+                0.0,
+            ).label("paid_total"),
+            func.coalesce(
+                func.sum(
+                    case(
+                        (Tip.payout_status == "pending", Tip.connected_account_payout),
+                        else_=0.0,
+                    )
+                ),
+                0.0,
+            ).label("pending_total"),
+        )
+        .where(
+            Tip.business_id == b_uuid,
+            Tip.status == "paid",
+        )
+        .group_by(Tip.employee_id)
+    ).all()
 
-    e_uuids = [emp.id if isinstance(emp.id, UUID) else UUID(str(emp.id)) for emp in employees]
+    stats_map: dict[str, dict[str, float | int]] = {}
+    total_amount = 0.0
+    total_count = 0
+
+    for row in tips_stats:
+        gross = float(row.gross_total)
+        count = int(row.emp_count)
+        total_amount += gross
+        total_count += count
+        if row.employee_id is not None:
+            stats_map[str(row.employee_id)] = {
+                "emp_count": count,
+                "paid_total": float(row.paid_total),
+                "pending_total": float(row.pending_total),
+            }
+
+    average = (total_amount / total_count) if total_count > 0 else 0.0
+
+    by_employee = []
+    for emp in employees:
+        emp_id_str = str(emp.id)
+        emp_data = stats_map.get(
+            emp_id_str, {"emp_count": 0, "paid_total": 0.0, "pending_total": 0.0}
+        )
+        by_employee.append(
+            {
+                "employee_id": emp_id_str,
+                "name": emp.name,
+                "total_amount": emp_data["paid_total"],
+                "tips_count": emp_data["emp_count"],
+                "pending_amount": emp_data["pending_total"],
+                "stripe_account_id": getattr(emp, "stripe_account_id", None),
+                "stripe_onboarding_completed": getattr(emp, "stripe_onboarding_completed", False),
+            }
+        )
+
+    return {
+        "business": {
+            "id": str(business.id),
+            "name": business.name,
+            "currency": getattr(business, "currency", "EUR"),
+            "logo_url": getattr(business, "logo_url", None),
+        },
+        "summary": {
+            "total_amount": total_amount,
+            "total_count": total_count,
+            "average": round(average, 2),
+        },
+        "by_employee": by_employee,
+    }
 
     # 4. CONSULTA UNIFICADA (Evita bucles N+1): Agrupa las estadísticas de todos los empleados de un solo golpe
     tips_stats = db.execute(
