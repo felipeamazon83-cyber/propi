@@ -332,9 +332,19 @@ export default function Home() {
           </form>
         </section>
 
-        {/* FOOTER TEXTO DE MARCA */}
-        <footer className="border-t border-white/10 py-8 text-sm text-slate-500">
-          {t('Landing.footerBrand') || 'Propi · Propinas digitales para equipos que dejan huella.'}
+ {/* FOOTER TEXTO DE MARCA */}
+        <footer className="flex flex-col items-center justify-between gap-4 border-t border-white/10 py-8 text-sm text-slate-500 sm:flex-row">
+          <span>
+            {t('Landing.footerBrand') || 'Propi · Propinas digitales para equipos que dejan huella.'}
+          </span>
+          <div className="flex gap-6">
+            <a href="/privacidad" className="transition-colors hover:text-slate-300">
+              Política de Privacidad
+            </a>
+            <a href="/terminos" className="transition-colors hover:text-slate-300">
+              Condiciones del Servicio
+            </a>
+          </div>
         </footer>
       </div>
     </main>
