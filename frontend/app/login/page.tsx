@@ -24,7 +24,7 @@ async function handleGoogleLogin() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: 'https://propi-kohl.vercel.app/dashboard',
+          redirectTo: `${window.location.origin}/dashboard`,
           queryParams: {
             prompt: 'select_account',
           },
